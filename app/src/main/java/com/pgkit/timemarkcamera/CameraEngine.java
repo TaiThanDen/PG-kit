@@ -82,8 +82,10 @@ final class CameraEngine {
                 sensorRotation = nextRotation;
                 targetRotation = sensorRotation;
                 callback.onCameraRotationChanged(sensorRotation);
-                if (previewUseCase != null) previewUseCase.setTargetRotation(targetRotation);
-                if (imageCapture != null) imageCapture.setTargetRotation(targetRotation);
+                // The activity intentionally stays portrait. Rebinding makes CameraX
+                // renegotiate the camera stream for the new physical orientation,
+                // rather than leaving a portrait stream merely turned sideways.
+                if (cameraProvider != null) previewView.post(CameraEngine.this::bindUseCases);
             }
         };
     }
@@ -189,10 +191,11 @@ final class CameraEngine {
     }
 
     private static int rotationForOrientation(int orientation) {
-        // CameraX/PreviewView use the clockwise display rotation convention.
-        if (orientation >= 45 && orientation < 135) return Surface.ROTATION_90;
+        // OrientationEventListener reports the physical tilt in the opposite
+        // direction from the clockwise Surface rotation constants.
+        if (orientation >= 45 && orientation < 135) return Surface.ROTATION_270;
         if (orientation >= 135 && orientation < 225) return Surface.ROTATION_180;
-        if (orientation >= 225 && orientation < 315) return Surface.ROTATION_270;
+        if (orientation >= 225 && orientation < 315) return Surface.ROTATION_90;
         return Surface.ROTATION_0;
     }
 
