@@ -445,6 +445,10 @@ public final class MainActivity extends ComponentActivity implements LocationLis
                         : "Camera và vị trí đã sẵn sàng"));
     }
 
+    @Override public void onCameraRotationChanged(int rotation) {
+        if (watermarkView != null) watermarkView.setCameraRotation(rotation);
+    }
+
     @Override public void onPhotoSaved(Uri uri) {
         runOnUiThread(() -> {
             latestPhoto = uri;

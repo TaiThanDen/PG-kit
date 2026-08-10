@@ -4,11 +4,13 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.Surface;
 
 import java.util.Date;
 
 public final class WatermarkOverlayView extends View {
     private String address = "Đang xác định vị trí…";
+    private int cameraRotation = Surface.ROTATION_0;
     private final Date currentTime = new Date();
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
@@ -32,6 +34,12 @@ public final class WatermarkOverlayView extends View {
 
     public String getAddress() { return address; }
 
+    public void setCameraRotation(int rotation) {
+        if (cameraRotation == rotation) return;
+        cameraRotation = rotation;
+        invalidate();
+    }
+
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         ticker.run();
@@ -45,7 +53,21 @@ public final class WatermarkOverlayView extends View {
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         currentTime.setTime(System.currentTimeMillis());
-        WatermarkRenderer.drawLive(canvas, getWidth(), getHeight(), currentTime, address,
-                getResources().getDisplayMetrics().density);
+        canvas.save();
+        if (cameraRotation == Surface.ROTATION_90) {
+            canvas.rotate(90f);
+            canvas.translate(0f, -getWidth());
+            WatermarkRenderer.drawLive(canvas, getHeight(), getWidth(), currentTime, address,
+                    getResources().getDisplayMetrics().density);
+        } else if (cameraRotation == Surface.ROTATION_270) {
+            canvas.rotate(-90f);
+            canvas.translate(-getHeight(), 0f);
+            WatermarkRenderer.drawLive(canvas, getHeight(), getWidth(), currentTime, address,
+                    getResources().getDisplayMetrics().density);
+        } else {
+            WatermarkRenderer.drawLive(canvas, getWidth(), getHeight(), currentTime, address,
+                    getResources().getDisplayMetrics().density);
+        }
+        canvas.restore();
     }
 }

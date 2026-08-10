@@ -42,6 +42,7 @@ import java.util.concurrent.Executors;
 final class CameraEngine {
     interface Callback {
         void onCameraReady();
+        void onCameraRotationChanged(int rotation);
         void onPhotoSaved(Uri uri);
         void onCameraError(String message);
     }
@@ -59,11 +60,13 @@ final class CameraEngine {
     private Preview previewUseCase;
     private OrientationEventListener orientationListener;
     private int targetRotation = Surface.ROTATION_0;
+    private int sensorRotation = Surface.ROTATION_0;
     private int desiredFacing = CameraSelector.LENS_FACING_BACK;
     private boolean ready;
     private boolean torchEnabled;
     private Date captureTime;
     private String captureAddress;
+    private int captureRotation = Surface.ROTATION_0;
 
     CameraEngine(ComponentActivity activity, PreviewView previewView, Callback callback,
                  String verificationCode) {
@@ -76,8 +79,10 @@ final class CameraEngine {
             @Override public void onOrientationChanged(int orientation) {
                 if (orientation == ORIENTATION_UNKNOWN) return;
                 int nextRotation = rotationForOrientation(orientation);
-                if (nextRotation == targetRotation) return;
-                targetRotation = nextRotation;
+                if (nextRotation == sensorRotation) return;
+                sensorRotation = nextRotation;
+                targetRotation = sensorRotation;
+                callback.onCameraRotationChanged(sensorRotation);
                 if (previewUseCase != null) previewUseCase.setTargetRotation(targetRotation);
                 if (imageCapture != null) imageCapture.setTargetRotation(targetRotation);
             }
@@ -131,6 +136,7 @@ final class CameraEngine {
         captureTime = new Date();
         captureAddress = address;
         capture.setTargetRotation(targetRotation);
+        captureRotation = targetRotation;
         try {
             File rawFile = File.createTempFile("timemark_raw_", ".jpg", activity.getCacheDir());
             ImageCapture.OutputFileOptions output = new ImageCapture.OutputFileOptions.Builder(rawFile).build();
@@ -157,7 +163,7 @@ final class CameraEngine {
         ready = false;
         try {
             cameraProvider.unbindAll();
-            targetRotation = displayRotation();
+            targetRotation = sensorRotation;
             previewUseCase = new Preview.Builder()
                     .setTargetRotation(targetRotation)
                     .build();
@@ -199,6 +205,11 @@ final class CameraEngine {
             if (decoded == null) throw new IllegalStateException("Dữ liệu ảnh không hợp lệ");
             oriented = applyExifRotation(decoded, rawFile);
             if (oriented != decoded) decoded.recycle();
+            Bitmap landscape = ensureLandscape(oriented, captureRotation);
+            if (landscape != oriented) {
+                oriented.recycle();
+                oriented = landscape;
+            }
             mutable = oriented.copy(Bitmap.Config.ARGB_8888, true);
             if (mutable == null) throw new IllegalStateException("Không tạo được bitmap để render");
             if (mutable != oriented) oriented.recycle();
@@ -230,6 +241,17 @@ final class CameraEngine {
         Matrix matrix = new Matrix();
         matrix.postRotate(degrees);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    private static Bitmap ensureLandscape(Bitmap bitmap, int rotation) {
+        if ((rotation != Surface.ROTATION_90 && rotation != Surface.ROTATION_270)
+                || bitmap.getWidth() >= bitmap.getHeight()) {
+            return bitmap;
+        }
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotation == Surface.ROTATION_90 ? 90f : -90f);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(),
+                matrix, true);
     }
 
     private Uri saveBitmap(Bitmap bitmap, Date when) throws Exception {
