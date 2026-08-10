@@ -1,7 +1,9 @@
 package com.pgkit.timemarkcamera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.Surface;
@@ -53,21 +55,22 @@ public final class WatermarkOverlayView extends View {
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         currentTime.setTime(System.currentTimeMillis());
-        canvas.save();
-        if (cameraRotation == Surface.ROTATION_90) {
-            canvas.rotate(90f);
-            canvas.translate(0f, -getWidth());
-            WatermarkRenderer.drawLive(canvas, getHeight(), getWidth(), currentTime, address,
-                    getResources().getDisplayMetrics().density);
-        } else if (cameraRotation == Surface.ROTATION_270) {
-            canvas.rotate(-90f);
-            canvas.translate(-getHeight(), 0f);
-            WatermarkRenderer.drawLive(canvas, getHeight(), getWidth(), currentTime, address,
-                    getResources().getDisplayMetrics().density);
-        } else {
+        if (cameraRotation == Surface.ROTATION_0 || cameraRotation == Surface.ROTATION_180) {
             WatermarkRenderer.drawLive(canvas, getWidth(), getHeight(), currentTime, address,
                     getResources().getDisplayMetrics().density);
+            return;
         }
-        canvas.restore();
+
+        Bitmap portraitLayer = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas layerCanvas = new Canvas(portraitLayer);
+        WatermarkRenderer.drawLive(layerCanvas, getWidth(), getHeight(), currentTime, address,
+                getResources().getDisplayMetrics().density);
+        Matrix matrix = new Matrix();
+        matrix.postRotate(cameraRotation == Surface.ROTATION_90 ? -90f : 90f);
+        Bitmap rotatedLayer = Bitmap.createBitmap(portraitLayer, 0, 0,
+                portraitLayer.getWidth(), portraitLayer.getHeight(), matrix, true);
+        canvas.drawBitmap(rotatedLayer, 0f, 0f, null);
+        portraitLayer.recycle();
+        if (rotatedLayer != portraitLayer) rotatedLayer.recycle();
     }
 }

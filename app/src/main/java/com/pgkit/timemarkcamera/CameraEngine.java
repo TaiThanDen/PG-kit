@@ -66,7 +66,6 @@ final class CameraEngine {
     private boolean torchEnabled;
     private Date captureTime;
     private String captureAddress;
-    private int captureRotation = Surface.ROTATION_0;
 
     CameraEngine(ComponentActivity activity, PreviewView previewView, Callback callback,
                  String verificationCode) {
@@ -136,13 +135,13 @@ final class CameraEngine {
         captureTime = new Date();
         captureAddress = address;
         capture.setTargetRotation(targetRotation);
-        captureRotation = targetRotation;
+        final int requestedRotation = sensorRotation;
         try {
             File rawFile = File.createTempFile("timemark_raw_", ".jpg", activity.getCacheDir());
             ImageCapture.OutputFileOptions output = new ImageCapture.OutputFileOptions.Builder(rawFile).build();
             capture.takePicture(output, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
                 @Override public void onImageSaved(ImageCapture.OutputFileResults result) {
-                    renderAndSave(rawFile);
+                    renderAndSave(rawFile, requestedRotation);
                 }
 
                 @Override public void onError(ImageCaptureException exception) {
@@ -190,13 +189,14 @@ final class CameraEngine {
     }
 
     private static int rotationForOrientation(int orientation) {
+        // CameraX/PreviewView use the clockwise display rotation convention.
         if (orientation >= 45 && orientation < 135) return Surface.ROTATION_90;
         if (orientation >= 135 && orientation < 225) return Surface.ROTATION_180;
         if (orientation >= 225 && orientation < 315) return Surface.ROTATION_270;
         return Surface.ROTATION_0;
     }
 
-    private void renderAndSave(File rawFile) {
+    private void renderAndSave(File rawFile, int requestedRotation) {
         Bitmap decoded = null;
         Bitmap oriented = null;
         Bitmap mutable = null;
@@ -205,7 +205,7 @@ final class CameraEngine {
             if (decoded == null) throw new IllegalStateException("Dữ liệu ảnh không hợp lệ");
             oriented = applyExifRotation(decoded, rawFile);
             if (oriented != decoded) decoded.recycle();
-            Bitmap landscape = ensureLandscape(oriented, captureRotation);
+            Bitmap landscape = ensureLandscape(oriented, requestedRotation);
             if (landscape != oriented) {
                 oriented.recycle();
                 oriented = landscape;
