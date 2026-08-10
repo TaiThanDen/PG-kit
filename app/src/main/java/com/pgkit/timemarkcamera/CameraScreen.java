@@ -1,5 +1,6 @@
 package com.pgkit.timemarkcamera;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -8,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -32,7 +34,7 @@ final class CameraScreen {
     private final PreviewView previewView;
     private final WatermarkOverlayView watermarkView;
     private TextView locationState;
-    private TextView flashButton;
+    private ImageButton flashButton;
     private Button shutter;
 
     CameraScreen(ComponentActivity activity, Actions actions) {
@@ -79,7 +81,8 @@ final class CameraScreen {
     }
 
     void setFlashEnabled(boolean enabled) {
-        flashButton.setTextColor(enabled ? WatermarkRenderer.YELLOW : Color.rgb(30, 30, 30));
+        flashButton.setImageTintList(ColorStateList.valueOf(
+                enabled ? WatermarkRenderer.YELLOW : Color.rgb(30, 30, 30)));
         announce(enabled ? "Đã bật flash" : "Đã tắt flash");
     }
 
@@ -94,30 +97,34 @@ final class CameraScreen {
         bar.setPadding(dp(10), dp(4), dp(10), dp(4));
         bar.setBackgroundColor(Color.WHITE);
 
-        TextView menu = iconButton("☰", "Mở menu");
-        menu.setTextSize(31);
+        ImageButton menu = imageButton(R.drawable.ic_menu, "Mở menu", Color.rgb(30, 30, 30));
         menu.setOnClickListener(v -> actions.onMenu());
         bar.addView(menu, fixed(dp(54), dp(58)));
 
-        flashButton = iconButton("ϟ", "Bật hoặc tắt đèn flash");
-        flashButton.setTextSize(34);
+        flashButton = imageButton(R.drawable.ic_flash, "Bật hoặc tắt đèn flash",
+                Color.rgb(30, 30, 30));
         flashButton.setOnClickListener(v -> actions.onToggleFlash());
         bar.addView(flashButton, fixed(dp(54), dp(58)));
 
-        TextView verified = textButton("♢  Xác thực ảnh", "Xác thực ảnh", 15, Color.BLACK);
+        TextView verified = textButton("Xác thực ảnh", "Xác thực ảnh", 15, Color.BLACK);
         verified.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
+        verified.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                R.drawable.ic_verified, 0, 0, 0);
+        verified.setCompoundDrawablePadding(dp(4));
         verified.setBackgroundResource(R.drawable.pill_outline);
         LinearLayout.LayoutParams verifiedParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
         verifiedParams.setMargins(dp(8), 0, dp(8), 0);
         bar.addView(verified, verifiedParams);
 
-        TextView plus = textButton("✦ Plus", "Gói Plus", 16, Color.WHITE);
+        TextView plus = textButton("Plus", "Gói Plus", 16, Color.WHITE);
         plus.setTypeface(Typeface.DEFAULT_BOLD);
+        plus.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_plus, 0, 0, 0);
+        plus.setCompoundDrawablePadding(dp(3));
         plus.setBackgroundResource(R.drawable.pill_dark);
         bar.addView(plus, fixed(dp(76), dp(42)));
 
-        TextView switchCamera = iconButton("▣", "Đổi camera trước sau");
-        switchCamera.setTextSize(28);
+        ImageButton switchCamera = imageButton(R.drawable.ic_switch_camera,
+                "Đổi camera trước sau", Color.rgb(30, 30, 30));
         switchCamera.setOnClickListener(v -> actions.onSwitchCamera());
         LinearLayout.LayoutParams switchParams = fixed(dp(54), dp(58));
         switchParams.setMargins(dp(6), 0, 0, 0);
@@ -128,10 +135,10 @@ final class CameraScreen {
     private void addPreviewControls(FrameLayout preview) {
         LinearLayout zoom = new LinearLayout(activity);
         zoom.setOrientation(LinearLayout.VERTICAL);
-        zoom.setGravity(Gravity.CENTER);
-        zoom.setPadding(0, dp(4), 0, dp(4));
+        zoom.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
 
         TextView two = transparentLabel("2", 15, Color.WHITE);
+        two.setGravity(Gravity.CENTER);
         two.setContentDescription("Thu phóng 2 lần");
         TextView one = transparentLabel("1x", 16, Color.WHITE);
         one.setGravity(Gravity.CENTER);
@@ -142,19 +149,17 @@ final class CameraScreen {
         one.setBackground(circle);
         one.setContentDescription("Thu phóng 1 lần");
         TextView half = transparentLabel("0.5", 15, Color.WHITE);
+        half.setGravity(Gravity.CENTER);
         half.setContentDescription("Thu phóng 0 phẩy 5 lần");
-        zoom.addView(two, fixed(dp(48), dp(40)));
+        zoom.addView(two, fixed(dp(48), dp(48)));
         zoom.addView(one, fixed(dp(48), dp(48)));
-        zoom.addView(half, fixed(dp(48), dp(40)));
+        zoom.addView(half, fixed(dp(48), dp(48)));
         FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(56), dp(145),
                 Gravity.END | Gravity.CENTER_VERTICAL);
         zoomParams.rightMargin = dp(6);
         preview.addView(zoom, zoomParams);
 
-        TextView edit = iconButton("□", "Chỉnh sửa watermark");
-        edit.setTextColor(Color.WHITE);
-        edit.setTextSize(33);
-        edit.setBackgroundColor(Color.TRANSPARENT);
+        ImageButton edit = imageButton(R.drawable.ic_edit, "Chỉnh sửa watermark", Color.WHITE);
         edit.setOnClickListener(v -> actions.onEditWatermark());
         FrameLayout.LayoutParams editParams = new FrameLayout.LayoutParams(dp(58), dp(58),
                 Gravity.END | Gravity.BOTTOM);
@@ -162,10 +167,7 @@ final class CameraScreen {
         editParams.bottomMargin = dp(66);
         preview.addView(edit, editParams);
 
-        TextView pin = iconButton("⌾", "Làm mới vị trí");
-        pin.setTextColor(Color.WHITE);
-        pin.setTextSize(38);
-        pin.setBackgroundColor(Color.TRANSPARENT);
+        ImageButton pin = imageButton(R.drawable.ic_location_target, "Làm mới vị trí", Color.WHITE);
         pin.setOnClickListener(v -> actions.onRefreshLocation());
         FrameLayout.LayoutParams pinParams = new FrameLayout.LayoutParams(dp(58), dp(58),
                 Gravity.END | Gravity.BOTTOM);
@@ -193,9 +195,11 @@ final class CameraScreen {
         panel.addView(captureRow, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        TextView gallery = transparentLabel("▣\nThư viện", 15, Color.rgb(82, 82, 82));
+        TextView gallery = transparentLabel("Thư viện", 15, Color.rgb(82, 82, 82));
         gallery.setGravity(Gravity.CENTER);
         gallery.setTypeface(Typeface.DEFAULT_BOLD);
+        gallery.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_gallery, 0, 0);
+        gallery.setCompoundDrawablePadding(dp(4));
         gallery.setContentDescription("Mở ảnh vừa chụp trong thư viện");
         gallery.setOnClickListener(v -> actions.onOpenGallery());
         captureRow.addView(gallery, new LinearLayout.LayoutParams(
@@ -210,9 +214,11 @@ final class CameraScreen {
         shutterParams.setMargins(dp(20), 0, dp(20), 0);
         captureRow.addView(shutter, shutterParams);
 
-        TextView templates = transparentLabel("▤\nBản mẫu", 15, Color.rgb(82, 82, 82));
+        TextView templates = transparentLabel("Bản mẫu", 15, Color.rgb(82, 82, 82));
         templates.setGravity(Gravity.CENTER);
         templates.setTypeface(Typeface.DEFAULT_BOLD);
+        templates.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_template, 0, 0);
+        templates.setCompoundDrawablePadding(dp(4));
         templates.setContentDescription("Mở bản mẫu watermark");
         templates.setOnClickListener(v -> actions.onOpenTemplates());
         captureRow.addView(templates, new LinearLayout.LayoutParams(
@@ -222,11 +228,16 @@ final class CameraScreen {
         tabs.setGravity(Gravity.CENTER);
         String[] labels = {"Báo cáo", "Video", "Ảnh", "Chấm công", "Danh sách"};
         for (String label : labels) {
-            TextView tab = transparentLabel(label + ("Ảnh".equals(label) ? "\n•" : ""),
-                    14, "Ảnh".equals(label) ? Color.BLACK : Color.rgb(150, 150, 150));
+            boolean selected = "Ảnh".equals(label);
+            TextView tab = transparentLabel(label,
+                    14, selected ? Color.BLACK : Color.rgb(150, 150, 150));
             tab.setGravity(Gravity.CENTER);
-            tab.setSingleLine(false);
             tab.setTypeface(Typeface.DEFAULT_BOLD);
+            if (selected) {
+                tab.setCompoundDrawablesWithIntrinsicBounds(
+                        0, 0, 0, R.drawable.ic_tab_selected);
+                tab.setCompoundDrawablePadding(dp(4));
+            }
             tabs.addView(tab, new LinearLayout.LayoutParams(0, dp(48), 1f));
         }
         panel.addView(tabs, new LinearLayout.LayoutParams(
@@ -234,9 +245,13 @@ final class CameraScreen {
         return panel;
     }
 
-    private TextView iconButton(String text, String description) {
-        TextView view = transparentLabel(text, 28, Color.rgb(30, 30, 30));
-        view.setGravity(Gravity.CENTER);
+    private ImageButton imageButton(int drawable, String description, int tint) {
+        ImageButton view = new ImageButton(activity);
+        view.setImageResource(drawable);
+        view.setImageTintList(ColorStateList.valueOf(tint));
+        view.setScaleType(ImageButton.ScaleType.CENTER);
+        view.setPadding(dp(12), dp(12), dp(12), dp(12));
+        view.setBackgroundColor(Color.TRANSPARENT);
         view.setContentDescription(description);
         view.setClickable(true);
         view.setFocusable(true);
