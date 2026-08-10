@@ -1,0 +1,11 @@
+.gradle/
+.idea/
+local.properties
+**/build/
+*.iml
+captures/
+
+# Local reference APK/decompilation artifacts and generated distributables
+reference_app/
+tools/jadx.zip
+*.apk
