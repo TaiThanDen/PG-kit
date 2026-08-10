@@ -59,21 +59,33 @@ public final class WatermarkOverlayView extends View {
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         currentTime.setTime(System.currentTimeMillis());
+        int viewWidth = getWidth();
+        int viewHeight = getHeight();
+        if (viewWidth == 0 || viewHeight == 0) return;
+
         if (cameraRotation == Surface.ROTATION_0) {
-            WatermarkRenderer.drawLive(canvas, getWidth(), getHeight(), currentTime, address,
+            WatermarkRenderer.drawLive(canvas, viewWidth, viewHeight, currentTime, address,
                     getResources().getDisplayMetrics().density);
             return;
         }
 
+        // The Activity remains portrait, so the physical View is always viewWidth x viewHeight.
+        // A quarter-turn must be laid out in the pre-rotation landscape coordinate system;
+        // otherwise the renderer receives portrait bounds and the transformed watermark is clipped.
+        boolean quarterTurn = cameraRotation == Surface.ROTATION_90
+                || cameraRotation == Surface.ROTATION_270;
+        int logicalWidth = quarterTurn ? viewHeight : viewWidth;
+        int logicalHeight = quarterTurn ? viewWidth : viewHeight;
+
         orientationMatrix.reset();
         orientationMatrix.setRotate(DeviceOrientation.watermarkDegrees(cameraRotation));
-        orientationBounds.set(0f, 0f, getWidth(), getHeight());
+        orientationBounds.set(0f, 0f, logicalWidth, logicalHeight);
         orientationMatrix.mapRect(orientationBounds);
         orientationMatrix.postTranslate(-orientationBounds.left, -orientationBounds.top);
 
         int checkpoint = canvas.save();
         canvas.concat(orientationMatrix);
-        WatermarkRenderer.drawLive(canvas, getWidth(), getHeight(), currentTime, address,
+        WatermarkRenderer.drawLive(canvas, logicalWidth, logicalHeight, currentTime, address,
                 getResources().getDisplayMetrics().density);
         canvas.restoreToCount(checkpoint);
     }
