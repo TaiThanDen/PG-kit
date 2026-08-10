@@ -55,7 +55,7 @@ final class CameraScreen {
         activity.setContentView(root);
 
         root.addView(createTopBar(), new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(68)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
 
         previewLayer = new FrameLayout(activity);
         previewLayer.setBackgroundColor(Color.rgb(28, 28, 28));
@@ -145,41 +145,46 @@ final class CameraScreen {
     private View createTopBar() {
         LinearLayout bar = new LinearLayout(activity);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(dp(10), dp(4), dp(10), dp(4));
+        bar.setPadding(dp(4), dp(2), dp(4), dp(2));
         bar.setBackgroundColor(Color.WHITE);
 
         ImageButton menu = imageButton(R.drawable.ic_menu, "Mở menu", Color.rgb(30, 30, 30));
         menu.setOnClickListener(v -> actions.onMenu());
-        bar.addView(menu, fixed(dp(54), dp(58)));
+        bar.addView(menu, fixed(dp(54), dp(48)));
 
         flashButton = imageButton(R.drawable.ic_flash, "Bật hoặc tắt đèn flash",
                 Color.rgb(30, 30, 30));
         flashButton.setOnClickListener(v -> actions.onToggleFlash());
-        bar.addView(flashButton, fixed(dp(54), dp(58)));
+        bar.addView(flashButton, fixed(dp(54), dp(48)));
+
+        bar.addView(new View(activity), fixed(dp(20), 1));
 
         TextView verified = textButton("Xác thực ảnh", "Xác thực ảnh", 15, Color.BLACK);
         verified.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
+        verified.setSingleLine(true);
         verified.setCompoundDrawablesRelativeWithIntrinsicBounds(
                 R.drawable.ic_verified, 0, 0, 0);
         verified.setCompoundDrawablePadding(dp(4));
         verified.setBackgroundResource(R.drawable.pill_outline);
-        LinearLayout.LayoutParams verifiedParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
-        verifiedParams.setMargins(dp(8), 0, dp(8), 0);
-        bar.addView(verified, verifiedParams);
+        bar.addView(verified, fixed(dp(106), dp(27)));
 
-        TextView plus = textButton("Plus", "Gói Plus", 16, Color.WHITE);
+        bar.addView(new View(activity), fixed(dp(28), 1));
+
+        TextView plus = textButton("Plus", "Gói Plus", 15, Color.WHITE);
         plus.setTypeface(Typeface.DEFAULT_BOLD);
+        plus.setSingleLine(true);
+        plus.setPadding(dp(5), 0, dp(5), 0);
         plus.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_plus, 0, 0, 0);
         plus.setCompoundDrawablePadding(dp(3));
         plus.setBackgroundResource(R.drawable.pill_dark);
-        bar.addView(plus, fixed(dp(76), dp(42)));
+        bar.addView(plus, fixed(dp(58), dp(24)));
+
+        bar.addView(new View(activity), fixed(dp(4), 1));
 
         ImageButton switchCamera = imageButton(R.drawable.ic_switch_camera,
                 "Đổi camera trước sau", Color.rgb(30, 30, 30));
         switchCamera.setOnClickListener(v -> actions.onSwitchCamera());
-        LinearLayout.LayoutParams switchParams = fixed(dp(54), dp(58));
-        switchParams.setMargins(dp(6), 0, 0, 0);
-        bar.addView(switchCamera, switchParams);
+        bar.addView(switchCamera, fixed(dp(48), dp(48)));
         return bar;
     }
 
@@ -316,7 +321,7 @@ final class CameraScreen {
         shutter.setContentDescription("Chụp ảnh");
         shutter.setBackgroundResource(R.drawable.shutter_ring);
         shutter.setOnClickListener(v -> actions.onCapture());
-        LinearLayout.LayoutParams shutterParams = fixed(dp(76), dp(76));
+        LinearLayout.LayoutParams shutterParams = fixed(dp(80), dp(80));
         shutterParams.setMargins(dp(20), 0, dp(20), 0);
         captureRow.addView(shutter, shutterParams);
 
