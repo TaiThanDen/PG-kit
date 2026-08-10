@@ -34,6 +34,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -70,8 +71,6 @@ final class CameraEngine {
     private int desiredFacing = CameraSelector.LENS_FACING_BACK;
     private boolean ready;
     private boolean torchEnabled;
-    private Date captureTime;
-    private String captureAddress;
 
     CameraEngine(ComponentActivity activity, PreviewView previewView, Callback callback,
                  String verificationCode) {
@@ -83,7 +82,7 @@ final class CameraEngine {
         this.orientationListener = new OrientationEventListener(activity) {
             @Override public void onOrientationChanged(int orientation) {
                 if (orientation == ORIENTATION_UNKNOWN) return;
-                int nextRotation = DeviceOrientation.fromSensorDegrees(orientation);
+                int nextRotation = DeviceOrientation.fromSensorDegrees(orientation, sensorRotation);
                 if (nextRotation == sensorRotation) return;
                 sensorRotation = nextRotation;
                 targetRotation = sensorRotation;
@@ -181,16 +180,17 @@ final class CameraEngine {
             callback.onCameraError("Camera chưa sẵn sàng");
             return;
         }
-        captureTime = new Date();
-        captureAddress = address;
-        capture.setTargetRotation(targetRotation);
+        final Date requestedTime = new Date();
+        final String requestedAddress = address == null || address.trim().isEmpty()
+                ? "Chưa xác định vị trí" : address.trim();
         final int requestedRotation = sensorRotation;
+        capture.setTargetRotation(requestedRotation);
         try {
             File rawFile = File.createTempFile("timemark_raw_", ".jpg", activity.getCacheDir());
             ImageCapture.OutputFileOptions output = new ImageCapture.OutputFileOptions.Builder(rawFile).build();
             capture.takePicture(output, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
                 @Override public void onImageSaved(ImageCapture.OutputFileResults result) {
-                    renderAndSave(rawFile, requestedRotation);
+                    renderAndSave(rawFile, requestedTime, requestedAddress, requestedRotation);
                 }
 
                 @Override public void onError(ImageCaptureException exception) {
@@ -250,7 +250,8 @@ final class CameraEngine {
         return clampedIndex * step.floatValue();
     }
 
-    private void renderAndSave(File rawFile, int requestedRotation) {
+    private void renderAndSave(File rawFile, Date requestedTime, String requestedAddress,
+                               int requestedRotation) {
         Bitmap decoded = null;
         Bitmap oriented = null;
         Bitmap mutable = null;
@@ -267,10 +268,9 @@ final class CameraEngine {
             mutable = oriented.copy(Bitmap.Config.ARGB_8888, true);
             if (mutable == null) throw new IllegalStateException("Không tạo được bitmap để render");
             if (mutable != oriented) oriented.recycle();
-            Date time = captureTime == null ? new Date() : captureTime;
-            String address = captureAddress == null ? "Chưa xác định vị trí" : captureAddress;
-            WatermarkRenderer.drawSaved(mutable, time, address, verificationCode);
-            Uri saved = saveBitmap(mutable, time);
+            WatermarkRenderer.drawSaved(mutable, requestedTime, requestedAddress,
+                    verificationCode);
+            Uri saved = saveBitmap(mutable, requestedTime, requestedAddress);
             callback.onPhotoSaved(saved);
         } catch (Exception e) {
             callback.onCameraError("Không xử lý được ảnh: " + e.getMessage());
@@ -285,15 +285,34 @@ final class CameraEngine {
     private static Bitmap applyExifRotation(Bitmap bitmap, File imageFile) throws Exception {
         int orientation = new ExifInterface(imageFile.getAbsolutePath()).getAttributeInt(
                 ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-        float degrees;
+        Matrix matrix = new Matrix();
         switch (orientation) {
-            case ExifInterface.ORIENTATION_ROTATE_90: degrees = 90f; break;
-            case ExifInterface.ORIENTATION_ROTATE_180: degrees = 180f; break;
-            case ExifInterface.ORIENTATION_ROTATE_270: degrees = 270f; break;
+            case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+                matrix.setScale(-1f, 1f);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.setRotate(180f);
+                break;
+            case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+                matrix.setRotate(180f);
+                matrix.postScale(-1f, 1f);
+                break;
+            case ExifInterface.ORIENTATION_TRANSPOSE:
+                matrix.setRotate(90f);
+                matrix.postScale(-1f, 1f);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.setRotate(90f);
+                break;
+            case ExifInterface.ORIENTATION_TRANSVERSE:
+                matrix.setRotate(-90f);
+                matrix.postScale(-1f, 1f);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                matrix.setRotate(-90f);
+                break;
             default: return bitmap;
         }
-        Matrix matrix = new Matrix();
-        matrix.postRotate(degrees);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
@@ -307,16 +326,17 @@ final class CameraEngine {
                 matrix, true);
     }
 
-    private Uri saveBitmap(Bitmap bitmap, Date when) throws Exception {
+    private Uri saveBitmap(Bitmap bitmap, Date when, String address) throws Exception {
         String fileName = "TIMEMARK_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
-                .format(when) + ".jpg";
+                .format(when) + "_" + safeAddressSlug(address) + ".jpg";
         ContentResolver resolver = activity.getContentResolver();
         if (Build.VERSION.SDK_INT >= 29) {
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
             values.put(MediaStore.Images.Media.RELATIVE_PATH,
-                    Environment.DIRECTORY_PICTURES + "/TimemarkCamera");
+                    Environment.DIRECTORY_DCIM + "/Camera");
+            values.put(MediaStore.Images.Media.DATE_TAKEN, when.getTime());
             values.put(MediaStore.Images.Media.IS_PENDING, 1);
             Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
             if (uri == null) throw new IllegalStateException("Không tạo được tệp ảnh");
@@ -332,7 +352,7 @@ final class CameraEngine {
             return uri;
         }
         File directory = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "TimemarkCamera");
+                Environment.DIRECTORY_DCIM), "Camera");
         if (!directory.exists() && !directory.mkdirs()) {
             throw new IllegalStateException("Không tạo được thư mục ảnh");
         }
@@ -344,8 +364,20 @@ final class CameraEngine {
         }
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.DATA, file.getAbsolutePath());
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        values.put(MediaStore.Images.Media.DATE_TAKEN, when.getTime());
         Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
         return uri == null ? Uri.fromFile(file) : uri;
+    }
+
+    private static String safeAddressSlug(String address) {
+        String normalized = Normalizer.normalize(address == null ? "" : address,
+                Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
+        String slug = normalized.toLowerCase(Locale.US)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-+|-+$)", "");
+        if (slug.isEmpty()) return "unknown-location";
+        return slug.substring(0, Math.min(slug.length(), 32));
     }
 }

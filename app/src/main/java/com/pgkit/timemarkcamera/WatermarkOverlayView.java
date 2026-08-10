@@ -3,7 +3,6 @@ package com.pgkit.timemarkcamera;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.Surface;
@@ -17,7 +16,6 @@ public final class WatermarkOverlayView extends View {
     private int cameraRotation = Surface.ROTATION_0;
     private final Date currentTime = new Date();
     private final Matrix orientationMatrix = new Matrix();
-    private final RectF orientationBounds = new RectF();
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
             invalidate();
@@ -63,29 +61,13 @@ public final class WatermarkOverlayView extends View {
         int viewHeight = getHeight();
         if (viewWidth == 0 || viewHeight == 0) return;
 
-        if (cameraRotation == Surface.ROTATION_0) {
-            WatermarkRenderer.drawLive(canvas, viewWidth, viewHeight, currentTime, address,
-                    getResources().getDisplayMetrics().density);
-            return;
-        }
-
-        // The Activity remains portrait, so the physical View is always viewWidth x viewHeight.
-        // A quarter-turn must be laid out in the pre-rotation landscape coordinate system;
-        // otherwise the renderer receives portrait bounds and the transformed watermark is clipped.
-        boolean quarterTurn = cameraRotation == Surface.ROTATION_90
-                || cameraRotation == Surface.ROTATION_270;
-        int logicalWidth = quarterTurn ? viewHeight : viewWidth;
-        int logicalHeight = quarterTurn ? viewWidth : viewHeight;
-
-        orientationMatrix.reset();
-        orientationMatrix.setRotate(DeviceOrientation.watermarkDegrees(cameraRotation));
-        orientationBounds.set(0f, 0f, logicalWidth, logicalHeight);
-        orientationMatrix.mapRect(orientationBounds);
-        orientationMatrix.postTranslate(-orientationBounds.left, -orientationBounds.top);
-
+        // Keep the renderer in the portrait coordinate system. DeviceOrientation owns the full
+        // rotation/translation that maps the bottom-left base watermark to each physical anchor.
+        DeviceOrientation.setWatermarkTransform(
+                orientationMatrix, cameraRotation, viewWidth, viewHeight);
         int checkpoint = canvas.save();
         canvas.concat(orientationMatrix);
-        WatermarkRenderer.drawLive(canvas, logicalWidth, logicalHeight, currentTime, address,
+        WatermarkRenderer.drawLive(canvas, viewWidth, viewHeight, currentTime, address,
                 getResources().getDisplayMetrics().density);
         canvas.restoreToCount(checkpoint);
     }

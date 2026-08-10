@@ -143,7 +143,7 @@ public final class MainActivity extends ComponentActivity implements
         try {
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
-            toast("Ảnh đã lưu trong Pictures/TimemarkCamera");
+            toast("Ảnh đã lưu trong DCIM/Camera");
         }
     }
 
@@ -195,7 +195,7 @@ public final class MainActivity extends ComponentActivity implements
         runOnUiThread(() -> {
             latestPhoto = uri;
             screen.setCaptureEnabled(true);
-            toast("Đã lưu ảnh có watermark vào Pictures/TimemarkCamera");
+            toast("Đã lưu ảnh có watermark vào DCIM/Camera");
         });
     }
 
