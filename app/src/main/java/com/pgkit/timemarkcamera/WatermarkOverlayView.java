@@ -66,7 +66,9 @@ public final class WatermarkOverlayView extends View {
         WatermarkRenderer.drawLive(layerCanvas, getWidth(), getHeight(), currentTime, address,
                 getResources().getDisplayMetrics().density);
         Matrix matrix = new Matrix();
-        matrix.postRotate(cameraRotation == Surface.ROTATION_90 ? -90f : 90f);
+        // The portrait watermark is anchored at the bottom-left. A clockwise
+        // quarter-turn keeps that anchor on the left side of the landscape frame.
+        matrix.postRotate(90f);
         Bitmap rotatedLayer = Bitmap.createBitmap(portraitLayer, 0, 0,
                 portraitLayer.getWidth(), portraitLayer.getHeight(), matrix, true);
         canvas.drawBitmap(rotatedLayer, 0f, 0f, null);

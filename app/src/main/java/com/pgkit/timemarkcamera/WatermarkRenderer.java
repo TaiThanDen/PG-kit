@@ -16,8 +16,6 @@ import java.util.Locale;
 
 final class WatermarkRenderer {
     static final int YELLOW = Color.rgb(255, 184, 43);
-    // Temporary comparison mode: keeps every font-preview screenshot on the same clock value.
-    private static final String FONT_PREVIEW_TIME = "08:12";
     private static final Locale VIETNAMESE = new Locale("vi", "VN");
     private static final Typeface DEFAULT_TIME_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
     private static final Typeface DEFAULT_TEXT_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
@@ -42,7 +40,7 @@ final class WatermarkRenderer {
     }
 
     static String time(Date when) {
-        return FONT_PREVIEW_TIME;
+        return new SimpleDateFormat("HH:mm", Locale.US).format(when);
     }
 
     static String date(Date when) {
@@ -204,7 +202,17 @@ final class WatermarkRenderer {
     private static void drawLandscapeSaved(Canvas canvas, int width, int height, Date when,
                                            String address, String verificationCode, float scale) {
         float margin = 38f * scale;
-        float timeBaseline = margin + 142f * scale;
+        Paint addressPaint = paint(Color.WHITE, 48f * scale, textTypeface);
+        addressPaint.setShadowLayer(4f * scale, 0f, 1f * scale, 0xB0000000);
+        List<String> lines = wrap(address, addressPaint, width - margin * 2f);
+        float addressBaseline = height - margin - 26f * scale;
+        for (int i = 0; i < Math.min(2, lines.size()); i++) {
+            drawOutlinedText(canvas, lines.get(i), margin,
+                    addressBaseline - (Math.min(2, lines.size()) - 1 - i) * 56f * scale,
+                    addressPaint, 2.5f * scale);
+        }
+
+        float timeBaseline = addressBaseline - 74f * scale;
         Paint timePaint = paint(Color.WHITE, 142f * scale, timeTypeface);
         timePaint.setShadowLayer(4f * scale, 0f, 1f * scale, 0xB0000000);
         String time = time(when);
@@ -213,24 +221,16 @@ final class WatermarkRenderer {
         float dividerX = margin + timePaint.measureText(time) + 22f * scale;
         Paint divider = paint(YELLOW, 5f * scale, textTypeface);
         divider.setStrokeWidth(5f * scale);
-        canvas.drawLine(dividerX, margin, dividerX, timeBaseline + 4f * scale, divider);
+        canvas.drawLine(dividerX, timeBaseline - 132f * scale,
+                dividerX, timeBaseline + 4f * scale, divider);
 
         Paint detailPaint = paint(Color.WHITE, 48f * scale, textTypeface);
         detailPaint.setShadowLayer(4f * scale, 0f, 1f * scale, 0xB0000000);
         float detailX = dividerX + 30f * scale;
-        drawOutlinedText(canvas, date(when), detailX, margin + 66f * scale,
+        drawOutlinedText(canvas, date(when), detailX, timeBaseline - 76f * scale,
                 detailPaint, 2.5f * scale);
         drawOutlinedText(canvas, weekday(when), detailX, timeBaseline,
                 detailPaint, 2.5f * scale);
-
-        Paint addressPaint = paint(Color.WHITE, 48f * scale, textTypeface);
-        addressPaint.setShadowLayer(4f * scale, 0f, 1f * scale, 0xB0000000);
-        List<String> lines = wrap(address, addressPaint, width - margin * 2f);
-        float addressBaseline = timeBaseline + 74f * scale;
-        for (int i = 0; i < Math.min(2, lines.size()); i++) {
-            drawOutlinedText(canvas, lines.get(i), margin,
-                    addressBaseline + i * 56f * scale, addressPaint, 2.5f * scale);
-        }
 
         drawBrand(canvas, width, height, scale, true);
         drawVerification(canvas, width, height, scale, verificationCode, true);
