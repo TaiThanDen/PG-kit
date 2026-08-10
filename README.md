@@ -12,9 +12,15 @@
 
 ## Cấu trúc
 
-- `MainActivity`: giao diện, quyền runtime, vị trí và hành động chụp.
-- `CameraEngine`: Camera2 preview/capture, xoay ảnh, render watermark và lưu MediaStore.
+- `MainActivity`: điều phối lifecycle, quyền runtime và callback.
+- `CameraScreen`: toàn bộ giao diện dọc; UI không đổi layout khi xoay điện thoại.
+- `CameraEngine`: CameraX preview/capture, sửa EXIF, render watermark và lưu MediaStore.
+- `DeviceOrientation`: ánh xạ duy nhất cho bốn hướng cầm thiết bị.
+- `LocationController`: GPS và reverse geocoding.
 - `WatermarkOverlayView` + `WatermarkRenderer`: watermark realtime và bản render JPEG chung style.
+- `VerificationCodeStore`: tạo và lưu mã xác thực cục bộ.
+
+Agent tiếp tục dự án phải đọc `AGENTS.md` trước khi sửa. File đó mô tả chính xác nơi cần sửa, các bất biến orientation và ma trận kiểm tra bốn hướng.
 
 Thông số visual và mức độ xác minh reference nằm trong `watermark_spec.md` và `reference_analysis.md`.
 
