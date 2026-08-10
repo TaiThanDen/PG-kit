@@ -57,7 +57,6 @@ final class CameraEngine {
     private ProcessCameraProvider cameraProvider;
     private ImageCapture imageCapture;
     private Camera camera;
-    private Preview previewUseCase;
     private OrientationEventListener orientationListener;
     private int targetRotation = Surface.ROTATION_0;
     private int sensorRotation = Surface.ROTATION_0;
@@ -77,7 +76,7 @@ final class CameraEngine {
         this.orientationListener = new OrientationEventListener(activity) {
             @Override public void onOrientationChanged(int orientation) {
                 if (orientation == ORIENTATION_UNKNOWN) return;
-                int nextRotation = rotationForOrientation(orientation);
+                int nextRotation = DeviceOrientation.fromSensorDegrees(orientation);
                 if (nextRotation == sensorRotation) return;
                 sensorRotation = nextRotation;
                 targetRotation = sensorRotation;
@@ -165,7 +164,7 @@ final class CameraEngine {
         try {
             cameraProvider.unbindAll();
             targetRotation = sensorRotation;
-            previewUseCase = new Preview.Builder()
+            Preview previewUseCase = new Preview.Builder()
                     .setTargetRotation(displayRotation())
                     .build();
             previewUseCase.setSurfaceProvider(previewView.getSurfaceProvider());
@@ -188,15 +187,6 @@ final class CameraEngine {
 
     private int displayRotation() {
         return previewView.getDisplay() == null ? Surface.ROTATION_0 : previewView.getDisplay().getRotation();
-    }
-
-    private static int rotationForOrientation(int orientation) {
-        // OrientationEventListener tilt values run in the opposite direction
-        // from the Surface rotation constants expected by CameraX.
-        if (orientation >= 45 && orientation < 135) return Surface.ROTATION_270;
-        if (orientation >= 135 && orientation < 225) return Surface.ROTATION_180;
-        if (orientation >= 225 && orientation < 315) return Surface.ROTATION_90;
-        return Surface.ROTATION_0;
     }
 
     private void renderAndSave(File rawFile, int requestedRotation) {
@@ -247,8 +237,7 @@ final class CameraEngine {
     }
 
     private static Bitmap ensureLandscape(Bitmap bitmap, int rotation) {
-        if ((rotation != Surface.ROTATION_90 && rotation != Surface.ROTATION_270)
-                || bitmap.getWidth() >= bitmap.getHeight()) {
+        if (!DeviceOrientation.isLandscape(rotation) || bitmap.getWidth() >= bitmap.getHeight()) {
             return bitmap;
         }
         Matrix matrix = new Matrix();
