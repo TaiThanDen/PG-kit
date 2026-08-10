@@ -28,9 +28,18 @@
 
 `assets/fonts/global/` contains: `BebasDaka.ttf`, `BigShouldersText-Medium.ttf`, `Handlee-Regular.ttf`, `Montserrat-Black.ttf`, `PTMono-Bold.ttf`, `PTMono-Regular.ttf`, `RobotoCondensed-Bold.ttf`, `RobotoCondensed-Medium.ttf`, `RobotoCondensed-Regular.ttf`, and `XiaoHeiNumber.ttf`. `res/font/roboto_medium_numbers.ttf` also exists. **ASSET**
 
+## Runtime measurements
+
+Các giá trị live watermark đã được đo trên thiết bị 450 dpi:
+
+- Time 38 dp; date/weekday 16 dp; address 14 dp; address `maxWidth=260 dp`; margin ngoài 8 dp. **RUNTIME**; đây là số đo style được cung cấp, không suy ra từ UIAutomator bounds.
+- Accent `#FFC233`. **ASSET**
+- Shadow dx 0, dy 1.5, radius 3.5. **RUNTIME**; raw style dump tương ứng chưa nằm trong `evidence/latest`.
+- Layout reference không khai báo bold hoặc stroke. **RESOURCE**
+- Bounds dọc một dòng `[0,1436]–[751,1696]`, dọc hai dòng `[0,1385]–[751,1696]`; ngang A `[0,256]–[311,1007]`; ngang B `[769,945]–[1080,1696]`. **UIAUTOMATOR**
+- Watermark đổi 0/90/180/270 trong khi Activity vẫn portrait. Geometry phù hợp `RotateLayout`, nhưng class/remeasure nội bộ là **SUY ĐOÁN** nếu chưa có DEX.
+
 ## What is not established
 
-- The font selected at runtime for style `132` or style `300`. **CHƯA XÁC MINH**
-- Runtime coordinates, orientation-specific positioning, alpha, line height or shadow formula. **CHƯA XÁC MINH**
-- Whether a given preview overlay is rendered by Canvas, OpenGL, bitmap or a custom View. **CHƯA XÁC MINH**
-
+- `BigShouldersText-Medium` cho time và `RobotoCondensed-Regular` cho nội dung phụ có xác suất cao, nhưng binding chính xác của style `132`/`300` chưa được chứng minh bằng DEX. **ASSET + SUY ĐOÁN**
+- Không khẳng định preview được render bằng Canvas, OpenGL, bitmap hay custom View nếu chưa có DEX production path. **CHƯA XÁC MINH**

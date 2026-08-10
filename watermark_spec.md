@@ -1,23 +1,48 @@
-# Timemark watermark specification
+# PG-kit watermark renderer specification
 
-This is the shared rendering specification implemented in `WatermarkRenderer.java`. Values are pixel-scaled from a 945 px portrait preview reference or a 2048 px landscape saved-image reference.
+Đây là specification của clone `com.pgkit.timemarkcamera`, không phải bằng chứng trực tiếp từ app mẫu. Giá trị reference và mức độ xác minh nằm trong `docs/timemark_reference/`.
 
-| Element | Portrait preview | Landscape saved image | Typeface / treatment |
-| --- | ---: | ---: | --- |
-| Left margin | 25 × scale | 38 × scale | — |
-| Time | 100 × scale | 142 × scale | `sans-serif-condensed`, bold, X scale 0.86, white, dark outline |
-| Date + weekday | 34 × scale | 48 × scale | `sans-serif-condensed`, bold, X scale 0.86, white, dark outline |
-| Address | 34 × scale | 47 × scale | `sans-serif-condensed`, bold, X scale 0.82, white, dark outline; maximum two lines |
-| Divider | 4 × scale stroke, 92 × scale height | 5 × scale stroke, 130 × scale height | `#FFB82B` |
-| Time-to-divider gap | 15 × scale | 20 × scale | — |
-| Divider-to-details gap | 20 × scale | 28 × scale | — |
-| Bottom margin | 33 × scale | 50 × scale | — |
+## Live preview
 
-Formatting uses device-local current time:
+`WatermarkRenderer.drawLive()` nhận density của thiết bị và dùng:
 
-- Time: `HH:mm`
-- Date: `dd Tháng M,yyyy`
-- Weekday: `Thứ hai` … `Chủ nhật`
-- Address: reverse-geocoded short address when available; coordinates while geocoding; otherwise `Đang xác định vị trí…`.
+| Thành phần | Giá trị clone hiện tại |
+| --- | ---: |
+| Margin ngoài | 8 dp |
+| Time | 38 dp-sized px theo density |
+| Date / weekday | 16 dp-sized px theo density |
+| Address | 14 dp-sized px theo density |
+| Address maxWidth | 260 dp, tối đa 2 dòng |
+| Accent | `#FFC233` |
+| Shadow | dx 0, dy 1.5 dp, radius 3.5 dp |
 
-The preview updates at the next whole second. At capture, the camera stores the capture timestamp and address, then renders that exact data into the mutable JPEG bitmap before saving it to `Pictures/TimemarkCamera`.
+Time dùng asset local `BigShouldersText-Medium.ttf`; nội dung phụ dùng `RobotoCondensed-Regular.ttf`, đều ở weight normal. Clone vẫn thêm outline mảnh để dễ đọc; resource app mẫu không khai báo stroke nên đây là khác biệt triển khai có chủ ý cho tới khi DEX/runtime chứng minh công thức chính xác.
+
+Live renderer luôn dựng watermark cơ sở ở góc dưới-trái của hệ tọa độ portrait. `WatermarkOverlayView` chỉ biến đổi canvas theo `DeviceOrientation`:
+
+| Rotation | Góc watermark | Anchor sau biến đổi |
+| --- | ---: | --- |
+| `ROTATION_0` | 0° | dưới-trái |
+| `ROTATION_90` | +90° | trên-trái |
+| `ROTATION_180` | 180° | trên-phải |
+| `ROTATION_270` | -90° | dưới-phải |
+
+Activity và UI vẫn portrait; Preview CameraX tiếp tục dùng display rotation.
+
+## Saved JPEG
+
+- Renderer chọn portrait/landscape bằng kích thước bitmap đã chuẩn hóa EXIF.
+- Address ngang bị giới hạn ở `760 × scale`, không dùng gần toàn chiều rộng ảnh.
+- Logo saved image vẽ `Time` màu vàng và `mark` màu trắng; subtitle là `100% Chân thực`.
+- Verification vẽ icon khiên bằng `Canvas Path`, sau đó là code và `Timemark Verified`.
+- Capture timestamp, address và rotation được chốt riêng cho từng request trước callback nền.
+
+## Formatting
+
+- Time: `HH:mm`.
+- Date: `dd Tháng M,yyyy`.
+- Weekday: `Thứ Hai` … `Thứ Bảy`; Sunday là `Chủ nhật`.
+- Address: địa chỉ reverse-geocoded; tọa độ trong lúc geocode; fallback `Đang xác định vị trí…`.
+- Thời gian preview và capture lấy từ đồng hồ hệ thống thiết bị.
+
+JPEG được ghi vào `DCIM/Camera` với MediaStore orientation 0 sau khi pixel đã được chuẩn hóa và burn watermark.

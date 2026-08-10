@@ -3,6 +3,8 @@ param(
     [string]$PackageName = 'com.oceangalaxy.camera.new',
     [string]$ApkPath = 'reference_app/base.apk',
     [string]$OutputDir = 'docs/timemark_reference/evidence/latest',
+    [string]$AdbPath = '',
+    [string]$DeviceSerial = '',
     [switch]$IncludeDex
 )
 
@@ -10,15 +12,32 @@ $ErrorActionPreference = 'Stop'
 $workspace = Split-Path -Parent $PSScriptRoot
 $apk = Join-Path $workspace $ApkPath
 $out = Join-Path $workspace $OutputDir
+$sdkRoot = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { 'E:\Android\Sdk' }
+$sdkAdb = Join-Path $sdkRoot 'platform-tools\adb.exe'
+$adb = if ($AdbPath) {
+    $AdbPath
+} elseif (Test-Path -LiteralPath $sdkAdb) {
+    $sdkAdb
+} else {
+    (Get-Command adb -ErrorAction SilentlyContinue).Source
+}
 
 if (!(Test-Path -LiteralPath $apk)) { throw "Không tìm thấy APK: $apk" }
-if (!(Get-Command adb -ErrorAction SilentlyContinue)) { throw 'Không tìm thấy adb trong PATH.' }
+if (!$adb -or !(Test-Path -LiteralPath $adb)) { throw 'Không tìm thấy adb hiện hành trong Android SDK hoặc PATH.' }
 
-& adb start-server | Out-Null
-& adb wait-for-device
-if ((& adb get-state).Trim() -ne 'device') {
+& $adb start-server | Out-Null
+$deviceLines = & $adb devices | Select-String -Pattern '^\S+\s+device$'
+if (!$DeviceSerial) {
+    if ($deviceLines.Count -eq 1) {
+        $DeviceSerial = ($deviceLines[0].Line -split '\s+')[0]
+    } elseif ($deviceLines.Count -gt 1) {
+        throw 'Có nhiều thiết bị ADB. Truyền -DeviceSerial để chọn đúng điện thoại.'
+    }
+}
+if (!$DeviceSerial -or ((& $adb -s $DeviceSerial get-state).Trim() -ne 'device')) {
     throw 'ADB không có thiết bị ở trạng thái device. Mở khóa điện thoại và chấp nhận USB debugging rồi chạy lại.'
 }
+$target = @('-s', $DeviceSerial)
 
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
@@ -28,14 +47,14 @@ function Save-Text([string]$Name, [scriptblock]$Action) {
     catch { "ERROR: $($_.Exception.Message)" | Out-File -FilePath $path -Encoding utf8; throw }
 }
 
-Save-Text '01-adb-devices.txt' { adb devices }
+Save-Text '01-adb-devices.txt' { & $adb devices -l }
 Save-Text '02-package.txt' {
-    adb shell dumpsys package $PackageName |
-        Select-String -Pattern 'versionName=|versionCode=|minSdk=|targetSdk=|codePath=|uses-permission:'
+    & $adb @target shell dumpsys package $PackageName |
+        Select-String -Pattern 'versionName=|versionCode=|minSdk=|targetSdk=|codePath=|uses-permission:' |
+        ForEach-Object { $_.Line.Trim() }
 }
-Save-Text '03-apk-paths.txt' { adb shell pm path $PackageName }
+Save-Text '03-apk-paths.txt' { & $adb @target shell pm path $PackageName }
 
-$sdkRoot = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { 'E:\Android\Sdk' }
 $aapt2 = Get-ChildItem (Join-Path $sdkRoot 'build-tools') -Directory -ErrorAction Stop |
     Sort-Object Name -Descending |
     ForEach-Object { Join-Path $_.FullName 'aapt2.exe' } |
@@ -77,6 +96,8 @@ if ($IncludeDex) {
 @"
 Generated: $(Get-Date -Format o)
 Package: $PackageName
+Device: $DeviceSerial
+ADB: $adb
 APK: $apk
 SHA256: $((Get-FileHash $apk -Algorithm SHA256).Hash)
 DEX inspected: $IncludeDex

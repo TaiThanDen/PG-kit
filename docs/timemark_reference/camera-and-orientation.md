@@ -19,13 +19,26 @@
 
 This is direct bytecode evidence for that SDK sample activity. **DEX**
 
-## What the extracted source does not yet establish
+## Production runtime behavior
 
-- Whether `PreviewActivity` itself uses this exact `SampleCameraActivity` path. **CHƯA XÁC MINH**
-- The formula used by the production activity for sensor orientation, display rotation, preview crop, EXIF rotation, mirror mode or landscape placement. **CHƯA XÁC MINH**
-- The production photo/video encoder/output pipeline. **CHƯA XÁC MINH**
+- `PreviewActivity` báo `requestedOrientation=SCREEN_ORIENTATION_PORTRAIT`. Khi cảm biến đề xuất `ROTATION_90`, display vẫn ở `ROTATION_0`; UI không xoay Activity. **RUNTIME**
+- Preview giữ khung portrait nhưng cảnh camera theo đúng hướng cầm máy. Watermark thay đổi bốn hướng độc lập với UI. **RUNTIME**
+- Chuyển hướng có hysteresis khoảng 60°, không đổi ngay khi rung quanh mốc 45°. **RUNTIME**; số đo được cung cấp từ phiên kiểm tra trước, raw sensor log chưa nằm trong `evidence/latest`.
+- Bounds cho thấy watermark đổi kích thước và anchor theo hướng cầm máy, phù hợp hành vi của `RotateLayout`. Việc production thật sự dùng class/remeasure nội bộ nào vẫn là **SUY ĐOÁN** cho tới khi có DEX.
 
-## Screenshot observation only
+Bounds tuyệt đối trên màn hình 1080 × 2400:
 
-Supplied portrait reference screenshots show an upright camera scene and a watermark overlay. They do not prove the code path or rotation algorithm. **SCREENSHOT**
+| Hướng | Bounds watermark |
+| --- | --- |
+| Dọc, address một dòng | `[0,1436]–[751,1696]` |
+| Dọc, address hai dòng | `[0,1385]–[751,1696]` |
+| Ngang A | `[0,256]–[311,1007]` |
+| Ngang B | `[769,945]–[1080,1696]` |
 
+**UIAUTOMATOR**. Bounds một dòng nằm trong `captures/reference-live-device-20260809-ui.xml`, có `package="com.oceangalaxy.camera.new"`; bounds hai dòng và hai hướng ngang đến từ phiên đo runtime được cung cấp. Chiều cao watermark thay đổi theo số dòng address.
+
+## What remains unverified
+
+- DEX hiện chỉ chứng minh CameraX trong `SampleCameraActivity`; chưa chứng minh `PreviewActivity` production dùng đúng class/path đó. **CHƯA XÁC MINH**
+- Công thức nội bộ chính xác cho sensor, preview crop và transform chưa được trích từ DEX production. Hành vi đầu ra ở trên đã được runtime chứng minh, nhưng không được gán nhãn DEX. **CHƯA XÁC MINH**
+- Mirror mode của preview/video và pipeline encoder video. **CHƯA XÁC MINH**

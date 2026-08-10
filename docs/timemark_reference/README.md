@@ -22,6 +22,10 @@ This folder contains only facts extracted from the installed Timemark APK or sep
 - **SCREENSHOT**: supplied or captured UI image.
 - **CHƯA XÁC MINH**: no claim is made.
 
+## Evidence precedence
+
+Khi hai nguồn mâu thuẫn, dùng thứ tự: runtime package mẫu qua ADB; APK resource/manifest/DEX; UIAutomator/JPEG thật từ app mẫu; Markdown; cuối cùng mới tới ước lượng screenshot. Không dùng ảnh do `com.pgkit.timemarkcamera` tạo làm bằng chứng cho `com.oceangalaxy.camera.new`.
+
 ## Files
 
 - [camera-and-orientation.md](camera-and-orientation.md)
@@ -35,7 +39,9 @@ This folder contains only facts extracted from the installed Timemark APK or sep
 Run this from the workspace root with the phone connected:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\verify_timemark_reference.ps1 -IncludeDex
+powershell -ExecutionPolicy Bypass -File .\scripts\verify_timemark_reference.ps1 -IncludeDex -DeviceSerial <adb-serial>
 ```
 
 It writes raw command output to `docs/timemark_reference/evidence/latest/`: package/version, installed APK paths, AAPT manifest data, archive entries, the exact `Time&Location` JSON, APK SHA-256, and CameraX DEX snippets. Compare those files to the `Evidence` label in each Markdown statement. The script does not install, alter, force-stop, or delete anything on the phone.
+
+Lần thu ngày 2026-08-10 dùng `E:\Android\Sdk\platform-tools\adb.exe`, đã ghi package/version, split APK và DEX snippets đầy đủ. Giữ nguyên raw output; khi cần làm mới phải chạy script thay vì điền dữ liệu bằng tay.

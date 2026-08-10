@@ -17,11 +17,23 @@
 
 The supplied camera screenshots show a white top region, camera preview, right-side zoom controls, a large shutter, gallery/template actions, a mode row, and a Time & Location watermark overlay. These observations are visual only; they do not establish resource hierarchy, click handlers or state transitions. **SCREENSHOT**
 
-## Runtime capture limitation
+## Runtime geometry
 
-The current UIAutomator dump after starting the reference app contained an advertisement overlay (`Chỉ 1 quảng cáo mỗi ngày`) rather than the camera hierarchy. It is not used as evidence for camera UI structure.
+UIAutomator trên thiết bị 1080 × 2400, 450 dpi đã xác minh các bounds sau:
+
+| Thành phần | Bounds / kích thước px | Quy đổi gần đúng |
+| --- | ---: | ---: |
+| Top bar | `[0,110]–[1080,256]` | cao 52 dp |
+| Preview | `[0,256]–[1080,1696]` | 384 × 512 dp |
+| Shutter | `[428,1876]–[653,2101]` | 80 × 80 dp |
+| Xác thực ảnh | `[372,146]–[670,221]` | 106 × 27 dp |
+| Plus | `[749,149]–[911,217]` | 58 × 24 dp |
+
+**UIAUTOMATOR**. Tọa độ Y tuyệt đối gồm system bar; không dùng `110 px` làm padding của app.
+
+Một lần thu thập sau đó bị `NotificationShade` che hierarchy. Lần thất bại này không phủ nhận dump camera sạch đã đo ở trên. Artifact bounds mới chưa được lưu trong `evidence/latest` nên cần bổ sung khi chạy lại script.
 
 ## Not established
 
-- Exact margins, dimensions, text sizes, accessibility labels, animation timing, gesture handling, or landscape layout variants. **CHƯA XÁC MINH**
-
+- Accessibility labels, animation timing và click-handler nội bộ của app mẫu. **CHƯA XÁC MINH**
+- App mẫu không tạo layout camera landscape; UI vẫn portrait trong bốn hướng cầm máy. **RUNTIME**

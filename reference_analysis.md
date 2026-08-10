@@ -1,49 +1,62 @@
-# Reference analysis
+# Reference analysis (đã đối chiếu 2026-08-10)
 
-## Inspected reference build
+File này là bản tổng hợp, không phải raw source of truth. Khi có mâu thuẫn, ưu tiên runtime app mẫu, APK/DEX/resource, UIAutomator/JPEG, rồi mới tới Markdown và screenshot estimate.
 
-- Package: `com.oceangalaxy.camera.new` (`Timemark`).
-- Version: `v10.0.189` / `versionCode 100018900`.
-- SDKs: `minSdk 26`, `targetSdk 35`, `compileSdk 35`.
-- Launch activity: `com.xhey.xcamera.ui.camera.picNew.PreviewActivity`.
-- Installed splits: `base.apk`, `split_config.arm64_v8a.apk`, `split_config.vi.apk`, and `split_config.xxhdpi.apk`.
-- Device used for inspection: 1080 × 2400 px at 450 dpi.
-- `reference_app/` holds the pulled APK splits solely for local inspection at the user's request. No reference source code has been copied into the clone.
+## Reference build
 
-## Screenshot sources
+- Package `com.oceangalaxy.camera.new`, version `v10.0.189` / code `100018900`. **RUNTIME/MANIFEST**
+- Main activity `com.xhey.xcamera.ui.camera.picNew.PreviewActivity`. **RUNTIME/MANIFEST**
+- minSdk 26, target/compile SDK 35. **MANIFEST**
+- Thiết bị kiểm tra 1080 × 2400 px, 450 dpi. **RUNTIME**
+- Ảnh hoặc UI của package clone `com.pgkit.timemarkcamera` không được dùng làm bằng chứng cho app mẫu.
 
-- Full saved-photo reference: 1920 x 2560 px (`codex-clipboard-eed6e4be-bae2-43f5-ae20-150b2c327254.png`).
-- Live camera references: 1080 x 2400 px. They establish the live-preview placement and camera-screen controls, but the saved-photo image is the typography source of truth because it contains the cleanest watermark.
+## Camera và orientation
 
-## Watermark observations
+- Production Activity luôn portrait; display giữ `ROTATION_0` ngay cả khi sensor đề xuất `ROTATION_90`. **RUNTIME**
+- UI không có layout camera landscape. Preview/capture/watermark phản ứng với hướng cầm máy mà không xoay Activity. **RUNTIME**
+- Watermark có hysteresis khoảng 60° và đổi anchor theo hướng cầm máy. **RUNTIME/UIAUTOMATOR**. Geometry phù hợp `RotateLayout`; cơ chế class/remeasure nội bộ chưa có DEX nên là **SUY ĐOÁN**.
+- DEX hiện chỉ chứng minh CameraX trong `SampleCameraActivity`; chưa đủ để nói production `PreviewActivity` dùng cùng đường gọi. **DEX + CHƯA XÁC MINH**
+- Clone hiện dùng CameraX, không phải Camera2 thuần hoặc dependency-free. **CODE**
 
-| Element | Observed layout / typography | Color | Source |
-| --- | --- | --- | --- |
-| Time | Left aligned near lower-left; very narrow bold sans; approximately 154 px on the 1920 px saved image; 07:45 baseline near y=2300 | White with dark edge/shadow | SCREENSHOT ESTIMATE |
-| Date | Starts just right of divider; approximately 54 px, bold narrow sans; baseline about y=2170 | White with dark edge/shadow | SCREENSHOT ESTIMATE |
-| Weekday | Aligned to date; approximately 54 px; baseline about y=2320 | White with dark edge/shadow | SCREENSHOT ESTIMATE |
-| Divider | Vertical line between time and details; x≈503, y≈2110–2320; width≈8 px | `#FFB82B` estimate | SCREENSHOT ESTIMATE |
-| Address | Left aligned below the time/detail row; approximately 55 px; wraps to two lines when needed | White with dark edge/shadow | SCREENSHOT ESTIMATE |
-| Branding | Bottom-right `Timemark` plus `100% Chân thực`; not required for the live overlay but added to saved image | Yellow / light gray | SCREENSHOT ESTIMATE |
-| Verification text | Rotated along right side of saved image | White with dark edge/shadow | SCREENSHOT ESTIMATE |
+## UI runtime
 
-## APK-resource findings
+Trên màn hình 1080 × 2400:
 
-- The default `Time&Location` template has `base_id=34`, time style `132`, address style `300`, and a theme text color of `#FFFFFF` with accent `#FFC233`. **SOURCE = APK RESOURCE**.
-- The APK bundles `BebasDaka`, `BigShouldersText-Medium`, `Montserrat-Black`, `PTMono`, `RobotoCondensed` (Regular/Medium/Bold), and `XiaoHeiNumber` under `assets/fonts/global/`; it also has `res/font/roboto_medium_numbers.ttf`. **SOURCE = APK RESOURCE**.
-- Internal identifier strings include `RobotoCondensedBold`, `RobotoCondensedRegular`, and `BigShouldersTextMedium`, but the resource metadata inspected does not prove which one style `132` selects. **SOURCE = APK RESOURCE; FONT BINDING = UNVERIFIED**.
-- The reference declares Camera/Location capabilities and CameraX extension libraries. This clone uses the Android Camera2 API to keep the minimal build dependency-free; it does not reproduce the reference's business logic. **SOURCE = APK MANIFEST**.
+| Thành phần | Bounds |
+| --- | --- |
+| Top bar | `[0,110]–[1080,256]` |
+| Preview | `[0,256]–[1080,1696]` |
+| Shutter | `[428,1876]–[653,2101]` |
+| Xác thực ảnh | `[372,146]–[670,221]` |
+| Plus | `[749,149]–[911,217]` |
 
-## Implementation mapping
+**UIAUTOMATOR**
 
-- `WatermarkRenderer` is the single style/geometry authority. `WatermarkOverlayView` invokes `drawLive`; `CameraEngine` invokes `drawSaved` after camera capture and before MediaStore write.
-- Typeface is Android's public `sans-serif-condensed` in bold weight. It is a legal platform fallback selected from screenshot shape; the reference APK contains but does not prove use of `RobotoCondensed` for this exact template. No bundled reference font is reused.
-- The implementation uses white fill, a dark outline and subtle shadow for legibility over arbitrary camera scenes. The divider uses `#FFB82B`.
-- The format is now `HH:mm`, `dd Tháng M,yyyy`, and lowercase Vietnamese weekday names, matching the supplied reference's punctuation/casing.
+## Watermark
 
-## Test status
+- Template `Time&Location`, base ID 34; time style 132; address style 300; accent `#FFC233`; text `#FFFFFF`. **ASSET**
+- Live sizes: time 38 dp, date/weekday 16 dp, address 14 dp, address maxWidth 260 dp, margin 8 dp. **RUNTIME**; raw style dump chưa nằm trong evidence.
+- Shadow runtime: dx 0, dy 1.5, radius 3.5. Layout resource không khai báo bold/stroke. **RUNTIME/RESOURCE**
+- Time có khả năng cao dùng `BigShouldersText-Medium`; nội dung phụ có khả năng cao dùng `RobotoCondensed-Regular`. APK có hai font này nhưng binding style vẫn chưa được chứng minh bằng DEX. **ASSET + SUY ĐOÁN**
+- Weekday reference dùng `Thứ Hai`…`Thứ Bảy`, riêng Sunday dump là `Chủ nhật`. Logo saved image tô `Time` vàng và `mark` trắng; verification dùng icon khiên. **UIAUTOMATOR/JPEG**
+- Bounds live phụ thuộc address: dọc một dòng `[0,1436]–[751,1696]`, dọc hai dòng `[0,1385]–[751,1696]`; ngang A `[0,256]–[311,1007]`; ngang B `[769,945]–[1080,1696]`. **UIAUTOMATOR**
 
-- The fresh debug APK builds successfully with JDK 21.
-- The debug APK was installed successfully on the connected 1080 × 2400 device with Camera and precise Location permission granted. `MainActivity` was confirmed as foreground.
-- A physical-camera test photo was captured and saved as `Pictures/TimemarkCamera/TIMEMARK_20260809_081059.jpg` (2256 × 4000 px). The pulled verification copy is `captures/device-v1.3-watermarked.jpg`; it visibly contains the time, date, weekday, address, Timemark branding, and rotated verification text burned into JPEG pixels.
-- The device preview screenshot is `captures/device-v1.3-live.png`; the reference live screenshot/UI dump are `captures/reference-live-device-20260809.*`. These files provide the final direct-device comparison artifacts.
+## JPEG và media
+
+- Portrait 1920 × 2560; landscape 2560 × 1920; MediaStore orientation 0. **JPEG**
+- Watermark được burn vào pixel, lưu ở `DCIM/Camera`; tên file có timestamp và một phần địa chỉ. **JPEG/RUNTIME**
+- Preview crop và JPEG không cùng hệ tọa độ. **JPEG/RUNTIME**
+
+## Clone implementation status
+
+- `CameraScreen` dựng UI portrait bằng Java.
+- `CameraEngine` dùng CameraX cho preview/capture, EXIF normalization và MediaStore.
+- `DeviceOrientation` là nơi ánh xạ sensor/Surface và hysteresis.
+- `WatermarkOverlayView` biến đổi live watermark theo orientation.
+- `WatermarkRenderer` dùng font local `BigShouldersText-Medium.ttf` và `RobotoCondensed-Regular.ttf` cho clone; việc này không chứng minh binding của app mẫu.
+
+Các thông số clone cụ thể nằm trong `watermark_spec.md`. Không dùng ảnh trong `captures/` làm source of truth cho app mẫu nếu package tạo ảnh không được xác nhận là `com.oceangalaxy.camera.new`.
+
+## Evidence health
+
+`docs/timemark_reference/evidence/latest/` đã được làm mới bằng `E:\Android\Sdk\platform-tools\adb.exe`: package/version, bốn split APK, resource/template và DEX snippets đều có raw output. DEX snippets vẫn chỉ chứng minh `SampleCameraActivity`; không tự suy rộng sang production `PreviewActivity`.

@@ -8,7 +8,7 @@
 2. Build with JDK 17–21: `gradlew.bat assembleDebug` (the system default JDK 24 is not supported by this Gradle/Android Gradle Plugin combination).
 3. APK debug: `app/build/outputs/apk/debug/app-debug.apk`
 
-Ảnh chụp được lưu tại `Pictures/TimemarkCamera` qua Android MediaStore. `WatermarkRenderer` is shared by the live overlay and final JPEG renderer, so the timestamp/address is burned into the saved image.
+Ảnh chụp được lưu tại `DCIM/Camera` qua Android MediaStore. `WatermarkRenderer` được dùng cho live overlay và JPEG cuối, vì vậy timestamp/address được burn trực tiếp vào pixel ảnh.
 
 Preview hỗ trợ các thao tác CameraX cơ bản: chọn mức zoom, pinch-to-zoom, chạm để focus/đo sáng, bù sáng EV, flash và đổi camera trước/sau. Mọi giá trị zoom/EV đều được giới hạn theo khả năng camera thực tế của thiết bị.
 
@@ -23,9 +23,9 @@ Preview hỗ trợ các thao tác CameraX cơ bản: chọn mức zoom, pinch-to
 - `WatermarkOverlayView` + `WatermarkRenderer`: watermark realtime và bản render JPEG chung style.
 - `VerificationCodeStore`: tạo và lưu mã xác thực cục bộ.
 
-Agent tiếp tục dự án phải đọc `AGENTS.md` trước khi sửa. File đó mô tả chính xác nơi cần sửa, các bất biến orientation và ma trận kiểm tra bốn hướng.
+Trước khi sửa hành vi mô phỏng app mẫu, đọc chỉ mục `docs/timemark_reference/README.md`. Dữ liệu runtime/JPEG/resource của package mẫu `com.oceangalaxy.camera.new` có độ tin cậy cao hơn tài liệu tổng hợp; ảnh của clone `com.pgkit.timemarkcamera` không được dùng làm bằng chứng cho app mẫu.
 
-Thông số visual và mức độ xác minh reference nằm trong `watermark_spec.md` và `reference_analysis.md`.
+`watermark_spec.md` mô tả renderer của clone. `reference_analysis.md` chỉ là bản tổng hợp đã đối chiếu; bằng chứng thô không được sửa bằng suy đoán.
 
 ## Quyền sử dụng
 
