@@ -55,7 +55,7 @@ public final class WatermarkOverlayView extends View {
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         currentTime.setTime(System.currentTimeMillis());
-        if (cameraRotation == Surface.ROTATION_0 || cameraRotation == Surface.ROTATION_180) {
+        if (cameraRotation == Surface.ROTATION_0) {
             WatermarkRenderer.drawLive(canvas, getWidth(), getHeight(), currentTime, address,
                     getResources().getDisplayMetrics().density);
             return;
@@ -66,13 +66,22 @@ public final class WatermarkOverlayView extends View {
         WatermarkRenderer.drawLive(layerCanvas, getWidth(), getHeight(), currentTime, address,
                 getResources().getDisplayMetrics().density);
         Matrix matrix = new Matrix();
-        // The portrait watermark is anchored at the bottom-left. A clockwise
-        // quarter-turn keeps that anchor on the left side of the landscape frame.
-        matrix.postRotate(90f);
+        matrix.postRotate(watermarkRotation(cameraRotation));
         Bitmap rotatedLayer = Bitmap.createBitmap(portraitLayer, 0, 0,
                 portraitLayer.getWidth(), portraitLayer.getHeight(), matrix, true);
         canvas.drawBitmap(rotatedLayer, 0f, 0f, null);
         portraitLayer.recycle();
         if (rotatedLayer != portraitLayer) rotatedLayer.recycle();
+    }
+
+    private static float watermarkRotation(int rotation) {
+        switch (rotation) {
+            // Keep the text upright relative to the hand-held device and move the
+            // original bottom-left watermark to the matching physical corner.
+            case Surface.ROTATION_90: return -90f;
+            case Surface.ROTATION_180: return 180f;
+            case Surface.ROTATION_270: return 90f;
+            default: return 0f;
+        }
     }
 }
