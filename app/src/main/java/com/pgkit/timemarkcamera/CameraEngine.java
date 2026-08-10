@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.Surface;
+import android.view.OrientationEventListener;
 
 import androidx.activity.ComponentActivity;
 import androidx.camera.core.Camera;
@@ -55,6 +56,9 @@ final class CameraEngine {
     private ProcessCameraProvider cameraProvider;
     private ImageCapture imageCapture;
     private Camera camera;
+    private Preview previewUseCase;
+    private OrientationEventListener orientationListener;
+    private int targetRotation = Surface.ROTATION_0;
     private int desiredFacing = CameraSelector.LENS_FACING_BACK;
     private boolean ready;
     private boolean torchEnabled;
@@ -68,9 +72,20 @@ final class CameraEngine {
         this.callback = callback;
         this.verificationCode = verificationCode;
         this.mainExecutor = ContextCompat.getMainExecutor(activity);
+        this.orientationListener = new OrientationEventListener(activity) {
+            @Override public void onOrientationChanged(int orientation) {
+                if (orientation == ORIENTATION_UNKNOWN) return;
+                int nextRotation = rotationForOrientation(orientation);
+                if (nextRotation == targetRotation) return;
+                targetRotation = nextRotation;
+                if (previewUseCase != null) previewUseCase.setTargetRotation(targetRotation);
+                if (imageCapture != null) imageCapture.setTargetRotation(targetRotation);
+            }
+        };
     }
 
     void start() {
+        if (orientationListener.canDetectOrientation()) orientationListener.enable();
         ListenableFuture<ProcessCameraProvider> providerFuture =
                 ProcessCameraProvider.getInstance(activity);
         providerFuture.addListener(() -> {
@@ -85,6 +100,7 @@ final class CameraEngine {
 
     void stop() {
         ready = false;
+        orientationListener.disable();
         if (cameraProvider != null) cameraProvider.unbindAll();
     }
 
@@ -114,7 +130,7 @@ final class CameraEngine {
         }
         captureTime = new Date();
         captureAddress = address;
-        capture.setTargetRotation(displayRotation());
+        capture.setTargetRotation(targetRotation);
         try {
             File rawFile = File.createTempFile("timemark_raw_", ".jpg", activity.getCacheDir());
             ImageCapture.OutputFileOptions output = new ImageCapture.OutputFileOptions.Builder(rawFile).build();
@@ -141,11 +157,11 @@ final class CameraEngine {
         ready = false;
         try {
             cameraProvider.unbindAll();
-            int targetRotation = displayRotation();
-            Preview preview = new Preview.Builder()
+            targetRotation = displayRotation();
+            previewUseCase = new Preview.Builder()
                     .setTargetRotation(targetRotation)
                     .build();
-            preview.setSurfaceProvider(previewView.getSurfaceProvider());
+            previewUseCase.setSurfaceProvider(previewView.getSurfaceProvider());
 
             imageCapture = new ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
@@ -154,7 +170,7 @@ final class CameraEngine {
             CameraSelector selector = new CameraSelector.Builder()
                     .requireLensFacing(desiredFacing)
                     .build();
-            camera = cameraProvider.bindToLifecycle(activity, selector, preview, imageCapture);
+            camera = cameraProvider.bindToLifecycle(activity, selector, previewUseCase, imageCapture);
             ready = true;
             callback.onCameraReady();
         } catch (Exception e) {
@@ -165,6 +181,13 @@ final class CameraEngine {
 
     private int displayRotation() {
         return previewView.getDisplay() == null ? Surface.ROTATION_0 : previewView.getDisplay().getRotation();
+    }
+
+    private static int rotationForOrientation(int orientation) {
+        if (orientation >= 45 && orientation < 135) return Surface.ROTATION_90;
+        if (orientation >= 135 && orientation < 225) return Surface.ROTATION_180;
+        if (orientation >= 225 && orientation < 315) return Surface.ROTATION_270;
+        return Surface.ROTATION_0;
     }
 
     private void renderAndSave(File rawFile) {
