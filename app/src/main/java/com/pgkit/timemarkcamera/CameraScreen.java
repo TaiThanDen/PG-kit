@@ -147,7 +147,7 @@ final class CameraScreen {
         zoom.addView(one, fixed(dp(48), dp(48)));
         zoom.addView(half, fixed(dp(48), dp(40)));
         FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(56), dp(145),
-                Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+                Gravity.END | Gravity.CENTER_VERTICAL);
         zoomParams.rightMargin = dp(6);
         preview.addView(zoom, zoomParams);
 
@@ -157,7 +157,7 @@ final class CameraScreen {
         edit.setBackgroundColor(Color.TRANSPARENT);
         edit.setOnClickListener(v -> actions.onEditWatermark());
         FrameLayout.LayoutParams editParams = new FrameLayout.LayoutParams(dp(58), dp(58),
-                Gravity.RIGHT | Gravity.BOTTOM);
+                Gravity.END | Gravity.BOTTOM);
         editParams.rightMargin = dp(4);
         editParams.bottomMargin = dp(66);
         preview.addView(edit, editParams);
@@ -168,7 +168,7 @@ final class CameraScreen {
         pin.setBackgroundColor(Color.TRANSPARENT);
         pin.setOnClickListener(v -> actions.onRefreshLocation());
         FrameLayout.LayoutParams pinParams = new FrameLayout.LayoutParams(dp(58), dp(58),
-                Gravity.RIGHT | Gravity.BOTTOM);
+                Gravity.END | Gravity.BOTTOM);
         pinParams.rightMargin = dp(4);
         pinParams.bottomMargin = dp(6);
         preview.addView(pin, pinParams);

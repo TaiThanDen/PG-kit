@@ -1,9 +1,9 @@
 package com.pgkit.timemarkcamera;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.Surface;
@@ -16,6 +16,8 @@ public final class WatermarkOverlayView extends View {
     private String address = DEFAULT_ADDRESS;
     private int cameraRotation = Surface.ROTATION_0;
     private final Date currentTime = new Date();
+    private final Matrix orientationMatrix = new Matrix();
+    private final RectF orientationBounds = new RectF();
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
             invalidate();
@@ -63,16 +65,16 @@ public final class WatermarkOverlayView extends View {
             return;
         }
 
-        Bitmap portraitLayer = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas layerCanvas = new Canvas(portraitLayer);
-        WatermarkRenderer.drawLive(layerCanvas, getWidth(), getHeight(), currentTime, address,
+        orientationMatrix.reset();
+        orientationMatrix.setRotate(DeviceOrientation.watermarkDegrees(cameraRotation));
+        orientationBounds.set(0f, 0f, getWidth(), getHeight());
+        orientationMatrix.mapRect(orientationBounds);
+        orientationMatrix.postTranslate(-orientationBounds.left, -orientationBounds.top);
+
+        int checkpoint = canvas.save();
+        canvas.concat(orientationMatrix);
+        WatermarkRenderer.drawLive(canvas, getWidth(), getHeight(), currentTime, address,
                 getResources().getDisplayMetrics().density);
-        Matrix matrix = new Matrix();
-        matrix.postRotate(DeviceOrientation.watermarkDegrees(cameraRotation));
-        Bitmap rotatedLayer = Bitmap.createBitmap(portraitLayer, 0, 0,
-                portraitLayer.getWidth(), portraitLayer.getHeight(), matrix, true);
-        canvas.drawBitmap(rotatedLayer, 0f, 0f, null);
-        portraitLayer.recycle();
-        if (rotatedLayer != portraitLayer) rotatedLayer.recycle();
+        canvas.restoreToCount(checkpoint);
     }
 }
