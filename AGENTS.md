@@ -9,6 +9,7 @@
 | `MainActivity.java` | Điều phối lifecycle, quyền runtime và callback giữa các thành phần | Thay đổi luồng khởi động, quyền hoặc hành động cấp Activity |
 | `CameraScreen.java` | Tạo toàn bộ UI dọc và chuyển thao tác người dùng qua `Actions` | Thay đổi kích thước, màu, nút hoặc bố cục; không thêm layout landscape |
 | `CameraEngine.java` | Bind CameraX, flash/đổi camera, chụp, sửa EXIF, render và lưu JPEG | Thay đổi preview, capture, chất lượng ảnh hoặc MediaStore |
+| `CameraGestureController.java` | Chuyển tap/pinch trên `PreviewView` thành yêu cầu focus/zoom | Thay đổi gesture camera; không đặt logic CameraX trong file này |
 | `DeviceOrientation.java` | Nguồn duy nhất ánh xạ cảm biến sang `Surface.ROTATION_*` và góc xoay watermark | Sửa quy tắc cho 4 hướng cầm điện thoại |
 | `WatermarkOverlayView.java` | Cập nhật đồng hồ realtime và vẽ watermark lên preview | Thay đổi cách watermark preview phản ứng với orientation |
 | `WatermarkRenderer.java` | Style watermark dùng chung cho preview và JPEG cuối | Thay đổi font, cỡ chữ, khoảng cách, nội dung hoặc logo |
@@ -40,6 +41,14 @@ EXIF correction -> landscape size when needed -> WatermarkRenderer.drawSaved()
 - `WatermarkOverlayView` nhận cùng rotation vật lý. Mọi ánh xạ 0/90/180/270 phải sửa tập trung trong `DeviceOrientation`, không nhân bản `switch` ở file khác.
 - Hướng dựng ngược phải xoay watermark 180 độ; không được xử lý chung như portrait dựng đứng.
 - Thời gian luôn lấy từ thiết bị bằng `System.currentTimeMillis()`/`new Date()` tại lúc hiển thị hoặc bấm chụp. Không đưa thời gian thử nghiệm hoặc ngày cố định vào production code.
+
+## Điều khiển camera
+
+- Các nút `0.5 / 1x / 2` và pinch-to-zoom đều gọi `CameraEngine`; ratio luôn được clamp bằng `ZoomState` của thiết bị. Nếu camera không hỗ trợ góc siêu rộng, nút `0.5` có thể được clamp lên mức nhỏ nhất thực tế.
+- Tap-to-focus phải dùng `PreviewView.getMeteringPointFactory()` để CameraX tự chuyển tọa độ preview sang cảm biến. Không tự tính ma trận focus.
+- Focus action hiện dùng AF + AE và tự hủy sau 3 giây để camera quay lại continuous autofocus.
+- Bù sáng phải clamp bằng `ExposureState.getExposureCompensationRange()`; thiết bị không hỗ trợ phải trả trạng thái không khả dụng thay vì crash.
+- Icon camera nằm trong vector drawable `res/drawable/ic_*.xml`; không thay lại bằng ký tự Unicode vì glyph thay đổi theo font/hãng máy.
 
 Ánh xạ hiện tại của cảm biến:
 

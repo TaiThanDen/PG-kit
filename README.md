@@ -10,11 +10,14 @@
 
 Ảnh chụp được lưu tại `Pictures/TimemarkCamera` qua Android MediaStore. `WatermarkRenderer` is shared by the live overlay and final JPEG renderer, so the timestamp/address is burned into the saved image.
 
+Preview hỗ trợ các thao tác CameraX cơ bản: chọn mức zoom, pinch-to-zoom, chạm để focus/đo sáng, bù sáng EV, flash và đổi camera trước/sau. Mọi giá trị zoom/EV đều được giới hạn theo khả năng camera thực tế của thiết bị.
+
 ## Cấu trúc
 
 - `MainActivity`: điều phối lifecycle, quyền runtime và callback.
 - `CameraScreen`: toàn bộ giao diện dọc; UI không đổi layout khi xoay điện thoại.
 - `CameraEngine`: CameraX preview/capture, sửa EXIF, render watermark và lưu MediaStore.
+- `CameraGestureController`: tap-to-focus và pinch-to-zoom trên preview.
 - `DeviceOrientation`: ánh xạ duy nhất cho bốn hướng cầm thiết bị.
 - `LocationController`: GPS và reverse geocoding.
 - `WatermarkOverlayView` + `WatermarkRenderer`: watermark realtime và bản render JPEG chung style.
