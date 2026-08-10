@@ -187,6 +187,7 @@ final class CameraScreen {
         LinearLayout zoom = new LinearLayout(activity);
         zoom.setOrientation(LinearLayout.VERTICAL);
         zoom.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
+        zoom.setBackground(controlRailBackground());
 
         zoomTwo = zoomButton("2", 2f, "Thu phóng 2 lần");
         zoomOne = zoomButton("1x", 1f, "Thu phóng 1 lần");
@@ -203,6 +204,7 @@ final class CameraScreen {
         LinearLayout exposure = new LinearLayout(activity);
         exposure.setOrientation(LinearLayout.VERTICAL);
         exposure.setGravity(Gravity.CENTER);
+        exposure.setBackground(controlRailBackground());
         TextView brighter = transparentLabel("+", 25, Color.WHITE);
         brighter.setGravity(Gravity.CENTER);
         brighter.setContentDescription("Tăng độ sáng");
@@ -270,6 +272,14 @@ final class CameraScreen {
         background.setColor(selected ? 0x33000000 : Color.TRANSPARENT);
         if (selected) background.setStroke(dp(1), Color.WHITE);
         button.setBackground(background);
+    }
+
+    private GradientDrawable controlRailBackground() {
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.RECTANGLE);
+        background.setColor(0x33000000);
+        background.setCornerRadius(dp(28));
+        return background;
     }
 
     private View createBottomPanel() {
