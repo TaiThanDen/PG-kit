@@ -25,6 +25,7 @@ public final class MainActivity extends ComponentActivity implements
 
     private CameraScreen screen;
     private CameraEngine cameraEngine;
+    private CameraGestureController gestureController;
     private LocationController locationController;
     private Uri latestPhoto;
 
@@ -37,6 +38,16 @@ public final class MainActivity extends ComponentActivity implements
         locationController = new LocationController(this, this);
         cameraEngine = new CameraEngine(this, screen.previewView(), this,
                 VerificationCodeStore.obtain(this));
+        gestureController = new CameraGestureController(this, screen.previewView(),
+                new CameraGestureController.Listener() {
+                    @Override public void onTapToFocus(float x, float y) {
+                        if (cameraEngine.tapToFocus(x, y)) screen.showFocusIndicator(x, y);
+                    }
+
+                    @Override public void onPinchZoom(float scaleFactor) {
+                        screen.setZoomRatio(cameraEngine.pinchZoom(scaleFactor));
+                    }
+                });
         requestNeededPermissions();
     }
 
@@ -106,7 +117,11 @@ public final class MainActivity extends ComponentActivity implements
     }
 
     @Override public void onSwitchCamera() {
-        if (cameraEngine != null) cameraEngine.switchCamera();
+        if (cameraEngine != null) {
+            cameraEngine.switchCamera();
+            screen.setZoomRatio(1f);
+            screen.setExposureValue(0f);
+        }
     }
 
     @Override public void onEditWatermark() {
@@ -143,6 +158,18 @@ public final class MainActivity extends ComponentActivity implements
 
     @Override public void onOpenTemplates() {
         toast("Đang dùng bản mẫu giống ảnh tham chiếu");
+    }
+
+    @Override public void onZoomSelected(float ratio) {
+        if (cameraEngine != null) screen.setZoomRatio(cameraEngine.setZoomRatio(ratio));
+    }
+
+    @Override public void onExposureChanged(int direction) {
+        if (cameraEngine == null) return;
+        float ev = direction > 0
+                ? cameraEngine.increaseExposureCompensation()
+                : cameraEngine.decreaseExposureCompensation();
+        screen.setExposureValue(ev);
     }
 
     @Override public void onLocationStatus(String status) {

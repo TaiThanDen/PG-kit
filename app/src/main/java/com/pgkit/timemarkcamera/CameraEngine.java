@@ -9,15 +9,21 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Range;
+import android.util.Rational;
 import android.view.Surface;
 import android.view.OrientationEventListener;
 
 import androidx.activity.ComponentActivity;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ExposureState;
+import androidx.camera.core.FocusMeteringAction;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.MeteringPoint;
 import androidx.camera.core.Preview;
+import androidx.camera.core.ZoomState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
@@ -31,6 +37,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -120,6 +127,47 @@ final class CameraEngine {
         return torchEnabled;
     }
 
+    float setZoomRatio(float requestedRatio) {
+        Camera activeCamera = camera;
+        if (activeCamera == null || !Float.isFinite(requestedRatio)) return Float.NaN;
+        ZoomState zoomState = activeCamera.getCameraInfo().getZoomState().getValue();
+        if (zoomState == null) return Float.NaN;
+        float clampedRatio = Math.max(zoomState.getMinZoomRatio(),
+                Math.min(zoomState.getMaxZoomRatio(), requestedRatio));
+        activeCamera.getCameraControl().setZoomRatio(clampedRatio);
+        return clampedRatio;
+    }
+
+    float pinchZoom(float scaleFactor) {
+        Camera activeCamera = camera;
+        if (activeCamera == null || !Float.isFinite(scaleFactor) || scaleFactor <= 0f) {
+            return Float.NaN;
+        }
+        ZoomState zoomState = activeCamera.getCameraInfo().getZoomState().getValue();
+        if (zoomState == null) return Float.NaN;
+        return setZoomRatio(zoomState.getZoomRatio() * scaleFactor);
+    }
+
+    boolean tapToFocus(float x, float y) {
+        Camera activeCamera = camera;
+        if (activeCamera == null || !Float.isFinite(x) || !Float.isFinite(y)) return false;
+        MeteringPoint point = previewView.getMeteringPointFactory().createPoint(x, y);
+        FocusMeteringAction action = new FocusMeteringAction.Builder(point,
+                FocusMeteringAction.FLAG_AF | FocusMeteringAction.FLAG_AE)
+                .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                .build();
+        activeCamera.getCameraControl().startFocusAndMetering(action);
+        return true;
+    }
+
+    float increaseExposureCompensation() {
+        return adjustExposureCompensation(1);
+    }
+
+    float decreaseExposureCompensation() {
+        return adjustExposureCompensation(-1);
+    }
+
     void switchCamera() {
         desiredFacing = desiredFacing == CameraSelector.LENS_FACING_BACK
                 ? CameraSelector.LENS_FACING_FRONT : CameraSelector.LENS_FACING_BACK;
@@ -187,6 +235,19 @@ final class CameraEngine {
 
     private int displayRotation() {
         return previewView.getDisplay() == null ? Surface.ROTATION_0 : previewView.getDisplay().getRotation();
+    }
+
+    private float adjustExposureCompensation(int delta) {
+        Camera activeCamera = camera;
+        if (activeCamera == null) return Float.NaN;
+        ExposureState exposureState = activeCamera.getCameraInfo().getExposureState();
+        if (!exposureState.isExposureCompensationSupported()) return Float.NaN;
+        Range<Integer> range = exposureState.getExposureCompensationRange();
+        int requestedIndex = exposureState.getExposureCompensationIndex() + delta;
+        int clampedIndex = Math.max(range.getLower(), Math.min(range.getUpper(), requestedIndex));
+        activeCamera.getCameraControl().setExposureCompensationIndex(clampedIndex);
+        Rational step = exposureState.getExposureCompensationStep();
+        return clampedIndex * step.floatValue();
     }
 
     private void renderAndSave(File rawFile, int requestedRotation) {

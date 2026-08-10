@@ -27,15 +27,23 @@ final class CameraScreen {
         void onOpenGallery();
         void onCapture();
         void onOpenTemplates();
+        void onZoomSelected(float ratio);
+        void onExposureChanged(int direction);
     }
 
     private final ComponentActivity activity;
     private final Actions actions;
     private final PreviewView previewView;
     private final WatermarkOverlayView watermarkView;
+    private final FrameLayout previewLayer;
     private TextView locationState;
     private ImageButton flashButton;
     private Button shutter;
+    private TextView zoomHalf;
+    private TextView zoomOne;
+    private TextView zoomTwo;
+    private TextView exposureValue;
+    private View focusIndicator;
 
     CameraScreen(ComponentActivity activity, Actions actions) {
         this.activity = activity;
@@ -49,20 +57,21 @@ final class CameraScreen {
         root.addView(createTopBar(), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(68)));
 
-        FrameLayout preview = new FrameLayout(activity);
-        preview.setBackgroundColor(Color.rgb(28, 28, 28));
-        root.addView(preview, new LinearLayout.LayoutParams(
+        previewLayer = new FrameLayout(activity);
+        previewLayer.setBackgroundColor(Color.rgb(28, 28, 28));
+        root.addView(previewLayer, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         previewView = new PreviewView(activity);
         previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         previewView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         previewView.setContentDescription("Khung xem trước camera");
-        preview.addView(previewView, matchFrame());
+        previewLayer.addView(previewView, matchFrame());
 
         watermarkView = new WatermarkOverlayView(activity);
-        preview.addView(watermarkView, matchFrame());
-        addPreviewControls(preview);
+        previewLayer.addView(watermarkView, matchFrame());
+        addFocusIndicator(previewLayer);
+        addPreviewControls(previewLayer);
 
         root.addView(createBottomPanel(), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(250)));
@@ -89,6 +98,48 @@ final class CameraScreen {
     void setCaptureEnabled(boolean enabled) {
         shutter.setEnabled(enabled);
         shutter.setAlpha(enabled ? 1f : 0.55f);
+    }
+
+    void setZoomRatio(float ratio) {
+        if (!Float.isFinite(ratio)) return;
+        applyZoomStyle(zoomHalf, Math.abs(ratio - 0.5f) < 0.08f);
+        applyZoomStyle(zoomOne, Math.abs(ratio - 1f) < 0.08f);
+        applyZoomStyle(zoomTwo, Math.abs(ratio - 2f) < 0.12f);
+    }
+
+    void setExposureValue(float ev) {
+        if (!Float.isFinite(ev)) {
+            announce("Thiết bị không hỗ trợ bù sáng");
+            return;
+        }
+        exposureValue.setText(String.format(java.util.Locale.US, "EV\n%+.1f", ev));
+        announce(String.format(java.util.Locale.US, "Bù sáng %+.1f", ev));
+    }
+
+    void showFocusIndicator(float x, float y) {
+        int size = dp(56);
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) focusIndicator.getLayoutParams();
+        params.leftMargin = Math.max(0, Math.min(previewLayer.getWidth() - size,
+                Math.round(x) - size / 2));
+        params.topMargin = Math.max(0, Math.min(previewLayer.getHeight() - size,
+                Math.round(y) - size / 2));
+        focusIndicator.setLayoutParams(params);
+        focusIndicator.animate().cancel();
+        focusIndicator.setVisibility(View.VISIBLE);
+        focusIndicator.setAlpha(1f);
+        focusIndicator.setScaleX(1.3f);
+        focusIndicator.setScaleY(1.3f);
+        focusIndicator.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(150L)
+                .withEndAction(() -> focusIndicator.animate()
+                        .alpha(0f)
+                        .setStartDelay(600L)
+                        .setDuration(200L)
+                        .withEndAction(() -> focusIndicator.setVisibility(View.GONE))
+                        .start())
+                .start();
     }
 
     private View createTopBar() {
@@ -137,27 +188,39 @@ final class CameraScreen {
         zoom.setOrientation(LinearLayout.VERTICAL);
         zoom.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
 
-        TextView two = transparentLabel("2", 15, Color.WHITE);
-        two.setGravity(Gravity.CENTER);
-        two.setContentDescription("Thu phóng 2 lần");
-        TextView one = transparentLabel("1x", 16, Color.WHITE);
-        one.setGravity(Gravity.CENTER);
-        GradientDrawable circle = new GradientDrawable();
-        circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(0x22000000);
-        circle.setStroke(dp(1), Color.WHITE);
-        one.setBackground(circle);
-        one.setContentDescription("Thu phóng 1 lần");
-        TextView half = transparentLabel("0.5", 15, Color.WHITE);
-        half.setGravity(Gravity.CENTER);
-        half.setContentDescription("Thu phóng 0 phẩy 5 lần");
-        zoom.addView(two, fixed(dp(48), dp(48)));
-        zoom.addView(one, fixed(dp(48), dp(48)));
-        zoom.addView(half, fixed(dp(48), dp(48)));
+        zoomTwo = zoomButton("2", 2f, "Thu phóng 2 lần");
+        zoomOne = zoomButton("1x", 1f, "Thu phóng 1 lần");
+        zoomHalf = zoomButton("0.5", 0.5f, "Thu phóng 0 phẩy 5 lần");
+        applyZoomStyle(zoomOne, true);
+        zoom.addView(zoomTwo, fixed(dp(48), dp(48)));
+        zoom.addView(zoomOne, fixed(dp(48), dp(48)));
+        zoom.addView(zoomHalf, fixed(dp(48), dp(48)));
         FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(56), dp(145),
                 Gravity.END | Gravity.CENTER_VERTICAL);
         zoomParams.rightMargin = dp(6);
         preview.addView(zoom, zoomParams);
+
+        LinearLayout exposure = new LinearLayout(activity);
+        exposure.setOrientation(LinearLayout.VERTICAL);
+        exposure.setGravity(Gravity.CENTER);
+        TextView brighter = transparentLabel("+", 25, Color.WHITE);
+        brighter.setGravity(Gravity.CENTER);
+        brighter.setContentDescription("Tăng độ sáng");
+        brighter.setOnClickListener(v -> actions.onExposureChanged(1));
+        exposureValue = transparentLabel("EV\n+0.0", 12, Color.WHITE);
+        exposureValue.setGravity(Gravity.CENTER);
+        exposureValue.setContentDescription("Mức bù sáng");
+        TextView darker = transparentLabel("−", 25, Color.WHITE);
+        darker.setGravity(Gravity.CENTER);
+        darker.setContentDescription("Giảm độ sáng");
+        darker.setOnClickListener(v -> actions.onExposureChanged(-1));
+        exposure.addView(brighter, fixed(dp(48), dp(42)));
+        exposure.addView(exposureValue, fixed(dp(48), dp(48)));
+        exposure.addView(darker, fixed(dp(48), dp(42)));
+        FrameLayout.LayoutParams exposureParams = new FrameLayout.LayoutParams(dp(56), dp(132),
+                Gravity.START | Gravity.CENTER_VERTICAL);
+        exposureParams.leftMargin = dp(6);
+        preview.addView(exposure, exposureParams);
 
         ImageButton edit = imageButton(R.drawable.ic_edit, "Chỉnh sửa watermark", Color.WHITE);
         edit.setOnClickListener(v -> actions.onEditWatermark());
@@ -174,6 +237,39 @@ final class CameraScreen {
         pinParams.rightMargin = dp(4);
         pinParams.bottomMargin = dp(6);
         preview.addView(pin, pinParams);
+    }
+
+    private void addFocusIndicator(FrameLayout preview) {
+        focusIndicator = new View(activity);
+        GradientDrawable ring = new GradientDrawable();
+        ring.setShape(GradientDrawable.RECTANGLE);
+        ring.setColor(Color.TRANSPARENT);
+        ring.setStroke(dp(2), WatermarkRenderer.YELLOW);
+        ring.setCornerRadius(dp(6));
+        focusIndicator.setBackground(ring);
+        focusIndicator.setVisibility(View.GONE);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(56), dp(56),
+                Gravity.START | Gravity.TOP);
+        preview.addView(focusIndicator, params);
+    }
+
+    private TextView zoomButton(String label, float ratio, String description) {
+        TextView button = transparentLabel(label, "1x".equals(label) ? 16 : 15, Color.WHITE);
+        button.setGravity(Gravity.CENTER);
+        button.setContentDescription(description);
+        button.setClickable(true);
+        button.setFocusable(true);
+        button.setOnClickListener(v -> actions.onZoomSelected(ratio));
+        return button;
+    }
+
+    private void applyZoomStyle(TextView button, boolean selected) {
+        if (button == null) return;
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.OVAL);
+        background.setColor(selected ? 0x33000000 : Color.TRANSPARENT);
+        if (selected) background.setStroke(dp(1), Color.WHITE);
+        button.setBackground(background);
     }
 
     private View createBottomPanel() {
