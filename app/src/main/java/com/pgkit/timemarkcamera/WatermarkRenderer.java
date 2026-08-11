@@ -22,6 +22,13 @@ import java.util.Locale;
 
 final class WatermarkRenderer {
     static final int YELLOW = Color.rgb(255, 194, 51);
+    /**
+     * Output-photo coordinates are authored against the Timemark 4:3 reference images:
+     * 1536x1152 in landscape and 1152x1536 in portrait.  They intentionally do not use
+     * preview dp values or an independent horizontal/vertical percentage scale.
+     */
+    private static final int SAVED_YELLOW = Color.rgb(248, 194, 62);
+    private static final int SAVED_SUBTITLE = Color.rgb(180, 189, 196);
     // Insets only affect the yellow divider; date and weekday remain anchored in place.
     // Increase either value to shorten that end of the divider.
     private static final float DIVIDER_LINE_TOP_INSET = 3f;
@@ -137,134 +144,98 @@ final class WatermarkRenderer {
         Canvas canvas = new Canvas(bitmap);
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
-        boolean landscape = width > height;
-        float scale = landscape ? width / 2048f : width / 945f;
-        if (landscape) {
-            drawLandscapeSaved(canvas, width, height, when, address, verificationCode, scale);
-            return;
-        }
-        float margin = (landscape ? 38f : 25f) * scale;
-        float addressSize = (landscape ? 47f : 34f) * scale;
-        float bottom = height - (landscape ? 50f : 34f) * scale;
-        float reservedRight = landscape ? 650f * scale : 290f * scale;
+        float scale = WatermarkLayoutSpec.scaleFor(width, height);
+        float dividerTop = WatermarkLayoutSpec.dividerTop(height, scale);
 
-        Paint addressPaint = paint(Color.WHITE, addressSize, textTypeface);
-        List<String> lines = wrap(address, addressPaint, width - margin - reservedRight);
+        Paint addressPaint = savedPaint(Color.WHITE, 46f * scale, textTypeface, scale);
+        float maxAddressWidth = Math.min(WatermarkLayoutSpec.ADDRESS_MAX_WIDTH * scale,
+                width - WatermarkLayoutSpec.ADDRESS_LEFT * scale
+                        - (177f + WatermarkLayoutSpec.WORDMARK_RIGHT) * scale);
+        List<String> lines = wrap(address, addressPaint, maxAddressWidth);
         int lineCount = Math.min(2, lines.size());
-        float addressTop = bottom - (lineCount - 1) * addressSize * 1.14f;
+        String lastLine = lines.get(lineCount - 1);
+        float addressLastBaseline = baselineForTextBottom(lastLine, addressPaint,
+                height - WatermarkLayoutSpec.ADDRESS_BOTTOM * scale);
         for (int i = 0; i < lineCount; i++) {
-            drawText(canvas, lines.get(i), margin,
-                    addressTop + i * addressSize * 1.14f, addressPaint);
-        }
-
-        Paint timePaint = paint(Color.WHITE, 100f * scale, timeTypeface);
-        float addressFirstBaseline = addressTop;
-        float timeBaseline = addressFirstBaseline - timePaint.descent() - 30f * scale;
-        String time = time(when);
-        drawText(canvas, time, margin, timeBaseline, timePaint);
-
-        float timeWidth = timePaint.measureText(time);
-        float dividerX = margin + timeWidth + (landscape ? 20f : 15f) * scale;
-        Paint divider = paint(YELLOW, 5f * scale, textTypeface);
-        divider.setStrokeWidth(4f * scale);
-        Paint detailPaint = paint(Color.WHITE, 34f * scale, textTypeface);
-        float dividerTop = timeBaseline + timePaint.ascent() + 6f * scale;
-        float dividerBottom = timeBaseline + timePaint.descent() - 4f * scale;
-        float dividerLineTop = dividerTop + DIVIDER_LINE_TOP_INSET * scale;
-        float dividerLineBottom = dividerBottom - DIVIDER_LINE_BOTTOM_INSET * scale;
-        canvas.drawLine(dividerX, dividerLineTop, dividerX, dividerLineBottom, divider);
-        float detailX = dividerX + 20f * scale;
-        String dateText = date(when);
-        String weekdayText = weekday(when);
-        drawText(canvas, dateText, detailX,
-                baselineForTextTop(dateText, detailPaint, dividerTop + DETAIL_TEXT_TOP_INSET * scale), detailPaint);
-        drawText(canvas, weekdayText, detailX,
-                baselineForTextBottom(weekdayText, detailPaint, dividerBottom - DETAIL_TEXT_BOTTOM_INSET * scale), detailPaint);
-
-        drawBrand(canvas, width, height, scale, landscape);
-        drawVerification(canvas, width, height, scale, verificationCode, landscape);
-    }
-
-    private static void drawLandscapeSaved(Canvas canvas, int width, int height, Date when,
-                                           String address, String verificationCode, float scale) {
-        float margin = 38f * scale;
-        Paint addressPaint = paint(Color.WHITE, 48f * scale, textTypeface);
-        float addressMaxWidth = Math.min(width - margin * 2f, 760f * scale);
-        List<String> lines = wrap(address, addressPaint, addressMaxWidth);
-        float addressBaseline = height - margin - 26f * scale;
-        int lineCount = Math.min(2, lines.size());
-        for (int i = 0; i < lineCount; i++) {
-            drawText(canvas, lines.get(i), margin,
-                    addressBaseline - (lineCount - 1 - i) * 56f * scale,
+            drawText(canvas, lines.get(i), WatermarkLayoutSpec.ADDRESS_LEFT * scale,
+                    addressLastBaseline - (lineCount - 1 - i)
+                            * WatermarkLayoutSpec.ADDRESS_LINE_STEP * scale,
                     addressPaint);
         }
 
-        Paint timePaint = paint(Color.WHITE, 142f * scale, timeTypeface);
-        float addressFirstBaseline = addressBaseline - (lineCount - 1) * 56f * scale;
-        float timeBaseline = addressFirstBaseline - timePaint.descent() - 40f * scale;
+        Paint timePaint = savedPaint(Color.WHITE, 120f * scale, timeTypeface, scale);
         String time = time(when);
-        drawText(canvas, time, margin, timeBaseline, timePaint);
+        drawText(canvas, time, WatermarkLayoutSpec.TIME_LEFT * scale,
+                baselineForTextTop(time, timePaint, dividerTop), timePaint);
 
-        float dividerX = margin + timePaint.measureText(time) + 22f * scale;
-        Paint divider = paint(YELLOW, 5f * scale, textTypeface);
-        divider.setStrokeWidth(5f * scale);
-        Paint detailPaint = paint(Color.WHITE, 48f * scale, textTypeface);
-        float dividerTop = timeBaseline + timePaint.ascent() + 10f * scale;
-        float dividerBottom = timeBaseline + timePaint.descent() - 8f * scale;
-        float dividerLineTop = dividerTop + DIVIDER_LINE_TOP_INSET * scale;
-        float dividerLineBottom = dividerBottom - DIVIDER_LINE_BOTTOM_INSET * scale;
-        canvas.drawLine(dividerX, dividerLineTop, dividerX, dividerLineBottom, divider);
-        float detailX = dividerX + 30f * scale;
+        float timeWidth = timePaint.measureText(time);
+        float dividerX = WatermarkLayoutSpec.dividerX(timeWidth, scale);
+        Paint divider = paint(SAVED_YELLOW, 1f, textTypeface);
+        canvas.drawRect(dividerX, dividerTop, dividerX + WatermarkLayoutSpec.DIVIDER_WIDTH * scale,
+                dividerTop + WatermarkLayoutSpec.DIVIDER_HEIGHT * scale, divider);
+        Paint datePaint = savedPaint(Color.WHITE, 44.8f * scale, textTypeface, scale);
+        Paint weekdayPaint = savedPaint(Color.WHITE, 35.4f * scale, textTypeface, scale);
         String dateText = date(when);
         String weekdayText = weekday(when);
-        drawText(canvas, dateText, detailX,
-                baselineForTextTop(dateText, detailPaint, dividerTop + DETAIL_TEXT_TOP_INSET * scale), detailPaint);
-        drawText(canvas, weekdayText, detailX,
-                baselineForTextBottom(weekdayText, detailPaint, dividerBottom - DETAIL_TEXT_BOTTOM_INSET * scale), detailPaint);
+        drawText(canvas, dateText, dividerX + (WatermarkLayoutSpec.DIVIDER_WIDTH
+                        + WatermarkLayoutSpec.DATE_GAP) * scale,
+                baselineForTextTop(dateText, datePaint, dividerTop + scale), datePaint);
+        drawText(canvas, weekdayText,
+                dividerX + (WatermarkLayoutSpec.DIVIDER_WIDTH
+                        + WatermarkLayoutSpec.WEEKDAY_GAP) * scale,
+                baselineForTextTop(weekdayText, weekdayPaint,
+                        dividerTop + WatermarkLayoutSpec.WEEKDAY_TOP_GAP * scale), weekdayPaint);
 
-        drawBrand(canvas, width, height, scale, true);
-        drawVerification(canvas, width, height, scale, verificationCode, true);
+        drawBrand(canvas, width, height, scale);
+        drawVerification(canvas, width, height, scale, verificationCode);
     }
 
-    private static void drawBrand(Canvas canvas, int width, int height, float scale, boolean landscape) {
-        float right = width - (landscape ? 35f : 21f) * scale;
-        float logoBaseline = height - (landscape ? 76f : 63f) * scale;
-        Paint timeLogo = paint(YELLOW, 48f * scale, brandTypeface);
+    private static void drawBrand(Canvas canvas, int width, int height, float scale) {
+        Paint timeLogo = savedPaint(SAVED_YELLOW, 34.2f * scale, brandTypeface, scale);
+        timeLogo.setFakeBoldText(true);
         timeLogo.setTextAlign(Paint.Align.LEFT);
         Paint markLogo = new Paint(timeLogo);
         markLogo.setColor(Color.WHITE);
         float timeWidth = timeLogo.measureText("Time");
-        float markWidth = markLogo.measureText("mark");
-        float logoLeft = right - timeWidth - markWidth;
-        drawText(canvas, "Time", logoLeft, logoBaseline, timeLogo);
-        drawText(canvas, "mark", logoLeft + timeWidth, logoBaseline, markLogo);
-        Paint subtitle = paint(0xFFD6D6D6, 30f * scale, numbersTypeface);
-        subtitle.setTextAlign(Paint.Align.RIGHT);
-        drawText(canvas, "100% Chân thực", right,
-                height - (landscape ? 29f : 24f) * scale, subtitle);
+        Rect wordmarkBounds = textBounds("Timemark", timeLogo);
+        float wordmarkBaseline = baselineForTextBottom("Timemark", timeLogo,
+                height - WatermarkLayoutSpec.WORDMARK_BOTTOM * scale);
+        float wordmarkLeft = width - WatermarkLayoutSpec.WORDMARK_RIGHT * scale - wordmarkBounds.right;
+        drawText(canvas, "Time", wordmarkLeft, wordmarkBaseline, timeLogo);
+        drawText(canvas, "mark", wordmarkLeft + timeWidth, wordmarkBaseline, markLogo);
+
+        Paint subtitle = savedPaint(SAVED_SUBTITLE, 23.6f * scale, textTypeface, scale);
+        Rect subtitleBounds = textBounds("100% Chân thực", subtitle);
+        float subtitleLeft = width - WatermarkLayoutSpec.SUBTITLE_RIGHT * scale
+                - subtitleBounds.right;
+        drawText(canvas, "100% Chân thực", subtitleLeft,
+                baselineForTextBottom("100% Chân thực", subtitle,
+                        height - WatermarkLayoutSpec.SUBTITLE_BOTTOM * scale), subtitle);
     }
 
     private static void drawVerification(Canvas canvas, int width, int height, float scale,
-                                         String code, boolean landscape) {
-        Paint verified = paint(Color.WHITE, (landscape ? 31f : 20f) * scale, textTypeface);
+                                         String code) {
+        Paint verified = savedPaint(Color.WHITE, 24.8f * scale, textTypeface, scale);
         verified.setTextAlign(Paint.Align.LEFT);
-        verified.setShadowLayer(2f * scale, 0f, 1f * scale, 0x33000000);
         String verificationText = code + "  Timemark Verified";
-        float iconSize = verified.getTextSize() * 0.9f;
-        float iconGap = verified.getTextSize() * 0.35f;
-        float groupWidth = iconSize + iconGap + verified.measureText(verificationText);
-        float pivotX = width - (landscape ? 10f : 12f) * scale;
-        float baseline = height * 0.40f;
-        float groupLeft = pivotX - groupWidth / 2f;
+        float iconSize = 15f * scale;
+        float iconGap = 4f * scale;
+        Rect textBounds = textBounds(verificationText, verified);
+        float groupRight = iconSize + iconGap + textBounds.right;
+        float groupLeft = 0f;
+        float pivotX = width - WatermarkLayoutSpec.VERIFICATION_RIGHT * scale
+                - Math.max(textBounds.bottom, iconSize / 2f);
+        float baseline = height / 2f;
+        float groupStart = pivotX - (groupLeft + groupRight) / 2f;
         canvas.save();
         canvas.rotate(-90f, pivotX, baseline);
         drawShield(canvas,
-                groupLeft + iconSize / 2f,
+                groupStart + iconSize / 2f,
                 baseline - verified.getTextSize() * 0.34f,
                 iconSize,
                 scale);
         drawText(canvas, verificationText,
-                groupLeft + iconSize + iconGap,
+                groupStart + iconSize + iconGap,
                 baseline,
                 verified);
         canvas.restore();
@@ -301,20 +272,30 @@ final class WatermarkRenderer {
         return paint;
     }
 
+    private static Paint savedPaint(int color, float textSize, Typeface typeface, float scale) {
+        Paint paint = paint(color, textSize, typeface);
+        paint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x66000000);
+        return paint;
+    }
+
     private static void drawText(Canvas canvas, String text, float x, float y, Paint paint) {
         canvas.drawText(text, x, y, paint);
     }
 
     private static float baselineForTextTop(String text, Paint paint, float top) {
-        Rect bounds = new Rect();
-        paint.getTextBounds(text, 0, text.length(), bounds);
+        Rect bounds = textBounds(text, paint);
         return top - bounds.top;
     }
 
     private static float baselineForTextBottom(String text, Paint paint, float bottom) {
+        Rect bounds = textBounds(text, paint);
+        return bottom - bounds.bottom;
+    }
+
+    private static Rect textBounds(String text, Paint paint) {
         Rect bounds = new Rect();
         paint.getTextBounds(text, 0, text.length(), bounds);
-        return bottom - bounds.bottom;
+        return bounds;
     }
 
     private static List<String> wrap(String source, Paint paint, float maxWidth) {
