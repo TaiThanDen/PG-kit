@@ -25,7 +25,7 @@ public final class WatermarkLayoutSpecTest {
         float weekdayX = dividerX + WatermarkLayoutSpec.DIVIDER_WIDTH
                 + WatermarkLayoutSpec.WEEKDAY_GAP;
         assertEquals(dateX, weekdayX, DELTA);
-        assertEquals(90f, WatermarkLayoutSpec.WEEKDAY_TOP_GAP, DELTA);
+        assertEquals(84f, WatermarkLayoutSpec.WEEKDAY_TOP_GAP, DELTA);
     }
 
     @Test public void bottomAndRightAnchorsMoveOnlyWithCanvasEdges() {
