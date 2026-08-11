@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 
@@ -21,6 +22,13 @@ import java.util.Locale;
 
 final class WatermarkRenderer {
     static final int YELLOW = Color.rgb(255, 194, 51);
+    // Insets only affect the yellow divider; date and weekday remain anchored in place.
+    // Increase either value to shorten that end of the divider.
+    private static final float DIVIDER_LINE_TOP_INSET = 3f;
+    private static final float DIVIDER_LINE_BOTTOM_INSET = 3f;
+    // Keep label alignment independent when only the divider length changes.
+    private static final float DETAIL_TEXT_TOP_INSET = 3f;
+    private static final float DETAIL_TEXT_BOTTOM_INSET = 3f;
     private static final Locale VIETNAMESE = new Locale("vi", "VN");
     private static final Typeface DEFAULT_TIME_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
     private static final Typeface DEFAULT_TEXT_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
@@ -113,10 +121,16 @@ final class WatermarkRenderer {
         Paint detailPaint = paint(Color.WHITE, 16f * density, textTypeface);
         float dividerTop = timeBaseline + timePaint.ascent() + 5f * density;
         float dividerBottom = timeBaseline + timePaint.descent() - 3f * density;
-        canvas.drawLine(dividerX, dividerTop, dividerX, dividerBottom, divider);
+        float dividerLineTop = dividerTop + DIVIDER_LINE_TOP_INSET * density;
+        float dividerLineBottom = dividerBottom - DIVIDER_LINE_BOTTOM_INSET * density;
+        canvas.drawLine(dividerX, dividerLineTop, dividerX, dividerLineBottom, divider);
         float detailX = dividerX + 8f * density;
-        drawText(canvas, date(when), detailX, dividerTop - detailPaint.ascent(), detailPaint);
-        drawText(canvas, weekday(when), detailX, dividerBottom - detailPaint.descent(), detailPaint);
+        String dateText = date(when);
+        String weekdayText = weekday(when);
+        drawText(canvas, dateText, detailX,
+                baselineForTextTop(dateText, detailPaint, dividerTop + DETAIL_TEXT_TOP_INSET * density), detailPaint);
+        drawText(canvas, weekdayText, detailX,
+                baselineForTextBottom(weekdayText, detailPaint, dividerBottom - DETAIL_TEXT_BOTTOM_INSET * density), detailPaint);
     }
 
     static void drawSaved(Bitmap bitmap, Date when, String address, String verificationCode) {
@@ -145,7 +159,7 @@ final class WatermarkRenderer {
 
         Paint timePaint = paint(Color.WHITE, 100f * scale, timeTypeface);
         float addressFirstBaseline = addressTop;
-        float timeBaseline = addressFirstBaseline - timePaint.descent() - 12f * scale;
+        float timeBaseline = addressFirstBaseline - timePaint.descent() - 30f * scale;
         String time = time(when);
         drawText(canvas, time, margin, timeBaseline, timePaint);
 
@@ -154,12 +168,18 @@ final class WatermarkRenderer {
         Paint divider = paint(YELLOW, 5f * scale, textTypeface);
         divider.setStrokeWidth(4f * scale);
         Paint detailPaint = paint(Color.WHITE, 34f * scale, textTypeface);
-        float dividerTop = timeBaseline + timePaint.ascent() + 5f * scale;
-        float dividerBottom = timeBaseline + timePaint.descent() - 3f * scale;
-        canvas.drawLine(dividerX, dividerTop, dividerX, dividerBottom, divider);
+        float dividerTop = timeBaseline + timePaint.ascent() + 6f * scale;
+        float dividerBottom = timeBaseline + timePaint.descent() - 4f * scale;
+        float dividerLineTop = dividerTop + DIVIDER_LINE_TOP_INSET * scale;
+        float dividerLineBottom = dividerBottom - DIVIDER_LINE_BOTTOM_INSET * scale;
+        canvas.drawLine(dividerX, dividerLineTop, dividerX, dividerLineBottom, divider);
         float detailX = dividerX + 20f * scale;
-        drawText(canvas, date(when), detailX, dividerTop - detailPaint.ascent(), detailPaint);
-        drawText(canvas, weekday(when), detailX, dividerBottom - detailPaint.descent(), detailPaint);
+        String dateText = date(when);
+        String weekdayText = weekday(when);
+        drawText(canvas, dateText, detailX,
+                baselineForTextTop(dateText, detailPaint, dividerTop + DETAIL_TEXT_TOP_INSET * scale), detailPaint);
+        drawText(canvas, weekdayText, detailX,
+                baselineForTextBottom(weekdayText, detailPaint, dividerBottom - DETAIL_TEXT_BOTTOM_INSET * scale), detailPaint);
 
         drawBrand(canvas, width, height, scale, landscape);
         drawVerification(canvas, width, height, scale, verificationCode, landscape);
@@ -181,7 +201,7 @@ final class WatermarkRenderer {
 
         Paint timePaint = paint(Color.WHITE, 142f * scale, timeTypeface);
         float addressFirstBaseline = addressBaseline - (lineCount - 1) * 56f * scale;
-        float timeBaseline = addressFirstBaseline - timePaint.descent() - 18f * scale;
+        float timeBaseline = addressFirstBaseline - timePaint.descent() - 40f * scale;
         String time = time(when);
         drawText(canvas, time, margin, timeBaseline, timePaint);
 
@@ -189,12 +209,18 @@ final class WatermarkRenderer {
         Paint divider = paint(YELLOW, 5f * scale, textTypeface);
         divider.setStrokeWidth(5f * scale);
         Paint detailPaint = paint(Color.WHITE, 48f * scale, textTypeface);
-        float dividerTop = timeBaseline + timePaint.ascent() + 5f * scale;
-        float dividerBottom = timeBaseline + timePaint.descent() - 3f * scale;
-        canvas.drawLine(dividerX, dividerTop, dividerX, dividerBottom, divider);
+        float dividerTop = timeBaseline + timePaint.ascent() + 10f * scale;
+        float dividerBottom = timeBaseline + timePaint.descent() - 8f * scale;
+        float dividerLineTop = dividerTop + DIVIDER_LINE_TOP_INSET * scale;
+        float dividerLineBottom = dividerBottom - DIVIDER_LINE_BOTTOM_INSET * scale;
+        canvas.drawLine(dividerX, dividerLineTop, dividerX, dividerLineBottom, divider);
         float detailX = dividerX + 30f * scale;
-        drawText(canvas, date(when), detailX, dividerTop - detailPaint.ascent(), detailPaint);
-        drawText(canvas, weekday(when), detailX, dividerBottom - detailPaint.descent(), detailPaint);
+        String dateText = date(when);
+        String weekdayText = weekday(when);
+        drawText(canvas, dateText, detailX,
+                baselineForTextTop(dateText, detailPaint, dividerTop + DETAIL_TEXT_TOP_INSET * scale), detailPaint);
+        drawText(canvas, weekdayText, detailX,
+                baselineForTextBottom(weekdayText, detailPaint, dividerBottom - DETAIL_TEXT_BOTTOM_INSET * scale), detailPaint);
 
         drawBrand(canvas, width, height, scale, true);
         drawVerification(canvas, width, height, scale, verificationCode, true);
@@ -277,6 +303,18 @@ final class WatermarkRenderer {
 
     private static void drawText(Canvas canvas, String text, float x, float y, Paint paint) {
         canvas.drawText(text, x, y, paint);
+    }
+
+    private static float baselineForTextTop(String text, Paint paint, float top) {
+        Rect bounds = new Rect();
+        paint.getTextBounds(text, 0, text.length(), bounds);
+        return top - bounds.top;
+    }
+
+    private static float baselineForTextBottom(String text, Paint paint, float bottom) {
+        Rect bounds = new Rect();
+        paint.getTextBounds(text, 0, text.length(), bounds);
+        return bottom - bounds.bottom;
     }
 
     private static List<String> wrap(String source, Paint paint, float maxWidth) {
