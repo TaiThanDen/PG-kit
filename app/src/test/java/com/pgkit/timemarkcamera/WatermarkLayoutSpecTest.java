@@ -18,6 +18,16 @@ public final class WatermarkLayoutSpecTest {
         assertEquals(286f, WatermarkLayoutSpec.dividerX(223f, 1f), DELTA);
     }
 
+    @Test public void dateAndWeekdayShareTheSameLeftAnchor() {
+        float dividerX = 252f;
+        float dateX = dividerX + WatermarkLayoutSpec.DIVIDER_WIDTH
+                + WatermarkLayoutSpec.DATE_GAP;
+        float weekdayX = dividerX + WatermarkLayoutSpec.DIVIDER_WIDTH
+                + WatermarkLayoutSpec.WEEKDAY_GAP;
+        assertEquals(dateX, weekdayX, DELTA);
+        assertEquals(90f, WatermarkLayoutSpec.WEEKDAY_TOP_GAP, DELTA);
+    }
+
     @Test public void bottomAndRightAnchorsMoveOnlyWithCanvasEdges() {
         assertEquals(870f, WatermarkLayoutSpec.dividerTop(1152, 1f), DELTA);
         assertEquals(1254f, WatermarkLayoutSpec.dividerTop(1536, 1f), DELTA);

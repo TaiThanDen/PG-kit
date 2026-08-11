@@ -148,6 +148,7 @@ final class WatermarkRenderer {
         float dividerTop = WatermarkLayoutSpec.dividerTop(height, scale);
 
         Paint addressPaint = savedPaint(Color.WHITE, 46f * scale, textTypeface, scale);
+        addressPaint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x59000000);
         float maxAddressWidth = Math.min(WatermarkLayoutSpec.ADDRESS_MAX_WIDTH * scale,
                 width - WatermarkLayoutSpec.ADDRESS_LEFT * scale
                         - (177f + WatermarkLayoutSpec.WORDMARK_RIGHT) * scale);
@@ -174,7 +175,7 @@ final class WatermarkRenderer {
         canvas.drawRect(dividerX, dividerTop, dividerX + WatermarkLayoutSpec.DIVIDER_WIDTH * scale,
                 dividerTop + WatermarkLayoutSpec.DIVIDER_HEIGHT * scale, divider);
         Paint datePaint = savedPaint(Color.WHITE, 44.8f * scale, textTypeface, scale);
-        Paint weekdayPaint = savedPaint(Color.WHITE, 35.4f * scale, textTypeface, scale);
+        Paint weekdayPaint = savedPaint(Color.WHITE, 38f * scale, textTypeface, scale);
         String dateText = date(when);
         String weekdayText = weekday(when);
         drawText(canvas, dateText, dividerX + (WatermarkLayoutSpec.DIVIDER_WIDTH
@@ -192,7 +193,6 @@ final class WatermarkRenderer {
 
     private static void drawBrand(Canvas canvas, int width, int height, float scale) {
         Paint timeLogo = savedPaint(SAVED_YELLOW, 34.2f * scale, brandTypeface, scale);
-        timeLogo.setFakeBoldText(true);
         timeLogo.setTextAlign(Paint.Align.LEFT);
         Paint markLogo = new Paint(timeLogo);
         markLogo.setColor(Color.WHITE);
@@ -206,6 +206,9 @@ final class WatermarkRenderer {
 
         Paint subtitle = savedPaint(SAVED_SUBTITLE, 23.6f * scale, textTypeface, scale);
         Rect subtitleBounds = textBounds("100% Chân thực", subtitle);
+        subtitle.setTextSize(subtitle.getTextSize() * wordmarkBounds.width()
+                / Math.max(1, subtitleBounds.width()));
+        subtitleBounds = textBounds("100% Chân thực", subtitle);
         float subtitleLeft = width - WatermarkLayoutSpec.SUBTITLE_RIGHT * scale
                 - subtitleBounds.right;
         drawText(canvas, "100% Chân thực", subtitleLeft,
@@ -215,11 +218,11 @@ final class WatermarkRenderer {
 
     private static void drawVerification(Canvas canvas, int width, int height, float scale,
                                          String code) {
-        Paint verified = savedPaint(Color.WHITE, 24.8f * scale, textTypeface, scale);
+        Paint verified = savedPaint(Color.WHITE, 21f * scale, textTypeface, scale);
         verified.setTextAlign(Paint.Align.LEFT);
         String verificationText = code + "  Timemark Verified";
-        float iconSize = 15f * scale;
-        float iconGap = 4f * scale;
+        float iconSize = 12f * scale;
+        float iconGap = 3f * scale;
         Rect textBounds = textBounds(verificationText, verified);
         float groupRight = iconSize + iconGap + textBounds.right;
         float groupLeft = 0f;
@@ -273,9 +276,7 @@ final class WatermarkRenderer {
     }
 
     private static Paint savedPaint(int color, float textSize, Typeface typeface, float scale) {
-        Paint paint = paint(color, textSize, typeface);
-        paint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x66000000);
-        return paint;
+        return paint(color, textSize, typeface);
     }
 
     private static void drawText(Canvas canvas, String text, float x, float y, Paint paint) {

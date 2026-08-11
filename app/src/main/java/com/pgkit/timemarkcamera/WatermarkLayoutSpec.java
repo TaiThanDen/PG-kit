@@ -13,8 +13,8 @@ final class WatermarkLayoutSpec {
     static final float DIVIDER_HEIGHT = 117f;
     static final float DIVIDER_BOTTOM = 165f;
     static final float DATE_GAP = 21f;
-    static final float WEEKDAY_GAP = 19f;
-    static final float WEEKDAY_TOP_GAP = 86f;
+    static final float WEEKDAY_GAP = 21f;
+    static final float WEEKDAY_TOP_GAP = 90f;
     static final float ADDRESS_LEFT = 36f;
     static final float ADDRESS_BOTTOM = 37f;
     static final float ADDRESS_LINE_STEP = 51f;
@@ -23,7 +23,7 @@ final class WatermarkLayoutSpec {
     static final float WORDMARK_BOTTOM = 56f;
     static final float SUBTITLE_RIGHT = 18f;
     static final float SUBTITLE_BOTTOM = 20f;
-    static final float VERIFICATION_RIGHT = 11f;
+    static final float VERIFICATION_RIGHT = 7f;
 
     private WatermarkLayoutSpec() {
     }
