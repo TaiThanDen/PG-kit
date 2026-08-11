@@ -175,12 +175,21 @@ final class CameraEngine {
     }
 
     void capture(String address) {
+        capture(address, null);
+    }
+
+    /**
+     * Snapshots the optional manually selected watermark time at the instant the shutter is
+     * pressed. A null value deliberately preserves the normal device-clock behaviour.
+     */
+    void capture(String address, Date displayTimeOverride) {
         ImageCapture capture = imageCapture;
         if (!ready || capture == null) {
             callback.onCameraError("Camera chưa sẵn sàng");
             return;
         }
-        final Date requestedTime = new Date();
+        final Date requestedTime = displayTimeOverride == null
+                ? new Date() : new Date(displayTimeOverride.getTime());
         final String requestedAddress = address == null || address.trim().isEmpty()
                 ? "Chưa xác định vị trí" : address.trim();
         final int requestedRotation = sensorRotation;
@@ -242,9 +251,15 @@ final class CameraEngine {
         if (activeCamera == null) return Float.NaN;
         ExposureState exposureState = activeCamera.getCameraInfo().getExposureState();
         if (!exposureState.isExposureCompensationSupported()) return Float.NaN;
-        Range<Integer> range = exposureState.getExposureCompensationRange();
         int requestedIndex = exposureState.getExposureCompensationIndex() + delta;
+        return setExposureCompensationIndex(exposureState, requestedIndex);
+    }
+
+    private float setExposureCompensationIndex(ExposureState exposureState, int requestedIndex) {
+        Range<Integer> range = exposureState.getExposureCompensationRange();
         int clampedIndex = Math.max(range.getLower(), Math.min(range.getUpper(), requestedIndex));
+        Camera activeCamera = camera;
+        if (activeCamera == null) return Float.NaN;
         activeCamera.getCameraControl().setExposureCompensationIndex(clampedIndex);
         Rational step = exposureState.getExposureCompensationStep();
         return clampedIndex * step.floatValue();

@@ -4,13 +4,16 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.activity.ComponentActivity;
@@ -39,10 +42,11 @@ final class CameraScreen {
     private TextView locationState;
     private ImageButton flashButton;
     private Button shutter;
-    private TextView zoomHalf;
-    private TextView zoomOne;
-    private TextView zoomTwo;
+    private SeekBar zoomSlider;
+    private TextView zoomValue;
+    private SeekBar exposureSlider;
     private TextView exposureValue;
+    private ImageView latestPhotoPreview;
     private View focusIndicator;
 
     CameraScreen(ComponentActivity activity, Actions actions) {
@@ -52,6 +56,16 @@ final class CameraScreen {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.WHITE);
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            // targetSdk 35 draws edge-to-edge. Keep the fixed camera header below the status bar
+            // on both compact and tall devices while preserving a portrait-only composition.
+            view.setPadding(0, insets.getSystemWindowInsetTop(), 0,
+                    insets.getSystemWindowInsetBottom());
+            return insets;
+        });
+        activity.getWindow().setStatusBarColor(Color.WHITE);
+        activity.getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         activity.setContentView(root);
 
         root.addView(createTopBar(), new LinearLayout.LayoutParams(
@@ -102,9 +116,13 @@ final class CameraScreen {
 
     void setZoomRatio(float ratio) {
         if (!Float.isFinite(ratio)) return;
-        applyZoomStyle(zoomHalf, Math.abs(ratio - 0.5f) < 0.08f);
-        applyZoomStyle(zoomOne, Math.abs(ratio - 1f) < 0.08f);
-        applyZoomStyle(zoomTwo, Math.abs(ratio - 2f) < 0.12f);
+        if (zoomSlider != null) {
+            int progress = Math.round((ratio - 0.5f) / 1.5f * zoomSlider.getMax());
+            zoomSlider.setProgress(Math.max(0, Math.min(zoomSlider.getMax(), progress)));
+        }
+        if (zoomValue != null) {
+            zoomValue.setText(String.format(java.util.Locale.US, "%.1fx", ratio));
+        }
     }
 
     void setExposureValue(float ev) {
@@ -114,6 +132,14 @@ final class CameraScreen {
         }
         exposureValue.setText(String.format(java.util.Locale.US, "EV\n%+.1f", ev));
         announce(String.format(java.util.Locale.US, "Bù sáng %+.1f", ev));
+    }
+
+    /** Replaces the library placeholder with the just-saved photo, without changing its action. */
+    void setLatestPhoto(Uri uri) {
+        if (uri == null || latestPhotoPreview == null) return;
+        latestPhotoPreview.setImageTintList(null);
+        latestPhotoPreview.setImageURI(uri);
+        latestPhotoPreview.setContentDescription("Xem trước ảnh vừa chụp");
     }
 
     void showFocusIndicator(float x, float y) {
@@ -150,14 +176,14 @@ final class CameraScreen {
 
         ImageButton menu = imageButton(R.drawable.ic_menu, "Mở menu", Color.rgb(30, 30, 30));
         menu.setOnClickListener(v -> actions.onMenu());
-        bar.addView(menu, fixed(dp(54), dp(48)));
+        bar.addView(menu, fixed(dp(44), dp(48)));
 
         flashButton = imageButton(R.drawable.ic_flash, "Bật hoặc tắt đèn flash",
                 Color.rgb(30, 30, 30));
         flashButton.setOnClickListener(v -> actions.onToggleFlash());
-        bar.addView(flashButton, fixed(dp(54), dp(48)));
+        bar.addView(flashButton, fixed(dp(44), dp(48)));
 
-        bar.addView(new View(activity), fixed(dp(20), 1));
+        bar.addView(new View(activity), fixed(dp(6), 1));
 
         TextView verified = textButton("Xác thực ảnh", "Xác thực ảnh", 15, Color.BLACK);
         verified.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
@@ -168,7 +194,8 @@ final class CameraScreen {
         verified.setBackgroundResource(R.drawable.pill_outline);
         bar.addView(verified, fixed(dp(106), dp(27)));
 
-        bar.addView(new View(activity), fixed(dp(28), 1));
+        View flexibleSpace = new View(activity);
+        bar.addView(flexibleSpace, new LinearLayout.LayoutParams(0, 1, 1f));
 
         TextView plus = textButton("Plus", "Gói Plus", 15, Color.WHITE);
         plus.setTypeface(Typeface.DEFAULT_BOLD);
@@ -179,52 +206,63 @@ final class CameraScreen {
         plus.setBackgroundResource(R.drawable.pill_dark);
         bar.addView(plus, fixed(dp(58), dp(24)));
 
-        bar.addView(new View(activity), fixed(dp(4), 1));
-
         ImageButton switchCamera = imageButton(R.drawable.ic_switch_camera,
                 "Đổi camera trước sau", Color.rgb(30, 30, 30));
         switchCamera.setOnClickListener(v -> actions.onSwitchCamera());
-        bar.addView(switchCamera, fixed(dp(48), dp(48)));
+        bar.addView(switchCamera, fixed(dp(44), dp(48)));
         return bar;
     }
 
     private void addPreviewControls(FrameLayout preview) {
-        LinearLayout zoom = new LinearLayout(activity);
-        zoom.setOrientation(LinearLayout.VERTICAL);
-        zoom.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
-        zoom.setBackground(controlRailBackground());
-
-        zoomTwo = zoomButton("2", 2f, "Thu phóng 2 lần");
-        zoomOne = zoomButton("1x", 1f, "Thu phóng 1 lần");
-        zoomHalf = zoomButton("0.5", 0.5f, "Thu phóng 0 phẩy 5 lần");
-        applyZoomStyle(zoomOne, true);
-        zoom.addView(zoomTwo, fixed(dp(48), dp(48)));
-        zoom.addView(zoomOne, fixed(dp(48), dp(48)));
-        zoom.addView(zoomHalf, fixed(dp(48), dp(48)));
-        FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(56), dp(145),
-                Gravity.END | Gravity.CENTER_VERTICAL);
-        zoomParams.rightMargin = dp(6);
+        FrameLayout zoom = compactSlider("Thu phóng camera");
+        zoomValue = transparentLabel("1.0x", 12, Color.WHITE);
+        zoomValue.setGravity(Gravity.CENTER);
+        zoomValue.setTypeface(Typeface.DEFAULT_BOLD);
+        zoomSlider = verticalSlider();
+        zoomSlider.setProgress(Math.round(1f / 3f * zoomSlider.getMax()));
+        zoomSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float ratio = 0.5f + 1.5f * progress / seekBar.getMax();
+                zoomValue.setText(String.format(java.util.Locale.US, "%.1fx", ratio));
+                if (fromUser) actions.onZoomSelected(ratio);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        zoom.addView(zoomSlider, rotatedSliderParams());
+        zoom.addView(zoomValue, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(26), Gravity.TOP));
+        FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(52), dp(132),
+                Gravity.END | Gravity.BOTTOM);
+        zoomParams.rightMargin = dp(7);
+        zoomParams.bottomMargin = dp(128);
         preview.addView(zoom, zoomParams);
 
-        LinearLayout exposure = new LinearLayout(activity);
-        exposure.setOrientation(LinearLayout.VERTICAL);
-        exposure.setGravity(Gravity.CENTER);
-        exposure.setBackground(controlRailBackground());
-        TextView brighter = transparentLabel("+", 25, Color.WHITE);
-        brighter.setGravity(Gravity.CENTER);
-        brighter.setContentDescription("Tăng độ sáng");
-        brighter.setOnClickListener(v -> actions.onExposureChanged(1));
+        FrameLayout exposure = compactSlider("Điều chỉnh bù sáng");
         exposureValue = transparentLabel("EV\n+0.0", 12, Color.WHITE);
         exposureValue.setGravity(Gravity.CENTER);
         exposureValue.setContentDescription("Mức bù sáng");
-        TextView darker = transparentLabel("−", 25, Color.WHITE);
-        darker.setGravity(Gravity.CENTER);
-        darker.setContentDescription("Giảm độ sáng");
-        darker.setOnClickListener(v -> actions.onExposureChanged(-1));
-        exposure.addView(brighter, fixed(dp(48), dp(42)));
-        exposure.addView(exposureValue, fixed(dp(48), dp(48)));
-        exposure.addView(darker, fixed(dp(48), dp(42)));
-        FrameLayout.LayoutParams exposureParams = new FrameLayout.LayoutParams(dp(56), dp(132),
+        exposureSlider = verticalSlider();
+        exposureSlider.setProgress(exposureSlider.getMax() / 2);
+        exposureSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            private int previous = exposureSlider.getProgress();
+
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) {
+                    previous = progress;
+                    return;
+                }
+                int direction = Integer.compare(progress, previous);
+                if (direction != 0) actions.onExposureChanged(direction);
+                previous = progress;
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        exposure.addView(exposureSlider, rotatedSliderParams());
+        exposure.addView(exposureValue, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(34), Gravity.TOP));
+        FrameLayout.LayoutParams exposureParams = new FrameLayout.LayoutParams(dp(52), dp(112),
                 Gravity.START | Gravity.CENTER_VERTICAL);
         exposureParams.leftMargin = dp(6);
         preview.addView(exposure, exposureParams);
@@ -260,23 +298,28 @@ final class CameraScreen {
         preview.addView(focusIndicator, params);
     }
 
-    private TextView zoomButton(String label, float ratio, String description) {
-        TextView button = transparentLabel(label, "1x".equals(label) ? 16 : 15, Color.WHITE);
-        button.setGravity(Gravity.CENTER);
-        button.setContentDescription(description);
-        button.setClickable(true);
-        button.setFocusable(true);
-        button.setOnClickListener(v -> actions.onZoomSelected(ratio));
-        return button;
+    private FrameLayout compactSlider(String description) {
+        FrameLayout rail = new FrameLayout(activity);
+        rail.setBackground(controlRailBackground());
+        rail.setContentDescription(description);
+        return rail;
     }
 
-    private void applyZoomStyle(TextView button, boolean selected) {
-        if (button == null) return;
-        GradientDrawable background = new GradientDrawable();
-        background.setShape(GradientDrawable.OVAL);
-        background.setColor(selected ? 0x33000000 : Color.TRANSPARENT);
-        if (selected) background.setStroke(dp(1), Color.WHITE);
-        button.setBackground(background);
+    private SeekBar verticalSlider() {
+        SeekBar slider = new SeekBar(activity);
+        slider.setMax(100);
+        slider.setRotation(-90f);
+        slider.setProgressTintList(ColorStateList.valueOf(Color.WHITE));
+        slider.setThumbTintList(ColorStateList.valueOf(WatermarkRenderer.YELLOW));
+        slider.setContentDescription("Thanh trượt");
+        return slider;
+    }
+
+    private FrameLayout.LayoutParams rotatedSliderParams() {
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(80), dp(32),
+                Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        params.bottomMargin = dp(24);
+        return params;
     }
 
     private GradientDrawable controlRailBackground() {
@@ -306,13 +349,23 @@ final class CameraScreen {
         panel.addView(captureRow, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        TextView gallery = transparentLabel("Thư viện", 15, Color.rgb(82, 82, 82));
+        LinearLayout gallery = new LinearLayout(activity);
+        gallery.setOrientation(LinearLayout.VERTICAL);
         gallery.setGravity(Gravity.CENTER);
-        gallery.setTypeface(Typeface.DEFAULT_BOLD);
-        gallery.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_gallery, 0, 0);
-        gallery.setCompoundDrawablePadding(dp(4));
         gallery.setContentDescription("Mở ảnh vừa chụp trong thư viện");
         gallery.setOnClickListener(v -> actions.onOpenGallery());
+        latestPhotoPreview = new ImageView(activity);
+        latestPhotoPreview.setImageResource(R.drawable.ic_gallery);
+        latestPhotoPreview.setImageTintList(ColorStateList.valueOf(Color.rgb(82, 82, 82)));
+        latestPhotoPreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        latestPhotoPreview.setAdjustViewBounds(true);
+        latestPhotoPreview.setOnClickListener(v -> actions.onOpenGallery());
+        gallery.addView(latestPhotoPreview, fixed(dp(48), dp(42)));
+        TextView galleryLabel = transparentLabel("Thư viện", 15, Color.rgb(82, 82, 82));
+        galleryLabel.setTypeface(Typeface.DEFAULT_BOLD);
+        galleryLabel.setGravity(Gravity.CENTER);
+        galleryLabel.setOnClickListener(v -> actions.onOpenGallery());
+        gallery.addView(galleryLabel, fixed(ViewGroup.LayoutParams.MATCH_PARENT, dp(30)));
         captureRow.addView(gallery, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 

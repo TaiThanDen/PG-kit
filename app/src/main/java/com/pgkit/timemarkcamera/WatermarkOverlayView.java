@@ -15,6 +15,7 @@ public final class WatermarkOverlayView extends View {
     private String address = DEFAULT_ADDRESS;
     private int cameraRotation = Surface.ROTATION_0;
     private final Date currentTime = new Date();
+    private Date displayTimeOverride;
     private final Matrix orientationMatrix = new Matrix();
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
@@ -38,6 +39,25 @@ public final class WatermarkOverlayView extends View {
 
     public String getAddress() { return address; }
 
+    /**
+     * Uses {@code value} for the live watermark until cleared. Passing {@code null} restores
+     * the device clock. The supplied mutable Date is copied so later caller changes cannot
+     * alter the preview unexpectedly.
+     */
+    public void setDisplayTimeOverride(Date value) {
+        displayTimeOverride = value == null ? null : new Date(value.getTime());
+        invalidate();
+    }
+
+    public void clearDisplayTimeOverride() {
+        setDisplayTimeOverride(null);
+    }
+
+    /** Returns a defensive snapshot of the active override, or {@code null} for device time. */
+    public Date getDisplayTimeOverride() {
+        return displayTimeOverride == null ? null : new Date(displayTimeOverride.getTime());
+    }
+
     public void setCameraRotation(int rotation) {
         if (cameraRotation == rotation) return;
         cameraRotation = rotation;
@@ -56,7 +76,9 @@ public final class WatermarkOverlayView extends View {
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        currentTime.setTime(System.currentTimeMillis());
+        currentTime.setTime(displayTimeOverride == null
+                ? System.currentTimeMillis()
+                : displayTimeOverride.getTime());
         int viewWidth = getWidth();
         int viewHeight = getHeight();
         if (viewWidth == 0 || viewHeight == 0) return;

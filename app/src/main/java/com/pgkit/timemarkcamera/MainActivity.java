@@ -12,10 +12,15 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowInsetsController;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.app.AlertDialog;
+import android.app.TimePickerDialog;
 
 import androidx.activity.ComponentActivity;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /** Coordinates permissions, lifecycle, camera, location and the portrait camera screen. */
@@ -28,6 +33,8 @@ public final class MainActivity extends ComponentActivity implements
     private CameraGestureController gestureController;
     private LocationController locationController;
     private Uri latestPhoto;
+    private Date manualWatermarkTime;
+    private String manualAddress;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,11 +132,51 @@ public final class MainActivity extends ComponentActivity implements
     }
 
     @Override public void onEditWatermark() {
-        toast("Mẫu watermark đang dùng: Timemark xác thực");
+        Date activeTime = manualWatermarkTime == null
+                ? screen.watermarkView().getDisplayTimeOverride()
+                : new Date(manualWatermarkTime.getTime());
+        Calendar calendar = Calendar.getInstance();
+        if (activeTime != null) calendar.setTime(activeTime);
+        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+            Calendar chosen = Calendar.getInstance();
+            chosen.setTime(activeTime == null ? new Date() : activeTime);
+            chosen.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            chosen.set(Calendar.MINUTE, minute);
+            chosen.set(Calendar.SECOND, 0);
+            chosen.set(Calendar.MILLISECOND, 0);
+            manualWatermarkTime = chosen.getTime();
+            screen.watermarkView().setDisplayTimeOverride(manualWatermarkTime);
+            toast("Đã cập nhật giờ watermark");
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
     }
 
     @Override public void onRefreshLocation() {
-        if (!locationController.start()) requestNeededPermissions();
+        EditText input = new EditText(this);
+        input.setSingleLine(false);
+        input.setMinLines(2);
+        input.setText(screen.watermarkView().getAddress());
+        input.setSelectAllOnFocus(false);
+        new AlertDialog.Builder(this)
+                .setTitle("Nhập vị trí watermark")
+                .setMessage("Vị trí này sẽ hiện ở preview và trong ảnh đã chụp.")
+                .setView(input)
+                .setNegativeButton("Hủy", null)
+                .setNeutralButton("Dùng vị trí hệ thống", (dialog, which) -> {
+                    manualAddress = null;
+                    screen.setLocationStatus("Đang lấy vị trí hệ thống…");
+                    if (!locationController.start()) requestNeededPermissions();
+                })
+                .setPositiveButton("Dùng vị trí này", (dialog, which) -> {
+                    String value = input.getText().toString().trim();
+                    if (value.isEmpty()) {
+                        toast("Vui lòng nhập vị trí");
+                        return;
+                    }
+                    manualAddress = value;
+                    screen.watermarkView().setAddress(value);
+                    screen.setLocationStatus("Đang dùng vị trí tự nhập");
+                })
+                .show();
     }
 
     @Override public void onOpenGallery() {
@@ -153,7 +200,8 @@ public final class MainActivity extends ComponentActivity implements
             return;
         }
         screen.setCaptureEnabled(false);
-        cameraEngine.capture(screen.watermarkView().getAddress());
+        cameraEngine.capture(screen.watermarkView().getAddress(),
+                screen.watermarkView().getDisplayTimeOverride());
     }
 
     @Override public void onOpenTemplates() {
@@ -173,10 +221,12 @@ public final class MainActivity extends ComponentActivity implements
     }
 
     @Override public void onLocationStatus(String status) {
+        if (manualAddress != null) return;
         screen.setLocationStatus(status);
     }
 
     @Override public void onAddressChanged(String address) {
+        if (manualAddress != null) return;
         screen.watermarkView().setAddress(address);
     }
 
@@ -194,6 +244,7 @@ public final class MainActivity extends ComponentActivity implements
     @Override public void onPhotoSaved(Uri uri) {
         runOnUiThread(() -> {
             latestPhoto = uri;
+            screen.setLatestPhoto(uri);
             screen.setCaptureEnabled(true);
             toast("Đã lưu ảnh có watermark vào DCIM/Camera");
         });
