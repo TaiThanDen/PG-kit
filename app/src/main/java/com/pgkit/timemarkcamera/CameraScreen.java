@@ -42,12 +42,18 @@ final class CameraScreen {
     private TextView locationState;
     private ImageButton flashButton;
     private Button shutter;
-    private SeekBar zoomSlider;
-    private TextView zoomValue;
-    private SeekBar exposureSlider;
+    private TextView zoomHalf;
+    private TextView zoomOne;
+    private TextView zoomTwo;
+    private FrameLayout focusExposureControl;
+    private SeekBar focusExposureSlider;
     private TextView exposureValue;
     private ImageView latestPhotoPreview;
     private View focusIndicator;
+    private final Runnable hideFocusControls = () -> {
+        if (focusIndicator != null) focusIndicator.setVisibility(View.GONE);
+        if (focusExposureControl != null) focusExposureControl.setVisibility(View.GONE);
+    };
 
     CameraScreen(ComponentActivity activity, Actions actions) {
         this.activity = activity;
@@ -116,13 +122,9 @@ final class CameraScreen {
 
     void setZoomRatio(float ratio) {
         if (!Float.isFinite(ratio)) return;
-        if (zoomSlider != null) {
-            int progress = Math.round((ratio - 0.5f) / 1.5f * zoomSlider.getMax());
-            zoomSlider.setProgress(Math.max(0, Math.min(zoomSlider.getMax(), progress)));
-        }
-        if (zoomValue != null) {
-            zoomValue.setText(String.format(java.util.Locale.US, "%.1fx", ratio));
-        }
+        applyZoomStyle(zoomHalf, Math.abs(ratio - 0.5f) < 0.08f);
+        applyZoomStyle(zoomOne, Math.abs(ratio - 1f) < 0.08f);
+        applyZoomStyle(zoomTwo, Math.abs(ratio - 2f) < 0.12f);
     }
 
     void setExposureValue(float ev) {
@@ -159,13 +161,10 @@ final class CameraScreen {
                 .scaleX(1f)
                 .scaleY(1f)
                 .setDuration(150L)
-                .withEndAction(() -> focusIndicator.animate()
-                        .alpha(0f)
-                        .setStartDelay(600L)
-                        .setDuration(200L)
-                        .withEndAction(() -> focusIndicator.setVisibility(View.GONE))
-                        .start())
                 .start();
+        showFocusExposureControl(x, y, size);
+        previewLayer.removeCallbacks(hideFocusControls);
+        previewLayer.postDelayed(hideFocusControls, 2500L);
     }
 
     private View createTopBar() {
@@ -214,58 +213,20 @@ final class CameraScreen {
     }
 
     private void addPreviewControls(FrameLayout preview) {
-        FrameLayout zoom = compactSlider("Thu phóng camera");
-        zoomValue = transparentLabel("1.0x", 12, Color.WHITE);
-        zoomValue.setGravity(Gravity.CENTER);
-        zoomValue.setTypeface(Typeface.DEFAULT_BOLD);
-        zoomSlider = verticalSlider();
-        zoomSlider.setProgress(Math.round(1f / 3f * zoomSlider.getMax()));
-        zoomSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float ratio = 0.5f + 1.5f * progress / seekBar.getMax();
-                zoomValue.setText(String.format(java.util.Locale.US, "%.1fx", ratio));
-                if (fromUser) actions.onZoomSelected(ratio);
-            }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
-            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
-        });
-        zoom.addView(zoomSlider, rotatedSliderParams());
-        zoom.addView(zoomValue, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(26), Gravity.TOP));
+        LinearLayout zoom = new LinearLayout(activity);
+        zoom.setOrientation(LinearLayout.VERTICAL);
+        zoom.setGravity(Gravity.CENTER);
+        zoomTwo = zoomButton("2", 2f, "Thu phóng 2 lần");
+        zoomOne = zoomButton("1x", 1f, "Thu phóng 1 lần");
+        zoomHalf = zoomButton("0.5", 0.5f, "Góc siêu rộng 0 phẩy 5 lần");
+        applyZoomStyle(zoomOne, true);
+        zoom.addView(zoomTwo, fixed(dp(48), dp(42)));
+        zoom.addView(zoomOne, fixed(dp(48), dp(48)));
+        zoom.addView(zoomHalf, fixed(dp(48), dp(42)));
         FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(52), dp(132),
-                Gravity.END | Gravity.BOTTOM);
+                Gravity.END | Gravity.CENTER_VERTICAL);
         zoomParams.rightMargin = dp(7);
-        zoomParams.bottomMargin = dp(128);
         preview.addView(zoom, zoomParams);
-
-        FrameLayout exposure = compactSlider("Điều chỉnh bù sáng");
-        exposureValue = transparentLabel("EV\n+0.0", 12, Color.WHITE);
-        exposureValue.setGravity(Gravity.CENTER);
-        exposureValue.setContentDescription("Mức bù sáng");
-        exposureSlider = verticalSlider();
-        exposureSlider.setProgress(exposureSlider.getMax() / 2);
-        exposureSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            private int previous = exposureSlider.getProgress();
-
-            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (!fromUser) {
-                    previous = progress;
-                    return;
-                }
-                int direction = Integer.compare(progress, previous);
-                if (direction != 0) actions.onExposureChanged(direction);
-                previous = progress;
-            }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
-            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
-        });
-        exposure.addView(exposureSlider, rotatedSliderParams());
-        exposure.addView(exposureValue, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(34), Gravity.TOP));
-        FrameLayout.LayoutParams exposureParams = new FrameLayout.LayoutParams(dp(52), dp(112),
-                Gravity.START | Gravity.CENTER_VERTICAL);
-        exposureParams.leftMargin = dp(6);
-        preview.addView(exposure, exposureParams);
 
         ImageButton edit = imageButton(R.drawable.ic_edit, "Chỉnh sửa watermark", Color.WHITE);
         edit.setOnClickListener(v -> actions.onEditWatermark());
@@ -296,6 +257,40 @@ final class CameraScreen {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(56), dp(56),
                 Gravity.START | Gravity.TOP);
         preview.addView(focusIndicator, params);
+
+        focusExposureControl = compactSlider("Điều chỉnh bù sáng tại điểm focus");
+        focusExposureControl.setVisibility(View.GONE);
+        exposureValue = transparentLabel("EV\n+0.0", 11, Color.WHITE);
+        exposureValue.setGravity(Gravity.CENTER);
+        exposureValue.setContentDescription("Mức bù sáng");
+        focusExposureSlider = verticalSlider();
+        focusExposureSlider.setProgress(focusExposureSlider.getMax() / 2);
+        focusExposureSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            private int previous = focusExposureSlider.getProgress();
+
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) {
+                    previous = progress;
+                    return;
+                }
+                int direction = Integer.compare(progress, previous);
+                if (direction != 0) actions.onExposureChanged(direction);
+                previous = progress;
+                keepFocusControlsVisible();
+            }
+
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {
+                keepFocusControlsVisible();
+            }
+
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {
+                keepFocusControlsVisible();
+            }
+        });
+        focusExposureControl.addView(focusExposureSlider, rotatedSliderParams());
+        focusExposureControl.addView(exposureValue, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(34), Gravity.TOP));
+        preview.addView(focusExposureControl, new FrameLayout.LayoutParams(dp(48), dp(116)));
     }
 
     private FrameLayout compactSlider(String description) {
@@ -303,6 +298,49 @@ final class CameraScreen {
         rail.setBackground(controlRailBackground());
         rail.setContentDescription(description);
         return rail;
+    }
+
+    private void showFocusExposureControl(float x, float y, int focusSize) {
+        if (focusExposureControl == null) return;
+        int controlWidth = dp(48);
+        int controlHeight = dp(116);
+        int rightSide = Math.round(x) + focusSize / 2 + dp(8);
+        int leftSide = Math.round(x) - focusSize / 2 - dp(8) - controlWidth;
+        int left = rightSide + controlWidth <= previewLayer.getWidth() ? rightSide : leftSide;
+        left = Math.max(0, Math.min(previewLayer.getWidth() - controlWidth, left));
+        int top = Math.round(y) - controlHeight / 2;
+        top = Math.max(0, Math.min(previewLayer.getHeight() - controlHeight, top));
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)
+                focusExposureControl.getLayoutParams();
+        params.leftMargin = left;
+        params.topMargin = top;
+        focusExposureControl.setLayoutParams(params);
+        focusExposureControl.setVisibility(View.VISIBLE);
+        focusExposureControl.bringToFront();
+    }
+
+    private void keepFocusControlsVisible() {
+        previewLayer.removeCallbacks(hideFocusControls);
+        previewLayer.postDelayed(hideFocusControls, 2500L);
+    }
+
+    private TextView zoomButton(String label, float ratio, String description) {
+        TextView button = transparentLabel(label, "1x".equals(label) ? 16 : 15, Color.WHITE);
+        button.setGravity(Gravity.CENTER);
+        button.setContentDescription(description);
+        button.setClickable(true);
+        button.setFocusable(true);
+        button.setOnClickListener(v -> actions.onZoomSelected(ratio));
+        return button;
+    }
+
+    private void applyZoomStyle(TextView button, boolean selected) {
+        if (button == null) return;
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.OVAL);
+        background.setColor(selected ? 0x33000000 : Color.TRANSPARENT);
+        if (selected) background.setStroke(dp(1), Color.WHITE);
+        button.setBackground(background);
     }
 
     private SeekBar verticalSlider() {

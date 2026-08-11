@@ -41,6 +41,12 @@ final class CameraGestureController {
                         previewView.performClick();
                         return true;
                     }
+
+                    @Override public void onLongPress(MotionEvent event) {
+                        // Keep the same metering path for a press-and-hold; the screen then
+                        // presents the temporary EV rail beside the selected focus point.
+                        listener.onTapToFocus(event.getX(), event.getY());
+                    }
                 });
         scaleDetector = new ScaleGestureDetector(context,
                 new ScaleGestureDetector.SimpleOnScaleGestureListener() {
