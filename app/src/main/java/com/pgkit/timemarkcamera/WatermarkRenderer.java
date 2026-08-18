@@ -43,6 +43,7 @@ final class WatermarkRenderer {
     private static Typeface timeTypeface = DEFAULT_TIME_TYPEFACE;
     private static Typeface textTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Typeface brandTypeface = DEFAULT_TEXT_TYPEFACE;
+    private static Typeface numbersTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Bitmap shieldBitmap;
 
     private WatermarkRenderer() {}
@@ -65,6 +66,11 @@ final class WatermarkRenderer {
                     "fonts/RobotoCondensed-Medium.ttf");
         } catch (RuntimeException ignored) {
             brandTypeface = DEFAULT_TEXT_TYPEFACE;
+        }
+        try {
+            numbersTypeface = context.getResources().getFont(R.font.roboto_medium_numbers);
+        } catch (RuntimeException ignored) {
+            numbersTypeface = DEFAULT_TEXT_TYPEFACE;
         }
         shieldBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_shield);
     }
@@ -205,7 +211,7 @@ final class WatermarkRenderer {
         drawText(canvas, "Time", wordmarkLeft, wordmarkBaseline, timeLogo);
         drawText(canvas, "mark", wordmarkLeft + timeWidth, wordmarkBaseline, markLogo);
 
-        Paint subtitle = savedPaint(SAVED_SUBTITLE, 32f * scale, textTypeface, scale);
+        Paint subtitle = savedPaint(SAVED_SUBTITLE, 32f * scale, numbersTypeface, scale);
         Rect subtitleBounds = textBounds("100% Chân thực", subtitle);
         subtitle.setTextScaleX(REFERENCE_SUBTITLE_WIDTH * scale
                 / Math.max(1f, subtitleBounds.width()));
