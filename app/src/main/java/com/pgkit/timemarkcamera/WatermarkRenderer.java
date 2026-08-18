@@ -27,7 +27,9 @@ final class WatermarkRenderer {
      * preview dp values or an independent horizontal/vertical percentage scale.
      */
     private static final int SAVED_YELLOW = Color.rgb(248, 194, 62);
-    private static final int SAVED_SUBTITLE = Color.argb(204, 255, 255, 255);
+    private static final int SAVED_SUBTITLE = Color.rgb(190, 190, 190);
+    private static final float REFERENCE_WORDMARK_WIDTH = 177f;
+    private static final float REFERENCE_SUBTITLE_WIDTH = 174f;
     // Insets only affect the yellow divider; date and weekday remain anchored in place.
     // Increase either value to shorten that end of the divider.
     private static final float DIVIDER_LINE_TOP_INSET = 3f;
@@ -41,7 +43,6 @@ final class WatermarkRenderer {
     private static Typeface timeTypeface = DEFAULT_TIME_TYPEFACE;
     private static Typeface textTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Typeface brandTypeface = DEFAULT_TEXT_TYPEFACE;
-    private static Typeface numbersTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Bitmap shieldBitmap;
 
     private WatermarkRenderer() {}
@@ -64,11 +65,6 @@ final class WatermarkRenderer {
                     "fonts/RobotoCondensed-Medium.ttf");
         } catch (RuntimeException ignored) {
             brandTypeface = DEFAULT_TEXT_TYPEFACE;
-        }
-        try {
-            numbersTypeface = context.getResources().getFont(R.font.roboto_medium_numbers);
-        } catch (RuntimeException ignored) {
-            numbersTypeface = DEFAULT_TEXT_TYPEFACE;
         }
         shieldBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_shield);
     }
@@ -164,7 +160,7 @@ final class WatermarkRenderer {
                     addressPaint);
         }
 
-        Paint timePaint = savedPaint(Color.WHITE, 137 * scale, timeTypeface, scale);
+        Paint timePaint = savedPaint(Color.WHITE, 137f * scale, timeTypeface, scale);
         String time = time(when);
         drawText(canvas, time, WatermarkLayoutSpec.TIME_LEFT * scale,
                 baselineForTextTop(time, timePaint, dividerTop), timePaint);
@@ -174,8 +170,8 @@ final class WatermarkRenderer {
         Paint divider = paint(SAVED_YELLOW, 1f, textTypeface);
         canvas.drawRect(dividerX, dividerTop, dividerX + WatermarkLayoutSpec.DIVIDER_WIDTH * scale,
                 dividerTop + WatermarkLayoutSpec.DIVIDER_HEIGHT * scale, divider);
-        Paint datePaint = savedPaint(Color.WHITE, 44.8f * scale, textTypeface, scale);
-        Paint weekdayPaint = savedPaint(Color.WHITE, 45f     * scale, textTypeface, scale);
+        Paint datePaint = savedPaint(Color.WHITE, 42f * scale, textTypeface, scale);
+        Paint weekdayPaint = savedPaint(Color.WHITE, 41.5f * scale, textTypeface, scale);
         datePaint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x66000000);
         weekdayPaint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x66000000);
         String dateText = date(when);
@@ -196,20 +192,23 @@ final class WatermarkRenderer {
     private static void drawBrand(Canvas canvas, int width, int height, float scale) {
         Paint timeLogo = savedPaint(SAVED_YELLOW, 40f * scale, brandTypeface, scale);
         timeLogo.setTextAlign(Paint.Align.LEFT);
+        Rect wordmarkBounds = textBounds("Timemark", timeLogo);
+        timeLogo.setTextScaleX(REFERENCE_WORDMARK_WIDTH * scale
+                / Math.max(1f, wordmarkBounds.width()));
         Paint markLogo = new Paint(timeLogo);
         markLogo.setColor(Color.WHITE);
         float timeWidth = timeLogo.measureText("Time");
-        Rect wordmarkBounds = textBounds("Timemark", timeLogo);
+        wordmarkBounds = textBounds("Timemark", timeLogo);
         float wordmarkBaseline = baselineForTextBottom("Timemark", timeLogo,
                 height - WatermarkLayoutSpec.WORDMARK_BOTTOM * scale);
         float wordmarkLeft = width - WatermarkLayoutSpec.WORDMARK_RIGHT * scale - wordmarkBounds.right;
         drawText(canvas, "Time", wordmarkLeft, wordmarkBaseline, timeLogo);
         drawText(canvas, "mark", wordmarkLeft + timeWidth, wordmarkBaseline, markLogo);
 
-        Paint subtitle = savedPaint(SAVED_SUBTITLE, 32f * scale, numbersTypeface, scale);
+        Paint subtitle = savedPaint(SAVED_SUBTITLE, 32f * scale, textTypeface, scale);
         Rect subtitleBounds = textBounds("100% Chân thực", subtitle);
-        subtitle.setTextSize(subtitle.getTextSize() * wordmarkBounds.width()
-                / Math.max(1, subtitleBounds.width()));
+        subtitle.setTextScaleX(REFERENCE_SUBTITLE_WIDTH * scale
+                / Math.max(1f, subtitleBounds.width()));
         subtitleBounds = textBounds("100% Chân thực", subtitle);
         float subtitleLeft = width - WatermarkLayoutSpec.SUBTITLE_RIGHT * scale
                 - subtitleBounds.right;
@@ -222,15 +221,12 @@ final class WatermarkRenderer {
                                          String code) {
         Paint verified = savedPaint(Color.WHITE, 30f * scale, textTypeface, scale);
         verified.setTextAlign(Paint.Align.LEFT);
-        Paint verifiedOutline = paint(Color.BLACK, verified.getTextSize(), textTypeface);
-        verifiedOutline.setTextAlign(Paint.Align.LEFT);
-        verifiedOutline.setStyle(Paint.Style.STROKE);
-        verifiedOutline.setStrokeWidth(1.5f * scale);
-        verifiedOutline.setStrokeJoin(Paint.Join.ROUND);
         String verificationText = code + "  Timemark Verified";
-        float iconWidth = verified.getTextSize() * 0.60f;
         float iconHeight = verified.getTextSize() * 0.64f;
-        float iconGap = 10f * scale;
+        float iconWidth = shieldBitmap == null || shieldBitmap.getHeight() == 0
+                ? iconHeight * 0.86f
+                : iconHeight * shieldBitmap.getWidth() / shieldBitmap.getHeight();
+        float iconGap = 7f * scale;
         Rect textBounds = textBounds(verificationText, verified);
         float groupRight = iconWidth + iconGap + textBounds.right;
         float groupLeft = 0f;
@@ -247,7 +243,6 @@ final class WatermarkRenderer {
                 iconHeight,
                 scale);
         float textX = groupStart + iconWidth + iconGap;
-        drawText(canvas, verificationText, textX, baseline, verifiedOutline);
         drawText(canvas, verificationText, textX, baseline, verified);
         canvas.restore();
     }
@@ -256,7 +251,7 @@ final class WatermarkRenderer {
                                    float width, float height, float scale) {
         if (shieldBitmap == null || shieldBitmap.isRecycled()) return;
         Paint iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        iconPaint.setColorFilter(new PorterDuffColorFilter(0xB3FFFFFF , PorterDuff.Mode.SRC_IN));
+        iconPaint.setColorFilter(new PorterDuffColorFilter(0xCCFFFFFF, PorterDuff.Mode.SRC_IN));
         iconPaint.setShadowLayer(2f * scale, 0f, 1f * scale, 0x33000000);
         float halfWidth = width / 2f;
         float halfHeight = height / 2f;
