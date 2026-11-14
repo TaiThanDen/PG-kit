@@ -89,15 +89,41 @@ final class WatermarkRenderer {
         }
     }
 
+    static void drawLive(Canvas canvas, int width, int height, Date when, String address,
+                         float density, WatermarkTemplate.Snapshot template) {
+        if (template != null && TemplateWatermarkRenderer.drawLive(
+                canvas, width, height, when, address, density, template)) return;
+        drawLive(canvas, width, height, when, address, density);
+    }
+
+    static void drawSaved(Canvas canvas, int width, int height, Date when, String address,
+                          String verificationCode, WatermarkTemplate.Snapshot template) {
+        if (template != null && TemplateWatermarkRenderer.drawSaved(
+                canvas, width, height, when, address, template)) return;
+        drawSaved(canvas, width, height, when, address, verificationCode);
+    }
+
     static void drawLive(Canvas canvas, int width, int height, Date when, String address, float density) {
         TimeLocationWatermark.draw(canvas, width, height, density, time(when), date(when),
                 weekday(when), address, timeTypeface, textTypeface);
     }
 
+    static void drawStyled34(Canvas canvas, int width, int height, Date when, String address,
+                             float density, WatermarkTemplate.Snapshot template) {
+        TimeLocationWatermark.drawStyled(canvas, width, height, density, time(when), date(when),
+                weekday(when), address, timeTypeface, textTypeface, template.sizeScale,
+                template.textColor, template.accentColor,
+                template.field(2) != null && template.field(2).enabled);
+    }
+
     static void drawSaved(Bitmap bitmap, Date when, String address, String verificationCode) {
-        Canvas canvas = new Canvas(bitmap);
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
+        drawSaved(new Canvas(bitmap), bitmap.getWidth(), bitmap.getHeight(), when, address,
+                verificationCode);
+    }
+
+    /** Draws the exported watermark on any output canvas, including a CameraX video frame. */
+    static void drawSaved(Canvas canvas, int width, int height, Date when, String address,
+                          String verificationCode) {
         float scale = WatermarkLayoutSpec.scaleFor(width, height);
         float dividerTop = WatermarkLayoutSpec.dividerTop(height, scale);
 

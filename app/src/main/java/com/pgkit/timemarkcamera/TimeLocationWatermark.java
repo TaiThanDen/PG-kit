@@ -21,6 +21,14 @@ final class TimeLocationWatermark {
     static void draw(Canvas canvas, int width, int height, float density, String time,
                      String date, String weekday, String address, Typeface clockFont,
                      Typeface textFont) {
+        drawStyled(canvas, width, height, density, time, date, weekday, address, clockFont,
+                textFont, 1f, Color.WHITE, WatermarkRenderer.YELLOW, true);
+    }
+
+    static void drawStyled(Canvas canvas, int width, int height, float density, String time,
+                           String date, String weekday, String address, Typeface clockFont,
+                           Typeface textFont, float scale, int foreground, int accent,
+                           boolean showLocation) {
         if (width <= 0 || height <= 0 || density <= 0) return;
         Entry entry = CACHE.get();
         if (entry == null || !entry.matches(width, density, time, date, weekday, address,
@@ -28,7 +36,11 @@ final class TimeLocationWatermark {
             entry = new Entry(width, density, time, date, weekday, address, clockFont, textFont);
             CACHE.set(entry);
         }
-        entry.draw(canvas, height);
+        int save = canvas.save();
+        canvas.translate(entry.margin * (1 - scale), (height - entry.margin) * (1 - scale));
+        canvas.scale(scale, scale);
+        entry.draw(canvas, height, foreground, accent, showLocation);
+        canvas.restoreToCount(save);
     }
 
     private static int dp(float value, float density) {
@@ -118,25 +130,28 @@ final class TimeLocationWatermark {
                     && this.clockFont == clockFont && this.textFont == textFont;
         }
 
-        void draw(Canvas canvas, int height) {
-            int top = height - margin - headerHeight - location.getHeight();
+        void draw(Canvas canvas, int height, int foreground, int accent, boolean showLocation) {
+            int top = height - margin - headerHeight - (showLocation ? location.getHeight() : 0);
             TextPaint clockPaint = clock.getPaint();
             clockPaint.setStyle(Paint.Style.STROKE);
             clockPaint.setStrokeWidth(dp(.5f, density));
             clockPaint.setColor(0x80000000);
             drawLayout(canvas, clock, margin, top);
             clockPaint.setStyle(Paint.Style.FILL);
-            clockPaint.setColor(Color.WHITE);
+            clockPaint.setColor(foreground);
             drawLayout(canvas, clock, margin, top);
             Paint divider = new Paint();
-            divider.setColor(WatermarkRenderer.YELLOW);
+            divider.setColor(accent);
             int dividerTop = top + Math.round((headerHeight - dividerHeight) / 2f);
             canvas.drawRect(dividerX, dividerTop, dividerX + dividerWidth,
                     dividerTop + dividerHeight, divider);
+            dateLine.getPaint().setColor(foreground);
+            weekdayLine.getPaint().setColor(foreground);
+            location.getPaint().setColor(foreground);
             drawLayout(canvas, dateLine, detailX, top + detailInset);
             drawLayout(canvas, weekdayLine, detailX,
                     top + headerHeight - detailInset - weekdayLine.getHeight());
-            drawLayout(canvas, location, margin + locationInset, top + headerHeight);
+            if (showLocation) drawLayout(canvas, location, margin + locationInset, top + headerHeight);
         }
     }
 }

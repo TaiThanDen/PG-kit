@@ -1,0 +1,2243 @@
+[
+  {
+    "id": "150",
+    "baseId": "150",
+    "name": "Outdoor",
+    "items": [
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 11,
+        "title": "Title",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#FFC233",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "10",
+    "baseId": "10",
+    "name": "Custom Text",
+    "items": [
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 11,
+        "title": "Title",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#FFC233",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "service01",
+    "baseId": "10",
+    "name": "Service",
+    "items": [
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 11,
+        "title": "Service name",
+        "content": "Input content",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 1000000001,
+        "title": "👉🏻",
+        "content": "1. Service details",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 1000000002,
+        "title": "👉🏻",
+        "content": "2. Service details",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 1000000003,
+        "title": "👉🏻",
+        "content": "3. Service details",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 1000000004,
+        "title": "☎️",
+        "content": "0⃣️9⃣️7⃣️4⃣️8⃣️8⃣️2⃣️2⃣️2⃣️7⃣️",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 1000000005,
+        "title": "☎️",
+        "content": "0⃣️9⃣️7⃣️4⃣️8⃣️8⃣️2⃣️2⃣️2⃣️7⃣️",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": true,
+        "showArea": 2
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#FFC233",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "60",
+    "baseId": "60",
+    "name": "Location",
+    "items": [
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#FFC233",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "130",
+    "baseId": "130",
+    "name": "Location",
+    "items": [
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 6,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#FFC233",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "21",
+    "baseId": "21",
+    "name": "Clock in",
+    "items": [
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "CLOCK IN",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "0.5",
+      "color": "#B2FC9216",
+      "id": 23,
+      "switchStatus": true,
+      "sizeScale": "1.0",
+      "textColor": "#FFFFFF",
+      "fontScale": "1.0",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "20",
+    "baseId": "20",
+    "name": "Work Report",
+    "items": [
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "Work Report",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 14,
+        "title": "Project",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 15,
+        "title": "Area",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 16,
+        "title": "Inspection",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 17,
+        "title": "Inspector",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "0.5",
+      "color": "#B2FC9216",
+      "id": 23,
+      "switchStatus": true,
+      "sizeScale": "1.0",
+      "textColor": "#000000",
+      "fontScale": "1.0",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "110",
+    "baseId": "110",
+    "name": "Project",
+    "items": [
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "DEVELOPER",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 14,
+        "title": "Project",
+        "content": "Please input...",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1201,
+        "title": "Construction content",
+        "content": "Please input...",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1202,
+        "title": "Executor",
+        "content": "Please input...",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 15,
+        "title": "Area",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "0.5",
+      "color": "#B2FC9216",
+      "id": 23,
+      "switchStatus": true,
+      "sizeScale": "1.0",
+      "textColor": "#000000",
+      "fontScale": "1.0",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "100",
+    "baseId": "100",
+    "name": "Sheet",
+    "items": [
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "Work Record",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      }
+    ],
+    "theme": {
+      "alpha": "1.0",
+      "color": "#66000000",
+      "id": 23,
+      "switchStatus": true,
+      "sizeScale": "1.0",
+      "textColor": "#FFFFFF",
+      "fontScale": "1.0",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "80",
+    "baseId": "80",
+    "name": "Completed",
+    "items": [
+      {
+        "id": 550,
+        "title": "Company",
+        "content": "Delivery service",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "Completed",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 6,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 510,
+        "title": "Staff Name",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 520,
+        "title": "Work ID",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "1.0",
+      "color": "#391A13",
+      "id": 23,
+      "switchStatus": true,
+      "sizeScale": "1.0",
+      "textColor": "#FFFFFF",
+      "fontScale": "1.0",
+      "widthScale": "1.0",
+      "iconStyle": "2"
+    }
+  },
+  {
+    "id": "dasher01",
+    "baseId": "80",
+    "name": "dasher01",
+    "items": [
+      {
+        "id": 550,
+        "title": "Company",
+        "content": "Delivery service",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "[{\"content\":\"file:///android_asset/dasher/bc_default_avatar.png\",\"id\":60001,\"logoTintColor\":\"\",\"switchStatus\":true,\"title\":\"Avatar\"},{\"content\":\"Delivered by ..\",\"id\":60002,\"logoTintColor\":\"\",\"switchStatus\":true,\"title\":\"Title\"},{\"content\":\"Thanks & Enjoy\",\"id\":60003,\"logoTintColor\":\"\",\"switchStatus\":true,\"title\":\"Subtitle\"},{\"content\":\"file:///android_asset/dasher/bc_doordash.png\",\"id\":60004,\"logoTintColor\":\"#ffff0000\",\"switchStatus\":true,\"title\":\"Logo\"}]",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "⭐️ ⭐️ ⭐️ ⭐️ ⭐️\nTIPS & REVIEWS \nKEEP ME DRIVING",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 6,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 510,
+        "title": "Staff Name",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 520,
+        "title": "Work ID",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "0.5",
+      "color": "#FF0000",
+      "id": 23,
+      "switchStatus": true,
+      "sizeScale": "1.0",
+      "textColor": "#FFFFFF",
+      "fontScale": "1.0",
+      "widthScale": "1.0",
+      "iconStyle": "1"
+    }
+  },
+  {
+    "id": "34",
+    "baseId": "34",
+    "name": "Time&Location",
+    "items": [
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 132,
+        "editType": 6,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 13,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#FFC233",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "map01",
+    "baseId": "34",
+    "name": "Map",
+    "items": [
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 132,
+        "editType": 6,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 13,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true
+      },
+      {
+        "id": 640,
+        "title": "Kode Foto: verifikasi keaslian",
+        "content": "",
+        "style": 0,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#FFC233",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "90",
+    "baseId": "90",
+    "name": "Cleaned",
+    "items": [
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "Cleaned",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 530,
+        "title": "Cleaner",
+        "content": "",
+        "style": 600,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false,
+        "showArea": 2
+      },
+      {
+        "id": 540,
+        "title": "Workplace",
+        "content": "",
+        "style": 600,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false,
+        "showArea": 2
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": true,
+        "showArea": 2
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#004B92",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "120",
+    "baseId": "120",
+    "name": "Construction Record",
+    "items": [
+      {
+        "id": 13,
+        "title": "Project",
+        "content": "Construction Record",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1211,
+        "title": "Developer",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1210,
+        "title": "Construction Description",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1203,
+        "title": "Construction Area",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1204,
+        "title": "Operator",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1205,
+        "title": "Inspector",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1206,
+        "title": "Inspection",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false,
+        "hourFormat": 0
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false,
+        "tempUnits": 0
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "地点缩略图",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1208,
+        "title": "Construction Management",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1209,
+        "title": "Design Firm",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "0.5",
+      "color": "#B2FC9216",
+      "id": 23,
+      "switchStatus": true,
+      "sizeScale": "1.0",
+      "textColor": "#000000",
+      "fontScale": "1.0",
+      "widthScale": "1.0"
+    }
+  },
+  {
+    "id": "43",
+    "baseId": "43",
+    "name": "Patrol",
+    "items": [
+      {
+        "id": 13,
+        "title": "Title",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1301,
+        "title": "Subtitle",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 1213,
+        "title": "Work Content",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1214,
+        "title": "Inspector",
+        "content": "",
+        "style": 0,
+        "editType": 3,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 88,
+        "title": "Styled Note",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 1,
+        "title": "Time",
+        "content": "",
+        "style": 130,
+        "editType": 0,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 2,
+        "title": "Address",
+        "content": "",
+        "style": 300,
+        "editType": 4,
+        "switchStatus": true,
+        "userCustom": false
+      },
+      {
+        "id": 4,
+        "title": "Weather",
+        "content": "",
+        "style": 200,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 3,
+        "title": "Lat/Long",
+        "content": "",
+        "style": 500,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 210,
+        "title": "Map",
+        "content": "",
+        "style": 2100,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 5,
+        "title": "Altitude",
+        "content": "",
+        "style": 400,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 6,
+        "title": "Compass",
+        "content": "",
+        "style": 600,
+        "editType": 0,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 630,
+        "title": "Tags",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 620,
+        "title": "Business Card",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      },
+      {
+        "id": 12,
+        "title": "Notes",
+        "content": "",
+        "style": 0,
+        "editType": 2,
+        "switchStatus": false,
+        "userCustom": false
+      }
+    ],
+    "theme": {
+      "alpha": "1",
+      "color": "#0023FF",
+      "fontScale": "1.0",
+      "id": 110,
+      "sizeScale": "1.0",
+      "switchStatus": true,
+      "textColor": "#FFFFFF",
+      "widthScale": "1.0"
+    }
+  }
+]
