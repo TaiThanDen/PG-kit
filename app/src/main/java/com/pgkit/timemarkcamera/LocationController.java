@@ -22,6 +22,7 @@ final class LocationController implements LocationListener {
     interface Callback {
         void onLocationStatus(String status);
         void onAddressChanged(String address);
+        void onLocationFix(Location location);
     }
 
     private final ComponentActivity activity;
@@ -78,6 +79,7 @@ final class LocationController implements LocationListener {
     }
 
     private void resolveAddress(Location location) {
+        callback.onLocationFix(new Location(location));
         String coordinates = String.format(Locale.US, "%.6f, %.6f",
                 location.getLatitude(), location.getLongitude());
         callback.onAddressChanged(coordinates);

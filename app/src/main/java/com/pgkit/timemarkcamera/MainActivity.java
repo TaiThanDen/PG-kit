@@ -14,13 +14,10 @@ import android.view.WindowInsetsController;
 import android.widget.Toast;
 import android.widget.EditText;
 import android.app.AlertDialog;
-import android.app.TimePickerDialog;
 
 import androidx.activity.ComponentActivity;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 /** Coordinates permissions, lifecycle, camera, location and the portrait camera screen. */
@@ -33,7 +30,8 @@ public final class MainActivity extends ComponentActivity implements
     private CameraGestureController gestureController;
     private LocationController locationController;
     private Uri latestPhoto;
-    private Date manualWatermarkTime;
+    private WatermarkTemplate.Snapshot watermarkTemplate;
+    private int latestCameraRotation;
     private String manualAddress;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +40,9 @@ public final class MainActivity extends ComponentActivity implements
         configureSystemBars();
 
         screen = new CameraScreen(this, this);
+        String storedTemplate = getPreferences(MODE_PRIVATE).getString("watermark_template", null);
+        watermarkTemplate = WatermarkTemplate.fromJson(this, storedTemplate);
+        screen.watermarkView().setTemplate(watermarkTemplate);
         locationController = new LocationController(this, this);
         cameraEngine = new CameraEngine(this, screen.previewView(), this,
                 VerificationCodeStore.obtain(this));
@@ -132,22 +133,7 @@ public final class MainActivity extends ComponentActivity implements
     }
 
     @Override public void onEditWatermark() {
-        Date activeTime = manualWatermarkTime == null
-                ? screen.watermarkView().getDisplayTimeOverride()
-                : new Date(manualWatermarkTime.getTime());
-        Calendar calendar = Calendar.getInstance();
-        if (activeTime != null) calendar.setTime(activeTime);
-        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-            Calendar chosen = Calendar.getInstance();
-            chosen.setTime(activeTime == null ? new Date() : activeTime);
-            chosen.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            chosen.set(Calendar.MINUTE, minute);
-            chosen.set(Calendar.SECOND, 0);
-            chosen.set(Calendar.MILLISECOND, 0);
-            manualWatermarkTime = chosen.getTime();
-            screen.watermarkView().setDisplayTimeOverride(manualWatermarkTime);
-            toast("Đã cập nhật giờ watermark");
-        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
+        showWatermarkTemplates(true);
     }
 
     @Override public void onRefreshLocation() {
@@ -201,11 +187,24 @@ public final class MainActivity extends ComponentActivity implements
         }
         screen.setCaptureEnabled(false);
         cameraEngine.capture(screen.watermarkView().getAddress(),
-                screen.watermarkView().getDisplayTimeOverride());
+                watermarkTemplate);
     }
 
     @Override public void onOpenTemplates() {
-        toast("Đang dùng bản mẫu giống ảnh tham chiếu");
+        showWatermarkTemplates(false);
+    }
+
+    private void showWatermarkTemplates(boolean edit) {
+        WatermarkTemplateSheet sheet = new WatermarkTemplateSheet(this, watermarkTemplate,
+                () -> screen.watermarkView().getAddress(),
+                bottom -> screen.watermarkView().setVisibleBottomOnScreen(bottom),
+                () -> latestCameraRotation, updated -> {
+                    watermarkTemplate = updated;
+                    screen.watermarkView().setTemplate(updated);
+                    getPreferences(MODE_PRIVATE).edit()
+                            .putString("watermark_template", updated.toJson()).apply();
+                });
+        sheet.show(edit);
     }
 
     @Override public void onZoomSelected(float ratio) {
@@ -225,6 +224,12 @@ public final class MainActivity extends ComponentActivity implements
         screen.setLocationStatus(status);
     }
 
+    @Override public void onLocationFix(android.location.Location location) {
+        watermarkTemplate = watermarkTemplate.withSensorData(location.getLatitude(),
+                location.getLongitude(), location.hasAltitude() ? location.getAltitude() : null, null);
+        screen.watermarkView().setTemplate(watermarkTemplate);
+    }
+
     @Override public void onAddressChanged(String address) {
         if (manualAddress != null) return;
         screen.watermarkView().setAddress(address);
@@ -238,6 +243,7 @@ public final class MainActivity extends ComponentActivity implements
     }
 
     @Override public void onCameraRotationChanged(int rotation) {
+        latestCameraRotation = rotation;
         screen.watermarkView().setCameraRotation(rotation);
     }
 

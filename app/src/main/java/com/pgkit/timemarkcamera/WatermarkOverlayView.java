@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.Surface;
 
 import java.util.Date;
+import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 public final class WatermarkOverlayView extends View {
     static final String DEFAULT_ADDRESS = "Đang xác định vị trí…";
@@ -15,7 +17,11 @@ public final class WatermarkOverlayView extends View {
     private String address = DEFAULT_ADDRESS;
     private int cameraRotation = Surface.ROTATION_0;
     private final Date currentTime = new Date();
-    private Date displayTimeOverride;
+    private WatermarkTemplate.Snapshot template;
+    private int visibleBottomOnScreen = Integer.MAX_VALUE;
+    private final int[] screenPosition = new int[2];
+    private Supplier<String> addressSource;
+    private IntSupplier rotationSource;
     private final Matrix orientationMatrix = new Matrix();
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
@@ -39,23 +45,21 @@ public final class WatermarkOverlayView extends View {
 
     public String getAddress() { return address; }
 
-    /**
-     * Uses {@code value} for the live watermark until cleared. Passing {@code null} restores
-     * the device clock. The supplied mutable Date is copied so later caller changes cannot
-     * alter the preview unexpectedly.
-     */
-    public void setDisplayTimeOverride(Date value) {
-        displayTimeOverride = value == null ? null : new Date(value.getTime());
+    public void setTemplate(WatermarkTemplate.Snapshot value) {
+        template = value;
         invalidate();
     }
 
-    public void clearDisplayTimeOverride() {
-        setDisplayTimeOverride(null);
+    /** Moves the watermark above a template sheet without resizing or rebinding the camera. */
+    public void setVisibleBottomOnScreen(int bottom) {
+        visibleBottomOnScreen = bottom;
+        invalidate();
     }
 
-    /** Returns a defensive snapshot of the active override, or {@code null} for device time. */
-    public Date getDisplayTimeOverride() {
-        return displayTimeOverride == null ? null : new Date(displayTimeOverride.getTime());
+    void setLiveSources(Supplier<String> addressSource, IntSupplier rotationSource) {
+        this.addressSource = addressSource;
+        this.rotationSource = rotationSource;
+        invalidate();
     }
 
     public void setCameraRotation(int rotation) {
@@ -76,11 +80,18 @@ public final class WatermarkOverlayView extends View {
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        currentTime.setTime(displayTimeOverride == null
-                ? System.currentTimeMillis()
-                : displayTimeOverride.getTime());
+        if (addressSource != null) {
+            String value = addressSource.get();
+            if (value != null) address = value;
+        }
+        if (rotationSource != null) cameraRotation = rotationSource.getAsInt();
+        currentTime.setTime(System.currentTimeMillis());
         int viewWidth = getWidth();
         int viewHeight = getHeight();
+        if (visibleBottomOnScreen != Integer.MAX_VALUE) {
+            getLocationOnScreen(screenPosition);
+            viewHeight = Math.min(viewHeight, Math.max(0, visibleBottomOnScreen - screenPosition[1]));
+        }
         if (viewWidth == 0 || viewHeight == 0) return;
 
         // Keep the renderer in the portrait coordinate system. DeviceOrientation owns the full
@@ -90,7 +101,7 @@ public final class WatermarkOverlayView extends View {
         int checkpoint = canvas.save();
         canvas.concat(orientationMatrix);
         WatermarkRenderer.drawLive(canvas, viewWidth, viewHeight, currentTime, address,
-                getResources().getDisplayMetrics().density);
+                getResources().getDisplayMetrics().density, template);
         canvas.restoreToCount(checkpoint);
     }
 }

@@ -178,18 +178,14 @@ final class CameraEngine {
         capture(address, null);
     }
 
-    /**
-     * Snapshots the optional manually selected watermark time at the instant the shutter is
-     * pressed. A null value deliberately preserves the normal device-clock behaviour.
-     */
-    void capture(String address, Date displayTimeOverride) {
+    /** Snapshots device time and immutable template settings when the shutter is pressed. */
+    void capture(String address, WatermarkTemplate.Snapshot template) {
         ImageCapture capture = imageCapture;
         if (!ready || capture == null) {
             callback.onCameraError("Camera chưa sẵn sàng");
             return;
         }
-        final Date requestedTime = displayTimeOverride == null
-                ? new Date() : new Date(displayTimeOverride.getTime());
+        final Date requestedTime = new Date();
         final String requestedAddress = address == null || address.trim().isEmpty()
                 ? "Chưa xác định vị trí" : address.trim();
         final int requestedRotation = sensorRotation;
@@ -199,7 +195,7 @@ final class CameraEngine {
             ImageCapture.OutputFileOptions output = new ImageCapture.OutputFileOptions.Builder(rawFile).build();
             capture.takePicture(output, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
                 @Override public void onImageSaved(ImageCapture.OutputFileResults result) {
-                    renderAndSave(rawFile, requestedTime, requestedAddress, requestedRotation);
+                    renderAndSave(rawFile, requestedTime, requestedAddress, requestedRotation, template);
                 }
 
                 @Override public void onError(ImageCaptureException exception) {
@@ -266,7 +262,7 @@ final class CameraEngine {
     }
 
     private void renderAndSave(File rawFile, Date requestedTime, String requestedAddress,
-                               int requestedRotation) {
+                               int requestedRotation, WatermarkTemplate.Snapshot template) {
         Bitmap decoded = null;
         Bitmap oriented = null;
         Bitmap mutable = null;
@@ -283,8 +279,8 @@ final class CameraEngine {
             mutable = oriented.copy(Bitmap.Config.ARGB_8888, true);
             if (mutable == null) throw new IllegalStateException("Không tạo được bitmap để render");
             if (mutable != oriented) oriented.recycle();
-            WatermarkRenderer.drawSaved(mutable, requestedTime, requestedAddress,
-                    verificationCode);
+            WatermarkRenderer.drawSaved(new android.graphics.Canvas(mutable), mutable.getWidth(),
+                    mutable.getHeight(), requestedTime, requestedAddress, verificationCode, template);
             Uri saved = saveBitmap(mutable, requestedTime, requestedAddress);
             callback.onPhotoSaved(saved);
         } catch (Exception e) {
