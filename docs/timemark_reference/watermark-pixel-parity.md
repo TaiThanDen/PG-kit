@@ -142,3 +142,18 @@ The shell fixture in `scripts/android/TimeLocationLayoutProbe.java` calls the ac
 Outputs: `pixel/native34-layout-comparison.json`, `original-layout.png`, `candidate-layout.png`, `difference-layout.png` (ignored local evidence). This is a significant improvement over the earlier glyph fit, which cropped and aligned glyphs and did not exercise the complete application layout. Camera background pixels, antialiasing, outline/shadow RGBA, alternate settings, JPEG output and other templates remain outside this metric. Do not convert it into a claim that the whole app is pixel-identical.
 
 The debug APK with the native template-34 layout was installed successfully as `com.pgkit.timemarkcamera.codextest`, started on the real phone and visually inspected. A capture produced a readable 2448x3264 JPEG with the separate existing saved-watermark path; the camera-to-JPEG flow works, but that does not validate its fidelity. No production time was fixed and no orientation mapping was changed.
+
+## Viewport and real-phone orientation verification
+
+`PortraitPreviewFrame` measures a 3:4 portrait camera viewport when available space permits, reserving at least 200 dp for controls on short screens. The bottom panel fills the remaining space. The real phone now has a 1080x1440 preview ending at y=1696, matching the original capture rather than the previous y=1652 endpoint. The emulator also reports 1080x1440; its absolute y differs because its status-bar inset is different.
+
+On 2026-11-14 at 19:00–19:03, the user physically held the connected phone in all four requested orientations. The newer test APK installed successfully. Both preview screenshots and saved JPEGs were inspected. The Activity/header/bottom controls remained portrait, preview watermarks followed 0/90/180/270 orientation (including inverted portrait), and saved scenes/text were upright with normalized pixels and no EXIF orientation dependency:
+
+| Physical hold | JPEG pixel size |
+| --- | --- |
+| Portrait | 2448x3264 |
+| Landscape, top edge left | 3264x2448 |
+| Landscape, top edge right | 3264x2448 |
+| Inverted portrait | 2448x3264 |
+
+Ignored captures and dimensions: `reference_app/v10.0.311/qa-native34/`. This validates the default template-34 camera flow for this device; it does not validate pixel parity of JPEGs or all templates. In one landscape preview, fixed edit/location controls overlap the rotated watermark; that visual state still needs comparison against the original. No orientation source or mapping was changed.

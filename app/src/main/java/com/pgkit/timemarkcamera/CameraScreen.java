@@ -77,10 +77,10 @@ final class CameraScreen {
         root.addView(createTopBar(), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
 
-        previewLayer = new FrameLayout(activity);
+        previewLayer = new PortraitPreviewFrame(activity);
         previewLayer.setBackgroundColor(Color.rgb(28, 28, 28));
         root.addView(previewLayer, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         previewView = new PreviewView(activity);
         previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
@@ -94,7 +94,7 @@ final class CameraScreen {
         addPreviewControls(previewLayer);
 
         root.addView(createBottomPanel(), new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(250)));
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
     }
 
     PreviewView previewView() {
