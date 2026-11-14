@@ -52,7 +52,7 @@ Source identities in the exported bundle are authoritative if a future engine se
 | Shadow | Text style: dx 0, dy 1.5, radius 3.5, black alpha 0.4 | Compare antialiasing/shadow separately from the solid glyph mask |
 | Outline | `StrokeTextView` has a second TextView with stroke Paint, measured/layout separately | A single Canvas text call omits part of the original rendering |
 
-The production renderer currently uses 38 dp time, 16 dp secondary text, manual baseline offsets and greedy address wrapping. Those choices require replacement by the observed layout behavior, not another screenshot-only constant adjustment.
+Before the native-layout implementation below, the renderer used 38 dp time, 16 dp secondary text, manual baseline offsets and greedy address wrapping. Those choices were replaced for the default template-34 live camera path.
 
 ## Measured original state at 1080 × 2400
 
@@ -122,3 +122,23 @@ python3 scripts/compare_watermark_glyphs.py \
 ```
 
 Only APK-derived resources, REA results and original-app captures establish original behavior. The current clone screenshots and reconstructed UI are implementation artifacts, not reference evidence.
+
+## Native template-34 implementation checkpoint — 2026-11-14
+
+`TimeLocationWatermark` now uses Android StaticLayout, the packaged fonts, native text flags, font padding and line breaking. REA `x50.d.<init>` confirms address size Q3 defaults to 15 dp. `x50.d.D` computes `(widthPixels / density) / 375`, explaining why multiplying the nominal 45 dp clock by physical density alone was insufficient. The implementation rounds dp to pixels **before** applying this width normalization, as the original binding does. It preserves the empty seconds container's 4 dp margin and the divider's relative 6 dp margin.
+
+Additional REA observations are retained in `pixel/rea-native34-implementation.json`. `o.C` only changes the top margin; it does not remove the address's 3 dp start padding. The clock outline width comes from `getDimensionPixelSize`, so the half-dp attribute rounds to an integer pixel. Shadow attributes are raw floats in pixels.
+
+The shell fixture in `scripts/android/TimeLocationLayoutProbe.java` calls the actual application's layout class. With reference strings and the same phone (1080x1440 preview, 450 dpi), `scripts/compare_time_location_layout.py` measured the following **without alignment or resizing**:
+
+| Region | Solid foreground IoU | Absolute ink bounds |
+| --- | --- | --- |
+| Clock | 1.0 | identical |
+| Date | 1.0 | identical |
+| Weekday | 1.0 | identical |
+| Address (both lines) | 0.9998486 | identical |
+| Yellow divider | 1.0 | identical |
+
+Outputs: `pixel/native34-layout-comparison.json`, `original-layout.png`, `candidate-layout.png`, `difference-layout.png` (ignored local evidence). This is a significant improvement over the earlier glyph fit, which cropped and aligned glyphs and did not exercise the complete application layout. Camera background pixels, antialiasing, outline/shadow RGBA, alternate settings, JPEG output and other templates remain outside this metric. Do not convert it into a claim that the whole app is pixel-identical.
+
+The debug APK with the native template-34 layout was installed successfully as `com.pgkit.timemarkcamera.codextest`, started on the real phone and visually inspected. A capture produced a readable 2448x3264 JPEG with the separate existing saved-watermark path; the camera-to-JPEG flow works, but that does not validate its fidelity. No production time was fixed and no orientation mapping was changed.

@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Locale;
 
 final class WatermarkRenderer {
-    static final int YELLOW = Color.rgb(255, 194, 51);
+    static final int YELLOW = 0xffffc233;
     /**
      * Output-photo coordinates are authored against the Timemark 4:3 reference images:
      * 1536x1152 in landscape and 1152x1536 in portrait.  They intentionally do not use
@@ -30,13 +30,6 @@ final class WatermarkRenderer {
     private static final int SAVED_SUBTITLE = Color.rgb(190, 190, 190);
     private static final float REFERENCE_WORDMARK_WIDTH = 177f;
     private static final float REFERENCE_SUBTITLE_WIDTH = 174f;
-    // Insets only affect the yellow divider; date and weekday remain anchored in place.
-    // Increase either value to shorten that end of the divider.
-    private static final float DIVIDER_LINE_TOP_INSET = 3f;
-    private static final float DIVIDER_LINE_BOTTOM_INSET = 3f;
-    // Keep label alignment independent when only the divider length changes.
-    private static final float DETAIL_TEXT_TOP_INSET = 3f;
-    private static final float DETAIL_TEXT_BOTTOM_INSET = 3f;
     private static final Locale VIETNAMESE = new Locale("vi", "VN");
     private static final Typeface DEFAULT_TIME_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
     private static final Typeface DEFAULT_TEXT_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
@@ -97,43 +90,8 @@ final class WatermarkRenderer {
     }
 
     static void drawLive(Canvas canvas, int width, int height, Date when, String address, float density) {
-        float margin = 8f * density;
-        float addressSize = 14f * density;
-        float bottom = height - margin;
-        Paint addressPaint = paint(Color.WHITE, addressSize, textTypeface);
-        float addressMaxWidth = Math.min(width - margin * 2f, 260f * density);
-        List<String> lines = wrap(address, addressPaint, addressMaxWidth);
-        int lineCount = Math.min(2, lines.size());
-        float addressLineHeight = 16f * density;
-        float addressTop = bottom - (lineCount - 1) * addressLineHeight;
-        for (int i = 0; i < lineCount; i++) {
-            drawText(canvas, lines.get(i), margin,
-                    addressTop + i * addressLineHeight, addressPaint);
-        }
-
-        float timeBaseline = addressTop - 18f * density;
-        Paint timePaint = paint(Color.WHITE, 38f * density, timeTypeface);
-        String time = time(when);
-        drawText(canvas, time, margin, timeBaseline, timePaint);
-
-        float timeWidth = timePaint.measureText(time);
-        float dividerX = margin + timeWidth + 8f * density;
-        Paint divider = paint(YELLOW, 2f * density, textTypeface);
-        divider.setStrokeWidth(2f * density);
-        Paint detailPaint = paint(Color.WHITE, 16f * density, textTypeface);
-        detailPaint.setShadowLayer(3.5f * density, 0f, 1.5f * density, 0x66000000);
-        float dividerTop = timeBaseline + timePaint.ascent() + 5f * density;
-        float dividerBottom = timeBaseline + timePaint.descent() - 3f * density;
-        float dividerLineTop = dividerTop + DIVIDER_LINE_TOP_INSET * density;
-        float dividerLineBottom = dividerBottom - DIVIDER_LINE_BOTTOM_INSET * density;
-        canvas.drawLine(dividerX, dividerLineTop, dividerX, dividerLineBottom, divider);
-        float detailX = dividerX + 8f * density;
-        String dateText = date(when);
-        String weekdayText = weekday(when);
-        drawText(canvas, dateText, detailX,
-                baselineForTextTop(dateText, detailPaint, dividerTop + DETAIL_TEXT_TOP_INSET * density), detailPaint);
-        drawText(canvas, weekdayText, detailX,
-                baselineForTextBottom(weekdayText, detailPaint, dividerBottom - DETAIL_TEXT_BOTTOM_INSET * density), detailPaint);
+        TimeLocationWatermark.draw(canvas, width, height, density, time(when), date(when),
+                weekday(when), address, timeTypeface, textTypeface);
     }
 
     static void drawSaved(Bitmap bitmap, Date when, String address, String verificationCode) {
