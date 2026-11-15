@@ -82,7 +82,8 @@ final class LocationController implements LocationListener {
         callback.onLocationFix(new Location(location));
         String coordinates = String.format(Locale.US, "%.6f, %.6f",
                 location.getLatitude(), location.getLongitude());
-        callback.onAddressChanged(coordinates);
+        // GPS coordinates belong to the coordinate field, not the postal-address field.
+        // Keep any previously resolved address while a new reverse-geocoding request runs.
         callback.onLocationStatus("Vị trí hệ thống: " + coordinates);
 
         Geocoder geocoder = new Geocoder(activity, new Locale("vi", "VN"));
@@ -101,7 +102,7 @@ final class LocationController implements LocationListener {
                         applyAddress(addresses.get(0));
                     }
                 } catch (Exception ignored) {
-                    // Coordinates remain available when reverse geocoding fails.
+                    // onLocationFix already supplied coordinates to the coordinate field.
                 }
             }, "reverse-geocoder").start();
         }

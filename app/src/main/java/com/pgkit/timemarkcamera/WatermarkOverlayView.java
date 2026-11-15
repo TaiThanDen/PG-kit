@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import java.util.function.IntSupplier;
 
 public final class WatermarkOverlayView extends View {
-    static final String DEFAULT_ADDRESS = "Đang xác định vị trí…";
+    static final String DEFAULT_ADDRESS = "";
 
     private String address = DEFAULT_ADDRESS;
     private int cameraRotation = Surface.ROTATION_0;

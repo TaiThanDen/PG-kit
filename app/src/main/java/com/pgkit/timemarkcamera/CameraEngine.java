@@ -187,7 +187,7 @@ final class CameraEngine {
         }
         final Date requestedTime = new Date();
         final String requestedAddress = address == null || address.trim().isEmpty()
-                ? "Chưa xác định vị trí" : address.trim();
+                ? "" : address.trim();
         final int requestedRotation = sensorRotation;
         capture.setTargetRotation(requestedRotation);
         try {

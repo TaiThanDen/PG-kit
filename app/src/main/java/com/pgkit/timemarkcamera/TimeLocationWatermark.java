@@ -165,7 +165,8 @@ final class TimeLocationWatermark {
         }
 
         void draw(Canvas canvas, int height, int foreground, int accent, boolean showLocation) {
-            int top = height - margin - headerHeight - (showLocation ? location.getHeight() : 0);
+            boolean locationVisible = showLocation && !address.trim().isEmpty();
+            int top = height - margin - headerHeight - (locationVisible ? location.getHeight() : 0);
             TextPaint clockPaint = clock.getPaint();
             clockPaint.setStyle(Paint.Style.STROKE);
             clockPaint.setStrokeWidth(dp(.5f, density));
@@ -185,7 +186,7 @@ final class TimeLocationWatermark {
             drawLayout(canvas, dateLine, detailX, top + detailInset);
             drawLayout(canvas, weekdayLine, detailX,
                     top + headerHeight - detailInset - weekdayLine.getHeight());
-            if (showLocation) drawLayout(canvas, location, margin + locationInset, top + headerHeight);
+            if (locationVisible) drawLayout(canvas, location, margin + locationInset, top + headerHeight);
         }
     }
 }

@@ -33,6 +33,7 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
             date.set(2026, Calendar.NOVEMBER, 15,
                     Integer.parseInt(options.getString("hour", "9")),
                     Integer.parseInt(options.getString("minute", "23")), 0);
+            verifyMissingAddress(date.getTime());
             WatermarkTemplate.Snapshot fixtureTemplate = null;
             if ("false".equals(options.getString("location"))) {
                 for (WatermarkTemplate candidate : WatermarkTemplate.defaults(getTargetContext())) {
@@ -120,4 +121,26 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
         }
     }
 
+    private void verifyMissingAddress(java.util.Date when) {
+        WatermarkTemplate.Snapshot disabled = null;
+        for (WatermarkTemplate candidate : WatermarkTemplate.defaults(getTargetContext())) {
+            if ("34".equals(candidate.id))
+                disabled = candidate.defaultSnapshot().withField(2, false, "");
+        }
+        if (disabled == null) throw new IllegalStateException("Missing template 34");
+        Bitmap expected = Bitmap.createBitmap(768, 1024, Bitmap.Config.ARGB_8888);
+        Bitmap actual = Bitmap.createBitmap(768, 1024, Bitmap.Config.ARGB_8888);
+        try {
+            WatermarkRenderer.drawSaved(new Canvas(expected), 768, 1024, when, "", "TESTCODE", disabled);
+            for (String missing : new String[]{null, "", "   "}) {
+                actual.eraseColor(Color.TRANSPARENT);
+                WatermarkRenderer.drawSaved(new Canvas(actual), 768, 1024, when, missing, "TESTCODE");
+                if (!expected.sameAs(actual))
+                    throw new AssertionError("Missing address reserves a blank watermark row");
+            }
+        } finally {
+            actual.recycle();
+            expected.recycle();
+        }
+    }
 }
