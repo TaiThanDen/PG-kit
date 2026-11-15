@@ -61,8 +61,9 @@ final class TimeLocationWatermark {
         Entry entry = new Entry(layoutWidth, density, time, date, weekday, address,
                 clockFont, textFont, false);
         int save = canvas.save();
-        // Align the exported layer's inset with the measured v10.0.316 output raster.
-        canvas.translate(Math.min(width, height) / 768f, 0f);
+        // The reference's portrait export starts one pixel earlier at a 1536 px short side.
+        // Keep this JPEG raster calibration separate from the native preview layout.
+        canvas.translate(Math.min(width, height) / (width > height ? 768f : 1536f), 0f);
         canvas.scale(scale, scale);
         canvas.translate(entry.margin * (1 - sizeScale),
                 (layoutHeight - entry.margin) * (1 - sizeScale));
