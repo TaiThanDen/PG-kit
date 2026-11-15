@@ -42,7 +42,9 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
                 }
                 if (fixtureTemplate == null) throw new IllegalStateException("Missing template 34");
             }
-            for (int mode = 0; mode < 6; mode++) for (int background = 0; background < 3; background++) {
+            String nativeProbeAddress = fixtureTemplate == null ? address : "";
+            java.util.Date fixtureWhen = date.getTime();
+            for (int mode = 0; mode < 10; mode++) for (int background = 0; background < 3; background++) {
                 Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmap);
                 canvas.drawColor(background == 0 ? Color.BLACK
@@ -50,6 +52,10 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
                 if (mode == 0 || mode == 1) {
                     WatermarkRenderer.drawSaved(canvas, width, height, date.getTime(), address,
                             "TESTCODE", fixtureTemplate);
+                } else if (mode >= 6) {
+                    int angle = (mode - 6) * 90;
+                    runOnMainSync(() -> NativeTextWatermarkProbe.drawLayer(getTargetContext(), canvas,
+                            width, height, clock, text, nativeProbeAddress, angle, fixtureWhen));
                 } else if (mode == 5) {
                     // Diagnostic: stamp at the LG camera's 4032-pixel long side, then reduce.
                     float sourceScale = 4032f / Math.max(width, height);
@@ -65,7 +71,7 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
                     }
                 } else if (mode == 4) {
                     runOnMainSync(() -> NativeTextWatermarkProbe.draw(getTargetContext(), canvas,
-                            width, height, clock, text, address));
+                            width, height, clock, text, nativeProbeAddress, fixtureWhen));
                 } else if (mode == 3) {
                     // Diagnostic: distinguish scaled glyph rasterization from scaling a cached layer.
                     int nativeShortSide = Math.min(getTargetContext().getResources()
@@ -113,6 +119,7 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
             try (FileOutputStream output = new FileOutputStream(new File(root, "native-metrics.txt"))) {
                 output.write(NativeTextWatermarkProbe.metrics.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
+            SavedLogoTypefaceProbe.render(getTargetContext(), root);
             result.putString("stream", "Rendered watermark fixtures at " + root);
             finish(-1, result);
         } catch (Exception | AssertionError error) {
