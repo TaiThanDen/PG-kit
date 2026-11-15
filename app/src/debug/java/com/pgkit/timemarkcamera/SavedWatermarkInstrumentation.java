@@ -4,6 +4,8 @@ import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import java.io.File;
@@ -29,13 +31,29 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
             String address = "44/12 Tổ 44 KP3, Example District, Hồ Chí Minh";
             Calendar date = Calendar.getInstance();
             date.set(2026, Calendar.NOVEMBER, 15, 9, 23, 0);
-            for (int mode = 0; mode < 3; mode++) for (int background = 0; background < 3; background++) {
+            for (int mode = 0; mode < 4; mode++) for (int background = 0; background < 3; background++) {
                 Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmap);
                 canvas.drawColor(background == 0 ? Color.BLACK
                         : background == 1 ? Color.WHITE : Color.TRANSPARENT);
                 if (mode == 0 || mode == 1) {
                     WatermarkRenderer.drawSaved(canvas, width, height, date.getTime(), address, "TESTCODE");
+                } else if (mode == 3) {
+                    // Diagnostic: distinguish scaled glyph rasterization from scaling a cached layer.
+                    int nativeShortSide = Math.min(getTargetContext().getResources()
+                            .getDisplayMetrics().widthPixels, getTargetContext().getResources()
+                            .getDisplayMetrics().heightPixels);
+                    float scale = Math.min(width, height) / (float) nativeShortSide;
+                    Bitmap layer = Bitmap.createBitmap(Math.round(width / scale),
+                            Math.round(height / scale), Bitmap.Config.ARGB_8888);
+                    try {
+                        WatermarkRenderer.drawSaved(new Canvas(layer), layer.getWidth(),
+                                layer.getHeight(), date.getTime(), address, "TESTCODE");
+                        canvas.drawBitmap(layer, null, new Rect(0, 0, width, height),
+                                new Paint(Paint.FILTER_BITMAP_FLAG));
+                    } finally {
+                        layer.recycle();
+                    }
                 } else {
                     float base = mode == 1 ? 1440 : 1536;
                     float scale = Math.min(width, height) / base;
