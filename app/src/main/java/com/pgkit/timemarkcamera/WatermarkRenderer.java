@@ -6,8 +6,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
@@ -35,7 +33,6 @@ final class WatermarkRenderer {
     private static Typeface timeTypeface = DEFAULT_TIME_TYPEFACE;
     private static Typeface textTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Typeface brandTypeface = DEFAULT_TEXT_TYPEFACE;
-    private static Bitmap shieldBitmap;
     private static Bitmap wordmarkBitmap;
     // Display metrics reproduce native dp rounding; JPEG bounds own the final scale.
     private static int nativeLayoutWidth = 1080;
@@ -65,7 +62,7 @@ final class WatermarkRenderer {
         } catch (RuntimeException ignored) {
             brandTypeface = DEFAULT_TEXT_TYPEFACE;
         }
-        shieldBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_shield);
+        SavedVerificationRenderer.load(context);
         try (InputStream source = context.getAssets().open("video/official_vi.png")) {
             wordmarkBitmap = BitmapFactory.decodeStream(source);
         } catch (IOException ignored) {
@@ -154,7 +151,7 @@ final class WatermarkRenderer {
         float scale = WatermarkLayoutSpec.scaleFor(width, height);
         // The exported reference logo is a separate layer, smaller than the content text.
         drawBrand(canvas, width, height, scale);
-        drawVerification(canvas, width, height, scale, verificationCode);
+        drawVerification(canvas, width, height, verificationCode);
     }
 
     private static void drawBrand(Canvas canvas, int width, int height, float scale) {
@@ -205,48 +202,10 @@ final class WatermarkRenderer {
                         height - 18f * scale), subtitle);
     }
 
-    private static void drawVerification(Canvas canvas, int width, int height, float scale,
+    private static void drawVerification(Canvas canvas, int width, int height,
                                          String code) {
-        Paint verified = savedPaint(Color.WHITE, 30f * scale, textTypeface, scale);
-        verified.setTextAlign(Paint.Align.LEFT);
-        String verificationText = code + "  Timemark Verified";
-        float iconHeight = verified.getTextSize() * 0.64f;
-        float iconWidth = shieldBitmap == null || shieldBitmap.getHeight() == 0
-                ? iconHeight * 0.86f
-                : iconHeight * shieldBitmap.getWidth() / shieldBitmap.getHeight();
-        float iconGap = 7f * scale;
-        Rect textBounds = textBounds(verificationText, verified);
-        float groupRight = iconWidth + iconGap + textBounds.right;
-        float groupLeft = 0f;
-        float pivotX = width - WatermarkLayoutSpec.VERIFICATION_RIGHT * scale
-                - Math.max(textBounds.bottom, iconHeight / 2f);
-        float baseline = height / 2f - 90f * scale;
-        float groupStart = pivotX - (groupLeft + groupRight) / 2f;
-        canvas.save();
-        canvas.rotate(-90f, pivotX, baseline);
-        drawShield(canvas,
-                groupStart + iconWidth / 2f,
-                baseline - verified.getTextSize() * 0.34f,
-                iconWidth,
-                iconHeight,
-                scale);
-        float textX = groupStart + iconWidth + iconGap;
-        drawText(canvas, verificationText, textX, baseline, verified);
-        canvas.restore();
-    }
-
-    private static void drawShield(Canvas canvas, float centerX, float centerY,
-                                   float width, float height, float scale) {
-        if (shieldBitmap == null || shieldBitmap.isRecycled()) return;
-        Paint iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        iconPaint.setColorFilter(new PorterDuffColorFilter(0xCCFFFFFF, PorterDuff.Mode.SRC_IN));
-        iconPaint.setShadowLayer(2f * scale, 0f, 1f * scale, 0x33000000);
-        float halfWidth = width / 2f;
-        float halfHeight = height / 2f;
-        canvas.drawBitmap(shieldBitmap, null,
-                new RectF(centerX - halfWidth, centerY - halfHeight,
-                        centerX + halfWidth, centerY + halfHeight),
-                iconPaint);
+        SavedVerificationRenderer.draw(canvas, width, height, nativeLayoutWidth,
+                nativeLayoutDensity, code);
     }
 
     private static Paint paint(int color, float textSize, Typeface typeface) {
