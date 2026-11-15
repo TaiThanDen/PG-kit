@@ -33,7 +33,7 @@ Preview tiếp tục dùng rotation của display; ImageCapture dùng rotation v
 - Build debug thành công với JDK 17, CameraX 1.4.1 và build-tools 35, chế độ offline. Dùng init script cục bộ tạo package kiểm thử `.codexfilter`; không thay package app đang cài.
 - Instrumentation trên Android tạo builder thật với effect SEPIA/MONO trước khi áp dụng Original: cả hai được thay bằng OFF; target rotation, capture quality được giữ; không xuất hiện override AE compensation/AWB. Kết quả PASS trong `reference_app/v10.0.316/default-filter/probe-result.txt`. Probe và manifest thử nghiệm chỉ nằm trong thư mục evidence bị ignore, không thuộc source production.
 - `git diff --check` cho phần thay đổi filter sạch. Kiểm tra toàn checkout còn báo whitespace CRLF trong các file `evidence/latest` đã sửa từ trước bởi công việc khác; không đưa chúng vào commit này.
-- Đã thu preview và Camera2 state của package kiểm thử trên emulator. Chưa hoàn tất lượt chụp JPEG bổ sung: khóa runtime dùng chung đang thuộc thử nghiệm video; không ngắt phiên đó.
+- Đã cập nhật package clone trên LG và chụp hai JPEG mỗi app trong cùng cảnh. Cài/chụp/lưu PASS nhưng đầu ra chưa tương đương 1:1: khác độ phân giải và độ sáng/nhiễu. Xem [bài kiểm tra LG ngày 2026-11-15](lg-pair-test-2026-11-15.md) và script tái lập phép đo.
 
 ## Chưa xác minh
 
