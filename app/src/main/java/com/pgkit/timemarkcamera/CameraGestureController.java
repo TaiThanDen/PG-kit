@@ -19,6 +19,7 @@ final class CameraGestureController {
     private final ScaleGestureDetector scaleDetector;
     private float pendingFocusX = Float.NaN;
     private float pendingFocusY = Float.NaN;
+    private boolean hadMultiplePointers;
 
     @SuppressLint("ClickableViewAccessibility")
     CameraGestureController(Context context, PreviewView previewView, Listener listener) {
@@ -42,11 +43,6 @@ final class CameraGestureController {
                         return true;
                     }
 
-                    @Override public void onLongPress(MotionEvent event) {
-                        // Keep the same metering path for a press-and-hold; the screen then
-                        // presents the temporary EV rail beside the selected focus point.
-                        listener.onTapToFocus(event.getX(), event.getY());
-                    }
                 });
         scaleDetector = new ScaleGestureDetector(context,
                 new ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -57,9 +53,20 @@ final class CameraGestureController {
                 });
 
         previewView.setOnTouchListener((view, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                hadMultiplePointers = false;
+            }
+            if (event.getPointerCount() > 1) {
+                hadMultiplePointers = true;
+                // Cancel the pending tap before feeding the rest of a pinch to the scaler.
+                MotionEvent cancel = MotionEvent.obtain(event);
+                cancel.setAction(MotionEvent.ACTION_CANCEL);
+                tapDetector.onTouchEvent(cancel);
+                cancel.recycle();
+            }
             boolean scaling = scaleDetector.onTouchEvent(event);
             boolean tapping = false;
-            if (!scaleDetector.isInProgress()) {
+            if (!hadMultiplePointers && !scaleDetector.isInProgress()) {
                 tapping = tapDetector.onTouchEvent(event);
             }
             return scaling || tapping;

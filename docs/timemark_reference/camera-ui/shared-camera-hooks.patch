@@ -1,0 +1,51 @@
+--- a/app/src/main/java/com/pgkit/timemarkcamera/CameraEngine.java
++++ b/app/src/main/java/com/pgkit/timemarkcamera/CameraEngine.java
+@@ -173,6 +173,22 @@
+                 Math.min(zoomState.getMaxZoomRatio(), requestedRatio));
+         activeCamera.getCameraControl().setZoomRatio(clampedRatio);
+         return clampedRatio;
++    }
++
++    /** UI capability snapshot; do not infer ultra-wide support from preset labels. */
++    float[] zoomRange() {
++        Camera activeCamera = camera;
++        if (activeCamera == null) return null;
++        ZoomState state = activeCamera.getCameraInfo().getZoomState().getValue();
++        return state == null ? null : new float[]{state.getMinZoomRatio(), state.getMaxZoomRatio()};
++    }
++
++    float resetExposureCompensation() {
++        Camera activeCamera = camera;
++        if (activeCamera == null) return Float.NaN;
++        ExposureState state = activeCamera.getCameraInfo().getExposureState();
++        return state.isExposureCompensationSupported()
++                ? setExposureCompensationIndex(state, 0) : Float.NaN;
+     }
+
+     float pinchZoom(float scaleFactor) {
+--- a/app/src/main/java/com/pgkit/timemarkcamera/MainActivity.java
++++ b/app/src/main/java/com/pgkit/timemarkcamera/MainActivity.java
+@@ -51,7 +51,10 @@
+         gestureController = new CameraGestureController(this, screen.previewView(),
+                 new CameraGestureController.Listener() {
+                     @Override public void onTapToFocus(float x, float y) {
+-                        if (cameraEngine.tapToFocus(x, y)) screen.showFocusIndicator(x, y);
++                        if (cameraEngine.tapToFocus(x, y)) {
++                            screen.setExposureValue(cameraEngine.resetExposureCompensation());
++                            screen.showFocusIndicator(x, y);
++                        }
+                     }
+
+                     @Override public void onPinchZoom(float scaleFactor) {
+@@ -254,6 +257,11 @@
+     }
+
+     @Override public void onCameraReady() {
++        runOnUiThread(() -> {
++            float[] range = cameraEngine.zoomRange();
++            if (range != null) screen.setZoomRange(range[0], range[1]);
++            screen.setZoomRatio(cameraEngine.setZoomRatio(1f));
++        });
+         runOnUiThread(() -> screen.setLocationStatus(
+                 WatermarkOverlayView.DEFAULT_ADDRESS.equals(screen.watermarkView().getAddress())
+                         ? "Camera sẵn sàng • Đang lấy vị trí…"

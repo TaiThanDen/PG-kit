@@ -4,6 +4,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.net.Uri;
 import android.view.Gravity;
 import android.view.View;
@@ -13,7 +14,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.activity.ComponentActivity;
@@ -45,14 +45,20 @@ final class CameraScreen {
     private TextView zoomHalf;
     private TextView zoomOne;
     private TextView zoomTwo;
-    private FrameLayout focusExposureControl;
-    private SeekBar focusExposureSlider;
-    private TextView exposureValue;
+    private LinearLayout zoomControls;
+    private FocusExposureView focusExposureControl;
     private ImageView latestPhotoPreview;
     private View focusIndicator;
+    private final Runnable settleFocusControls = () -> {
+        if (focusIndicator != null) focusIndicator.setAlpha(0.6f);
+        if (focusExposureControl != null) focusExposureControl.setAlpha(0.6f);
+    };
     private final Runnable hideFocusControls = () -> {
-        if (focusIndicator != null) focusIndicator.setVisibility(View.GONE);
-        if (focusExposureControl != null) focusExposureControl.setVisibility(View.GONE);
+        if (focusIndicator != null) focusIndicator.animate().alpha(0f).setDuration(300L)
+                .withEndAction(() -> focusIndicator.setVisibility(View.GONE)).start();
+        if (focusExposureControl != null) focusExposureControl.animate().alpha(0f)
+                .setDuration(300L)
+                .withEndAction(() -> focusExposureControl.setVisibility(View.GONE)).start();
     };
 
     CameraScreen(ComponentActivity activity, Actions actions) {
@@ -110,6 +116,7 @@ final class CameraScreen {
     }
 
     void setFlashEnabled(boolean enabled) {
+        flashButton.setImageResource(enabled ? R.drawable.ic_flash : R.drawable.ic_flash_off);
         flashButton.setImageTintList(ColorStateList.valueOf(
                 enabled ? WatermarkRenderer.YELLOW : Color.rgb(30, 30, 30)));
         announce(enabled ? "Đã bật flash" : "Đã tắt flash");
@@ -122,17 +129,31 @@ final class CameraScreen {
 
     void setZoomRatio(float ratio) {
         if (!Float.isFinite(ratio)) return;
-        applyZoomStyle(zoomHalf, Math.abs(ratio - 0.5f) < 0.08f);
-        applyZoomStyle(zoomOne, Math.abs(ratio - 1f) < 0.08f);
-        applyZoomStyle(zoomTwo, Math.abs(ratio - 2f) < 0.12f);
+        boolean half = Math.abs(ratio - 0.5f) < 0.03f;
+        boolean two = Math.abs(ratio - 2f) < 0.03f;
+        zoomOne.setText(String.format(java.util.Locale.US, "%.1fx", half || two ? 1f : ratio));
+        applyZoomStyle(zoomHalf, half);
+        applyZoomStyle(zoomOne, !half && !two);
+        applyZoomStyle(zoomTwo, two);
+    }
+
+    /** Camera capability hook, called after binding or changing lenses. */
+    void setZoomRange(float minimum, float maximum) {
+        if (!Float.isFinite(minimum) || !Float.isFinite(maximum) || minimum > maximum) return;
+        zoomHalf.setVisibility(minimum <= 0.5f && maximum >= 0.5f ? View.VISIBLE : View.GONE);
+        zoomTwo.setVisibility(maximum >= 2f ? View.VISIBLE : View.GONE);
+        updateZoomLayout();
     }
 
     void setExposureValue(float ev) {
         if (!Float.isFinite(ev)) {
+            focusExposureControl.setEnabled(false);
             announce("Thiết bị không hỗ trợ bù sáng");
             return;
         }
-        exposureValue.setText(String.format(java.util.Locale.US, "EV\n%+.1f", ev));
+        focusExposureControl.setEnabled(true);
+        focusExposureControl.setContentDescription(String.format(java.util.Locale.US,
+                "Bù sáng %+.1f EV", ev));
         announce(String.format(java.util.Locale.US, "Bù sáng %+.1f", ev));
     }
 
@@ -145,44 +166,46 @@ final class CameraScreen {
     }
 
     void showFocusIndicator(float x, float y) {
-        int size = dp(56);
+        int size = dp(72);
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) focusIndicator.getLayoutParams();
-        params.leftMargin = Math.max(0, Math.min(previewLayer.getWidth() - size,
-                Math.round(x) - size / 2));
-        params.topMargin = Math.max(0, Math.min(previewLayer.getHeight() - size,
-                Math.round(y) - size / 2));
+        // Keep the target centered on the metering point, clipping naturally at preview edges.
+        params.leftMargin = Math.round(x) - size / 2;
+        params.topMargin = Math.round(y) - size / 2;
         focusIndicator.setLayoutParams(params);
         focusIndicator.animate().cancel();
+        focusIndicator.animate().withEndAction(null);
         focusIndicator.setVisibility(View.VISIBLE);
         focusIndicator.setAlpha(1f);
-        focusIndicator.setScaleX(1.3f);
-        focusIndicator.setScaleY(1.3f);
+        focusIndicator.setScaleX(1.05f);
+        focusIndicator.setScaleY(1.05f);
         focusIndicator.animate()
                 .scaleX(1f)
                 .scaleY(1f)
                 .setDuration(150L)
                 .start();
-        showFocusExposureControl(x, y, size);
+        showFocusExposureControl(x, y);
         previewLayer.removeCallbacks(hideFocusControls);
-        previewLayer.postDelayed(hideFocusControls, 2500L);
+        previewLayer.removeCallbacks(settleFocusControls);
+        previewLayer.postDelayed(settleFocusControls, 1200L);
+        previewLayer.postDelayed(hideFocusControls, 2700L);
     }
 
     private View createTopBar() {
         LinearLayout bar = new LinearLayout(activity);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(dp(4), dp(2), dp(4), dp(2));
+        bar.setPadding(dp(4), dp(2), dp(14), dp(2));
         bar.setBackgroundColor(Color.WHITE);
 
         ImageButton menu = imageButton(R.drawable.ic_menu, "Mở menu", Color.rgb(30, 30, 30));
         menu.setOnClickListener(v -> actions.onMenu());
-        bar.addView(menu, fixed(dp(44), dp(48)));
+        bar.addView(menu, fixed(dp(54), dp(48)));
 
-        flashButton = imageButton(R.drawable.ic_flash, "Bật hoặc tắt đèn flash",
+        flashButton = imageButton(R.drawable.ic_flash_off, "Bật hoặc tắt đèn flash",
                 Color.rgb(30, 30, 30));
         flashButton.setOnClickListener(v -> actions.onToggleFlash());
-        bar.addView(flashButton, fixed(dp(44), dp(48)));
+        bar.addView(flashButton, fixed(dp(54), dp(48)));
 
-        bar.addView(new View(activity), fixed(dp(6), 1));
+        bar.addView(new View(activity), fixed(dp(20), 1));
 
         TextView verified = textButton("Xác thực ảnh", "Xác thực ảnh", 15, Color.BLACK);
         verified.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
@@ -214,118 +237,87 @@ final class CameraScreen {
 
     private void addPreviewControls(FrameLayout preview) {
         LinearLayout zoom = new LinearLayout(activity);
+        zoomControls = zoom;
         zoom.setOrientation(LinearLayout.VERTICAL);
         zoom.setGravity(Gravity.CENTER);
         zoomTwo = zoomButton("2", 2f, "Thu phóng 2 lần");
-        zoomOne = zoomButton("1x", 1f, "Thu phóng 1 lần");
+        zoomOne = zoomButton("1.0x", 1f, "Thu phóng 1 lần");
         zoomHalf = zoomButton("0.5", 0.5f, "Góc siêu rộng 0 phẩy 5 lần");
         applyZoomStyle(zoomOne, true);
-        zoom.addView(zoomTwo, fixed(dp(48), dp(42)));
-        zoom.addView(zoomOne, fixed(dp(48), dp(48)));
-        zoom.addView(zoomHalf, fixed(dp(48), dp(42)));
-        FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(52), dp(132),
-                Gravity.END | Gravity.CENTER_VERTICAL);
-        zoomParams.rightMargin = dp(7);
+        zoom.addView(zoomTwo, fixed(dp(44), dp(44)));
+        zoom.addView(zoomOne, fixed(dp(44), dp(44)));
+        zoom.addView(zoomHalf, fixed(dp(44), dp(44)));
+        FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(48), dp(132),
+                Gravity.END | Gravity.BOTTOM);
+        zoomParams.rightMargin = 0;
+        zoomParams.bottomMargin = dp(105);
         preview.addView(zoom, zoomParams);
 
         ImageButton edit = imageButton(R.drawable.ic_edit, "Chỉnh sửa watermark", Color.WHITE);
         edit.setOnClickListener(v -> actions.onEditWatermark());
-        FrameLayout.LayoutParams editParams = new FrameLayout.LayoutParams(dp(58), dp(58),
+        FrameLayout.LayoutParams editParams = new FrameLayout.LayoutParams(dp(48), dp(48),
                 Gravity.END | Gravity.BOTTOM);
-        editParams.rightMargin = dp(4);
-        editParams.bottomMargin = dp(66);
+        editParams.rightMargin = 0;
+        editParams.bottomMargin = dp(51);
         preview.addView(edit, editParams);
 
         ImageButton pin = imageButton(R.drawable.ic_location_target, "Làm mới vị trí", Color.WHITE);
         pin.setOnClickListener(v -> actions.onRefreshLocation());
-        FrameLayout.LayoutParams pinParams = new FrameLayout.LayoutParams(dp(58), dp(58),
+        FrameLayout.LayoutParams pinParams = new FrameLayout.LayoutParams(dp(48), dp(48),
                 Gravity.END | Gravity.BOTTOM);
-        pinParams.rightMargin = dp(4);
-        pinParams.bottomMargin = dp(6);
+        pinParams.rightMargin = 0;
+        pinParams.bottomMargin = 0;
         preview.addView(pin, pinParams);
     }
 
+    private void updateZoomLayout() {
+        int count = 1 + (zoomHalf.getVisibility() == View.VISIBLE ? 1 : 0)
+                + (zoomTwo.getVisibility() == View.VISIBLE ? 1 : 0);
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) zoomControls.getLayoutParams();
+        params.height = dp(count * 44);
+        params.bottomMargin = dp(105);
+        zoomControls.setLayoutParams(params);
+    }
+
     private void addFocusIndicator(FrameLayout preview) {
-        focusIndicator = new View(activity);
-        GradientDrawable ring = new GradientDrawable();
-        ring.setShape(GradientDrawable.RECTANGLE);
-        ring.setColor(Color.TRANSPARENT);
-        ring.setStroke(dp(2), WatermarkRenderer.YELLOW);
-        ring.setCornerRadius(dp(6));
-        focusIndicator.setBackground(ring);
+        focusIndicator = new FocusRingView(activity);
         focusIndicator.setVisibility(View.GONE);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(56), dp(56),
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(72), dp(72),
                 Gravity.START | Gravity.TOP);
         preview.addView(focusIndicator, params);
 
-        focusExposureControl = compactSlider("Điều chỉnh bù sáng tại điểm focus");
+        focusExposureControl = new FocusExposureView(activity, previewView,
+                actions::onExposureChanged, this::beginExposureDrag,
+                this::keepFocusControlsVisible);
         focusExposureControl.setVisibility(View.GONE);
-        exposureValue = transparentLabel("EV\n+0.0", 11, Color.WHITE);
-        exposureValue.setGravity(Gravity.CENTER);
-        exposureValue.setContentDescription("Mức bù sáng");
-        focusExposureSlider = verticalSlider();
-        focusExposureSlider.setProgress(focusExposureSlider.getMax() / 2);
-        focusExposureSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            private int previous = focusExposureSlider.getProgress();
-
-            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (!fromUser) {
-                    previous = progress;
-                    return;
-                }
-                int direction = Integer.compare(progress, previous);
-                if (direction != 0) actions.onExposureChanged(direction);
-                previous = progress;
-                keepFocusControlsVisible();
-            }
-
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {
-                keepFocusControlsVisible();
-            }
-
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {
-                keepFocusControlsVisible();
-            }
-        });
-        focusExposureControl.addView(focusExposureSlider, rotatedSliderParams());
-        focusExposureControl.addView(exposureValue, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(34), Gravity.TOP));
-        preview.addView(focusExposureControl, new FrameLayout.LayoutParams(dp(48), dp(116)));
+        preview.addView(focusExposureControl, matchFrame());
     }
 
-    private FrameLayout compactSlider(String description) {
-        FrameLayout rail = new FrameLayout(activity);
-        rail.setBackground(controlRailBackground());
-        rail.setContentDescription(description);
-        return rail;
-    }
-
-    private void showFocusExposureControl(float x, float y, int focusSize) {
+    private void showFocusExposureControl(float x, float y) {
         if (focusExposureControl == null) return;
-        int controlWidth = dp(48);
-        int controlHeight = dp(116);
-        int rightSide = Math.round(x) + focusSize / 2 + dp(8);
-        int leftSide = Math.round(x) - focusSize / 2 - dp(8) - controlWidth;
-        int left = rightSide + controlWidth <= previewLayer.getWidth() ? rightSide : leftSide;
-        left = Math.max(0, Math.min(previewLayer.getWidth() - controlWidth, left));
-        int top = Math.round(y) - controlHeight / 2;
-        top = Math.max(0, Math.min(previewLayer.getHeight() - controlHeight, top));
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)
-                focusExposureControl.getLayoutParams();
-        params.leftMargin = left;
-        params.topMargin = top;
-        focusExposureControl.setLayoutParams(params);
+        focusExposureControl.setFocusPoint(x, y);
+        focusExposureControl.animate().cancel();
+        focusExposureControl.animate().withEndAction(null);
+        focusExposureControl.setAlpha(1f);
         focusExposureControl.setVisibility(View.VISIBLE);
-        focusExposureControl.bringToFront();
+    }
+
+    private void beginExposureDrag() {
+        previewLayer.removeCallbacks(hideFocusControls);
+        previewLayer.removeCallbacks(settleFocusControls);
+        focusIndicator.animate().cancel();
+        focusExposureControl.animate().cancel();
+        focusIndicator.setAlpha(1f);
+        focusExposureControl.setAlpha(1f);
     }
 
     private void keepFocusControlsVisible() {
         previewLayer.removeCallbacks(hideFocusControls);
-        previewLayer.postDelayed(hideFocusControls, 2500L);
+        previewLayer.postDelayed(hideFocusControls, 1200L);
     }
 
     private TextView zoomButton(String label, float ratio, String description) {
-        TextView button = transparentLabel(label, "1x".equals(label) ? 16 : 15, Color.WHITE);
+        TextView button = transparentLabel(label, "1.0x".equals(label) ? 12 : 11, Color.WHITE);
         button.setGravity(Gravity.CENTER);
         button.setContentDescription(description);
         button.setClickable(true);
@@ -338,34 +330,9 @@ final class CameraScreen {
         if (button == null) return;
         GradientDrawable background = new GradientDrawable();
         background.setShape(GradientDrawable.OVAL);
-        background.setColor(selected ? 0x33000000 : Color.TRANSPARENT);
+        background.setColor(selected ? 0x33000000 : 0x4d000000);
         if (selected) background.setStroke(dp(1), Color.WHITE);
-        button.setBackground(background);
-    }
-
-    private SeekBar verticalSlider() {
-        SeekBar slider = new SeekBar(activity);
-        slider.setMax(100);
-        slider.setRotation(-90f);
-        slider.setProgressTintList(ColorStateList.valueOf(Color.WHITE));
-        slider.setThumbTintList(ColorStateList.valueOf(WatermarkRenderer.YELLOW));
-        slider.setContentDescription("Thanh trượt");
-        return slider;
-    }
-
-    private FrameLayout.LayoutParams rotatedSliderParams() {
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(80), dp(32),
-                Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
-        params.bottomMargin = dp(24);
-        return params;
-    }
-
-    private GradientDrawable controlRailBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setShape(GradientDrawable.RECTANGLE);
-        background.setColor(0x33000000);
-        background.setCornerRadius(dp(28));
-        return background;
+        button.setBackground(new InsetDrawable(background, dp(6)));
     }
 
     private View createBottomPanel() {
