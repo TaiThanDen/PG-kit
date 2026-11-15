@@ -13,16 +13,14 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 final class WatermarkRenderer {
     static final int YELLOW = 0xffffc233;
     /**
-     * Output-photo coordinates are authored against the Timemark 4:3 reference images:
+     * Output-photo logo coordinates are authored against the Timemark 4:3 reference images:
      * 1536x1152 in landscape and 1152x1536 in portrait.  They intentionally do not use
      * preview dp values or an independent horizontal/vertical percentage scale.
      */
@@ -37,10 +35,16 @@ final class WatermarkRenderer {
     private static Typeface textTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Typeface brandTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Bitmap shieldBitmap;
+    // Display metrics reproduce native dp rounding; JPEG bounds own the final scale.
+    private static int nativeLayoutWidth = 1080;
+    private static float nativeLayoutDensity = 450f / 160f;
 
     private WatermarkRenderer() {}
 
     static void loadWatermarkFonts(Context context) {
+        android.util.DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        nativeLayoutWidth = Math.min(metrics.widthPixels, metrics.heightPixels);
+        nativeLayoutDensity = metrics.density;
         try {
             timeTypeface = Typeface.createFromAsset(context.getAssets(),
                     "fonts/BigShouldersText-Medium.ttf");
@@ -79,7 +83,7 @@ final class WatermarkRenderer {
         Calendar calendar = Calendar.getInstance(VIETNAMESE);
         calendar.setTime(when);
         switch (calendar.get(Calendar.DAY_OF_WEEK)) {
-            case Calendar.SUNDAY: return "Chủ Nhật";
+            case Calendar.SUNDAY: return "Chủ nhật";
             case Calendar.MONDAY: return "Thứ Hai";
             case Calendar.TUESDAY: return "Thứ Ba";
             case Calendar.WEDNESDAY: return "Thứ Tư";
@@ -98,6 +102,15 @@ final class WatermarkRenderer {
 
     static void drawSaved(Canvas canvas, int width, int height, Date when, String address,
                           String verificationCode, WatermarkTemplate.Snapshot template) {
+        if (template != null && "34".equals(template.id)
+                && TemplateWatermarkRenderer.isBasic34(template)) {
+            TimeLocationWatermark.drawExportStyled(canvas, width, height, nativeLayoutWidth,
+                    nativeLayoutDensity, time(when), date(when), weekday(when), address,
+                    timeTypeface, textTypeface, template.sizeScale, template.textColor,
+                    template.accentColor, template.field(2) != null && template.field(2).enabled);
+            drawSavedExtras(canvas, width, height, verificationCode);
+            return;
+        }
         if (template != null && TemplateWatermarkRenderer.drawSaved(
                 canvas, width, height, when, address, template)) return;
         drawSaved(canvas, width, height, when, address, verificationCode);
@@ -124,52 +137,19 @@ final class WatermarkRenderer {
     /** Draws the exported watermark on any output canvas, including a CameraX video frame. */
     static void drawSaved(Canvas canvas, int width, int height, Date when, String address,
                           String verificationCode) {
+        TimeLocationWatermark.drawExport(canvas, width, height, nativeLayoutWidth,
+                nativeLayoutDensity, time(when), date(when), weekday(when), address,
+                timeTypeface, textTypeface);
+        drawSavedExtras(canvas, width, height, verificationCode);
+    }
+
+    private static void drawSavedExtras(Canvas canvas, int width, int height, String verificationCode) {
         float scale = WatermarkLayoutSpec.scaleFor(width, height);
-        float dividerTop = WatermarkLayoutSpec.dividerTop(height, scale);
-
-        Paint addressPaint = savedPaint(Color.WHITE, 46f * scale, textTypeface, scale);
-        addressPaint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x59000000);
-        float maxAddressWidth = Math.min(WatermarkLayoutSpec.ADDRESS_MAX_WIDTH * scale,
-                width - WatermarkLayoutSpec.ADDRESS_LEFT * scale
-                        - (177f + WatermarkLayoutSpec.WORDMARK_RIGHT) * scale);
-        List<String> lines = wrap(address, addressPaint, maxAddressWidth);
-        int lineCount = Math.min(2, lines.size());
-        String lastLine = lines.get(lineCount - 1);
-        float addressLastBaseline = baselineForTextBottom(lastLine, addressPaint,
-                height - WatermarkLayoutSpec.ADDRESS_BOTTOM * scale);
-        for (int i = 0; i < lineCount; i++) {
-            drawText(canvas, lines.get(i), WatermarkLayoutSpec.ADDRESS_LEFT * scale,
-                    addressLastBaseline - (lineCount - 1 - i)
-                            * WatermarkLayoutSpec.ADDRESS_LINE_STEP * scale,
-                    addressPaint);
-        }
-
-        Paint timePaint = savedPaint(Color.WHITE, 137f * scale, timeTypeface, scale);
-        String time = time(when);
-        drawText(canvas, time, WatermarkLayoutSpec.TIME_LEFT * scale,
-                baselineForTextTop(time, timePaint, dividerTop), timePaint);
-
-        float timeWidth = timePaint.measureText(time);
-        float dividerX = WatermarkLayoutSpec.dividerX(timeWidth, scale);
-        Paint divider = paint(SAVED_YELLOW, 1f, textTypeface);
-        canvas.drawRect(dividerX, dividerTop, dividerX + WatermarkLayoutSpec.DIVIDER_WIDTH * scale,
-                dividerTop + WatermarkLayoutSpec.DIVIDER_HEIGHT * scale, divider);
-        Paint datePaint = savedPaint(Color.WHITE, 42f * scale, textTypeface, scale);
-        Paint weekdayPaint = savedPaint(Color.WHITE, 41.5f * scale, textTypeface, scale);
-        datePaint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x66000000);
-        weekdayPaint.setShadowLayer(3.5f * scale, 0f, 1.5f * scale, 0x66000000);
-        String dateText = date(when);
-        String weekdayText = weekday(when);
-        drawText(canvas, dateText, dividerX + (WatermarkLayoutSpec.DIVIDER_WIDTH
-                        + WatermarkLayoutSpec.DATE_GAP) * scale,
-                baselineForTextTop(dateText, datePaint, dividerTop + scale), datePaint);
-        drawText(canvas, weekdayText,
-                dividerX + (WatermarkLayoutSpec.DIVIDER_WIDTH
-                        + WatermarkLayoutSpec.WEEKDAY_GAP) * scale,
-                baselineForTextTop(weekdayText, weekdayPaint,
-                        dividerTop + WatermarkLayoutSpec.WEEKDAY_TOP_GAP * scale), weekdayPaint);
-
+        // The exported reference logo is a separate layer, smaller than the content text.
+        int save = canvas.save();
+        canvas.scale(2f / 3f, 2f / 3f, width, height);
         drawBrand(canvas, width, height, scale);
+        canvas.restoreToCount(save);
         drawVerification(canvas, width, height, scale, verificationCode);
     }
 
@@ -261,11 +241,6 @@ final class WatermarkRenderer {
         canvas.drawText(text, x, y, paint);
     }
 
-    private static float baselineForTextTop(String text, Paint paint, float top) {
-        Rect bounds = textBounds(text, paint);
-        return top - bounds.top;
-    }
-
     private static float baselineForTextBottom(String text, Paint paint, float bottom) {
         Rect bounds = textBounds(text, paint);
         return bottom - bounds.bottom;
@@ -277,30 +252,4 @@ final class WatermarkRenderer {
         return bounds;
     }
 
-    private static List<String> wrap(String source, Paint paint, float maxWidth) {
-        String safe = source == null || source.trim().isEmpty() ? "Đang xác định vị trí…" : source.trim();
-        String[] words = safe.split("\\s+");
-        List<String> lines = new ArrayList<>();
-        StringBuilder line = new StringBuilder();
-        for (String word : words) {
-            String candidate = line.length() == 0 ? word : line + " " + word;
-            if (paint.measureText(candidate) <= maxWidth || line.length() == 0) {
-                line.setLength(0);
-                line.append(candidate);
-            } else {
-                lines.add(line.toString());
-                line.setLength(0);
-                line.append(word);
-            }
-        }
-        if (line.length() > 0) lines.add(line.toString());
-        if (lines.size() > 2) {
-            String second = lines.get(1);
-            while (paint.measureText(second + "…") > maxWidth && second.length() > 1) {
-                second = second.substring(0, second.length() - 1);
-            }
-            lines.set(1, second + "…");
-        }
-        return lines;
-    }
 }

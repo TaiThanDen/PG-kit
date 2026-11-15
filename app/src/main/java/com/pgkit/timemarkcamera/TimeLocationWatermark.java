@@ -11,7 +11,7 @@ import android.text.TextPaint;
 
 /** Native text layout for the camera's template 34, reconstructed from the 1034 binding.
  * Keep device dp rounding before the original 375 dp width normalization (x50.d.D).
- * This is the live-camera layout; the separately calibrated JPEG layout has its own scale.
+ * JPEG export reuses the native layout with its own output scale and address-column width.
  */
 final class TimeLocationWatermark {
     private static final ThreadLocal<Entry> CACHE = new ThreadLocal<>();
@@ -40,6 +40,34 @@ final class TimeLocationWatermark {
         canvas.translate(entry.margin * (1 - scale), (height - entry.margin) * (1 - scale));
         canvas.scale(scale, scale);
         entry.draw(canvas, height, foreground, accent, showLocation);
+        canvas.restoreToCount(save);
+    }
+
+    /** Rasterizes the native layout at JPEG scale, independently of the preview crop. */
+    static void drawExport(Canvas canvas, int width, int height, int layoutWidth, float density,
+                           String time, String date, String weekday, String address,
+                           Typeface clockFont, Typeface textFont) {
+        drawExportStyled(canvas, width, height, layoutWidth, density, time, date, weekday,
+                address, clockFont, textFont, 1f, Color.WHITE, WatermarkRenderer.YELLOW, true);
+    }
+
+    static void drawExportStyled(Canvas canvas, int width, int height, int layoutWidth, float density,
+                                 String time, String date, String weekday, String address,
+                                 Typeface clockFont, Typeface textFont, float sizeScale,
+                                 int foreground, int accent, boolean showLocation) {
+        if (width <= 0 || height <= 0 || layoutWidth <= 0 || density <= 0) return;
+        float scale = Math.min(width, height) / (float) layoutWidth;
+        int layoutHeight = Math.round(height / scale);
+        Entry entry = new Entry(layoutWidth, density, time, date, weekday, address,
+                clockFont, textFont, false);
+        int save = canvas.save();
+        // Align the exported layer's inset with the measured v10.0.316 output raster.
+        canvas.translate(Math.min(width, height) / 768f, 0f);
+        canvas.scale(scale, scale);
+        canvas.translate(entry.margin * (1 - sizeScale),
+                (layoutHeight - entry.margin) * (1 - sizeScale));
+        canvas.scale(sizeScale, sizeScale);
+        entry.draw(canvas, layoutHeight, foreground, accent, showLocation);
         canvas.restoreToCount(save);
     }
 
@@ -93,6 +121,11 @@ final class TimeLocationWatermark {
 
         Entry(int width, float density, String time, String date, String weekday, String address,
               Typeface clockFont, Typeface textFont) {
+            this(width, density, time, date, weekday, address, clockFont, textFont, true);
+        }
+
+        Entry(int width, float density, String time, String date, String weekday, String address,
+              Typeface clockFont, Typeface textFont, boolean scaleLocationColumn) {
             this.width = width;
             this.density = density;
             this.time = time;
@@ -117,9 +150,10 @@ final class TimeLocationWatermark {
             detailX = dividerX + dividerWidth + dp(6, density);
             locationInset = dp(3, density);
             int columnWidth = Math.min(width - 2 * margin,
-                    (int) (dp(245, density) * totalScale));
+                    scaleLocationColumn ? (int) (dp(245, density) * totalScale)
+                            : dp(245, density) + dp(6, density));
             location = layout(this.address, textPaint(dp(15, density) * totalScale, textFont, true),
-                    columnWidth - locationInset, true, true);
+                    columnWidth - locationInset, true, scaleLocationColumn);
         }
 
         boolean matches(int width, float density, String time, String date, String weekday,

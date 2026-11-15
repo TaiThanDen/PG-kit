@@ -169,7 +169,7 @@ final class TemplateWatermarkRenderer {
         for(WatermarkTemplate.Field f:s.fields.values()) if(f.enabled && f.id!=1 && f.id!=2) return false;
         return true;
     }
-    private static boolean isBasic34(WatermarkTemplate.Snapshot s) {
+    static boolean isBasic34(WatermarkTemplate.Snapshot s) {
         if (!show(s,1)) return false;
         for (WatermarkTemplate.Field field : s.fields.values())
             if (field.enabled && field.id != 1 && field.id != 2) return false;
