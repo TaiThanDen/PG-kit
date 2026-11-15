@@ -19,6 +19,12 @@ public final class PhotoOutputSizeTest {
         assertArrayEquals(new int[]{3024, 4032}, PhotoOutputSize.fit(3024, 4032, 0));
     }
 
+    @Test public void largeReferencePresetMatchesXiaomiWithoutUpscaling() {
+        assertArrayEquals(new int[]{1920, 2560}, PhotoOutputSize.fit(2448, 3264, 2560));
+        assertArrayEquals(new int[]{2560, 1920}, PhotoOutputSize.fit(3264, 2448, 2560));
+        assertArrayEquals(new int[]{1920, 1080}, PhotoOutputSize.fit(1920, 1080, 2560));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void rejectsInvalidDimensions() { PhotoOutputSize.fit(0, 4032, 2048); }
 

@@ -121,10 +121,12 @@ public final class MainActivity extends ComponentActivity implements
                 .getInt(PhotoOutputSize.LONG_EDGE_KEY, PhotoOutputSize.REFERENCE_LONG_EDGE);
         new AlertDialog.Builder(this)
                 .setTitle("Độ phân giải ảnh")
-                .setSingleChoiceItems(new String[]{"2048 px · Khớp mẫu Timemark",
-                        "Độ phân giải camera gốc"}, current == PhotoOutputSize.CAMERA_ORIGINAL ? 1 : 0,
+                .setSingleChoiceItems(new String[]{"2048 px", "2560 px",
+                        "Độ phân giải camera gốc"}, current == PhotoOutputSize.CAMERA_ORIGINAL ? 2
+                                : current == PhotoOutputSize.REFERENCE_LARGE_LONG_EDGE ? 1 : 0,
                         (dialog, which) -> {
                             int longEdge = which == 0 ? PhotoOutputSize.REFERENCE_LONG_EDGE
+                                    : which == 1 ? PhotoOutputSize.REFERENCE_LARGE_LONG_EDGE
                                     : PhotoOutputSize.CAMERA_ORIGINAL;
                             getSharedPreferences(PhotoOutputSize.PREFERENCES, MODE_PRIVATE).edit()
                                     .putInt(PhotoOutputSize.LONG_EDGE_KEY, longEdge).apply();
