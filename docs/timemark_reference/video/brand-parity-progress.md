@@ -209,4 +209,19 @@ shape, padding and shadow. On the dark sample, integer translations within±2px
 have best RGB error at(0,0), so no pixel-shift correction was added.
 Debug build passed. APK SHA-256:
 `532598e54efc27e8eaf1a2bfe30f9012ba4ba599e54b386c9d7c0427bbdad174`.
-Fresh installed/encoded verification for this asset revision is pending.
+The installed APK hash matches that build. The clock/cache/none instrumentation
+probe passed. Fresh MediaStore clip ID1000011507
+(`verified-official-vi-recording.mp4`) fully decodes without errors: H.264
+720×1280, 21.128489 seconds, no display-matrix rotation; AAC stereo48kHz.
+The inspected 2-second frame contains both original-image wordmark and subtitle.
+
+The new clip also has a near-black scene, allowing direct comparison of the
+encoded logo to the earlier covered-camera original without alignment/resizing.
+At brightness thresholds30/60/100/150/200, wordmark-mask IoUs are
+0.9313/0.9343/0.9523/0.9217/0.9491. Subtitle-mask IoUs at30/60/100/150 are
+0.9040/0.9168/0.7969/0.5981. This threshold sensitivity shows remaining edge/alpha
+differences. The camera backgrounds and encoders still differ, and the main
+watermark has different time/address values. These results prove a substantial
+brand improvement, not full RGBA or complete watermark parity.
+Evidence: `official-vi-encoded-dark-comparison.json` and
+`official-vi-encoded-original-top-test-bottom.png`. The test recording is stopped.
