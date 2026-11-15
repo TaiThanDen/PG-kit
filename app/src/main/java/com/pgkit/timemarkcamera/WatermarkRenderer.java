@@ -11,6 +11,8 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import java.io.IOException;
+import java.io.InputStream;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -27,7 +29,6 @@ final class WatermarkRenderer {
     private static final int SAVED_YELLOW = Color.rgb(248, 194, 62);
     private static final int SAVED_SUBTITLE = Color.rgb(190, 190, 190);
     private static final float REFERENCE_WORDMARK_WIDTH = 177f;
-    private static final float REFERENCE_SUBTITLE_WIDTH = 174f;
     private static final Locale VIETNAMESE = new Locale("vi", "VN");
     private static final Typeface DEFAULT_TIME_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
     private static final Typeface DEFAULT_TEXT_TYPEFACE = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
@@ -35,6 +36,8 @@ final class WatermarkRenderer {
     private static Typeface textTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Typeface brandTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Bitmap shieldBitmap;
+    private static Bitmap wordmarkBitmap;
+    private static final Rect WORDMARK_SOURCE = new Rect(98, 186, 276, 226);
     // Display metrics reproduce native dp rounding; JPEG bounds own the final scale.
     private static int nativeLayoutWidth = 1080;
     private static float nativeLayoutDensity = 450f / 160f;
@@ -64,6 +67,11 @@ final class WatermarkRenderer {
             brandTypeface = DEFAULT_TEXT_TYPEFACE;
         }
         shieldBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_shield);
+        try (InputStream source = context.getAssets().open("video/official_wm_new.webp")) {
+            wordmarkBitmap = BitmapFactory.decodeStream(source);
+        } catch (IOException ignored) {
+            wordmarkBitmap = null;
+        }
     }
 
     static String time(Date when) {
@@ -146,14 +154,28 @@ final class WatermarkRenderer {
     private static void drawSavedExtras(Canvas canvas, int width, int height, String verificationCode) {
         float scale = WatermarkLayoutSpec.scaleFor(width, height);
         // The exported reference logo is a separate layer, smaller than the content text.
-        int save = canvas.save();
-        canvas.scale(2f / 3f, 2f / 3f, width, height);
         drawBrand(canvas, width, height, scale);
-        canvas.restoreToCount(save);
         drawVerification(canvas, width, height, scale, verificationCode);
     }
 
     private static void drawBrand(Canvas canvas, int width, int height, float scale) {
+        if (wordmarkBitmap != null) {
+            // Measured JPEG geometry at a 1536 px short side. Reuse original glyph outlines;
+            // the packaged English subtitle is outside WORDMARK_SOURCE.
+            float outputScale = Math.min(width, height) / 1536f;
+            float left = width - 181.75f * outputScale;
+            float top = height - 82.8125f * outputScale;
+            RectF destination = new RectF(left, top, left + 172.4375f * outputScale,
+                    top + 38.75f * outputScale);
+            canvas.drawBitmap(wordmarkBitmap, WORDMARK_SOURCE, destination,
+                    new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
+        } else {
+            drawFallbackWordmark(canvas, width, height, scale * 2f / 3f);
+        }
+        drawBrandSubtitle(canvas, width, height, Math.min(width, height) / 1536f);
+    }
+
+    private static void drawFallbackWordmark(Canvas canvas, int width, int height, float scale) {
         Paint timeLogo = savedPaint(SAVED_YELLOW, 40f * scale, brandTypeface, scale);
         timeLogo.setTextAlign(Paint.Align.LEFT);
         Rect wordmarkBounds = textBounds("Timemark", timeLogo);
@@ -169,16 +191,20 @@ final class WatermarkRenderer {
         drawText(canvas, "Time", wordmarkLeft, wordmarkBaseline, timeLogo);
         drawText(canvas, "mark", wordmarkLeft + timeWidth, wordmarkBaseline, markLogo);
 
-        Paint subtitle = savedPaint(SAVED_SUBTITLE, 32f * scale, textTypeface, scale);
+    }
+
+    private static void drawBrandSubtitle(Canvas canvas, int width, int height, float scale) {
+        Paint subtitle = savedPaint(SAVED_SUBTITLE, 20f * scale,
+                Typeface.create("sans-serif-medium", Typeface.NORMAL), scale);
+        subtitle.setShadowLayer(3.111111f * scale, 0f, 1.333333f * scale, 0x66000000);
         Rect subtitleBounds = textBounds("100% Chân thực", subtitle);
-        subtitle.setTextScaleX(REFERENCE_SUBTITLE_WIDTH * scale
+        subtitle.setTextScaleX(155f * scale
                 / Math.max(1f, subtitleBounds.width()));
         subtitleBounds = textBounds("100% Chân thực", subtitle);
-        float subtitleLeft = width - WatermarkLayoutSpec.SUBTITLE_RIGHT * scale
-                - subtitleBounds.right;
+        float subtitleLeft = width - 16f * scale - subtitleBounds.right;
         drawText(canvas, "100% Chân thực", subtitleLeft,
                 baselineForTextBottom("100% Chân thực", subtitle,
-                        height - WatermarkLayoutSpec.SUBTITLE_BOTTOM * scale), subtitle);
+                        height - 18f * scale), subtitle);
     }
 
     private static void drawVerification(Canvas canvas, int width, int height, float scale,
