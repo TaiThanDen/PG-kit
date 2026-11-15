@@ -189,13 +189,17 @@ final class CameraEngine {
         final String requestedAddress = address == null || address.trim().isEmpty()
                 ? "" : address.trim();
         final int requestedRotation = sensorRotation;
+        final int requestedLongEdge = activity.getSharedPreferences(PhotoOutputSize.PREFERENCES,
+                        ComponentActivity.MODE_PRIVATE).getInt(PhotoOutputSize.LONG_EDGE_KEY,
+                        PhotoOutputSize.REFERENCE_LONG_EDGE);
         capture.setTargetRotation(requestedRotation);
         try {
             File rawFile = File.createTempFile("timemark_raw_", ".jpg", activity.getCacheDir());
             ImageCapture.OutputFileOptions output = new ImageCapture.OutputFileOptions.Builder(rawFile).build();
             capture.takePicture(output, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
                 @Override public void onImageSaved(ImageCapture.OutputFileResults result) {
-                    renderAndSave(rawFile, requestedTime, requestedAddress, requestedRotation, template);
+                    renderAndSave(rawFile, requestedTime, requestedAddress, requestedRotation,
+                            template, requestedLongEdge);
                 }
 
                 @Override public void onError(ImageCaptureException exception) {
@@ -264,7 +268,8 @@ final class CameraEngine {
     }
 
     private void renderAndSave(File rawFile, Date requestedTime, String requestedAddress,
-                               int requestedRotation, WatermarkTemplate.Snapshot template) {
+                               int requestedRotation, WatermarkTemplate.Snapshot template,
+                               int requestedLongEdge) {
         Bitmap decoded = null;
         Bitmap oriented = null;
         Bitmap mutable = null;
@@ -277,6 +282,13 @@ final class CameraEngine {
             if (landscape != oriented) {
                 oriented.recycle();
                 oriented = landscape;
+            }
+            int[] outputSize = PhotoOutputSize.fit(oriented.getWidth(), oriented.getHeight(),
+                    requestedLongEdge);
+            if (outputSize[0] != oriented.getWidth() || outputSize[1] != oriented.getHeight()) {
+                Bitmap resized = Bitmap.createScaledBitmap(oriented, outputSize[0], outputSize[1], true);
+                oriented.recycle();
+                oriented = resized;
             }
             mutable = oriented.copy(Bitmap.Config.ARGB_8888, true);
             if (mutable == null) throw new IllegalStateException("Không tạo được bitmap để render");
