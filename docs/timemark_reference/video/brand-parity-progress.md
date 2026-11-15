@@ -82,3 +82,27 @@ self-consistency, so remaining errors cannot all be dismissed as compression.
   text-edge differences, and verify other templates and brand variants.
 
 Generated APKs, device captures and analysis rasters remain ignored local evidence.
+
+## Installed APK and encoded MP4 follow-up
+
+The user completed installation through App Manager after opening the APK from
+the system Files app. Opening a shell `file://` URI failed with “Không thể lấy
+thông tin gói”; Files supplied readable content instead. APK signature v2 verifies,
+and the installed base APK SHA-256 matches the final build hash above. The old
+installation blocker is resolved for this build.
+
+The installed debug renderer probe passed: the clock advances across a minute,
+the reused cache equals a fresh render, and template `none` remains transparent.
+Its RGBA output is retained under `.316/video/installed-renderer-probe/`.
+The detached original-layout probe now resolves the original package, but fails
+in `StrokeTextView.g` because `ExKt.toPxInt` reaches a null framework context.
+It still does not produce a controlled original RGBA reference. The original
+Application was not initialized and private app data was not accessed.
+
+A fresh encoded test clip, MediaStore ID1000011500, was recorded using the
+verified APK. `verified-wordmark-recording.mp4` fully decodes with ffmpeg without
+errors: H.264 720×1280, 22.461589 seconds, average 23.7294 fps, no display-matrix
+rotation; AAC stereo 48kHz. The 2-second frame shows the new wordmark bottom-right
+and the main watermark bottom-left. The physical hold was not newly confirmed;
+this validates the encoded renderer change, not another four-direction run.
+Full pixel parity, subtitle and other-template gaps remain open.
