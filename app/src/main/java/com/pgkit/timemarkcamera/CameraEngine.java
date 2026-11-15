@@ -217,15 +217,17 @@ final class CameraEngine {
         try {
             cameraProvider.unbindAll();
             targetRotation = sensorRotation;
-            Preview previewUseCase = new Preview.Builder()
-                    .setTargetRotation(displayRotation())
-                    .build();
+            Preview.Builder previewBuilder = new Preview.Builder()
+                    .setTargetRotation(displayRotation());
+            TimemarkDefaultFilter.apply(previewBuilder);
+            Preview previewUseCase = previewBuilder.build();
             previewUseCase.setSurfaceProvider(previewView.getSurfaceProvider());
 
-            imageCapture = new ImageCapture.Builder()
+            ImageCapture.Builder imageBuilder = new ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-                    .setTargetRotation(targetRotation)
-                    .build();
+                    .setTargetRotation(targetRotation);
+            TimemarkDefaultFilter.apply(imageBuilder);
+            imageCapture = imageBuilder.build();
             CameraSelector selector = new CameraSelector.Builder()
                     .requireLensFacing(desiredFacing)
                     .build();
