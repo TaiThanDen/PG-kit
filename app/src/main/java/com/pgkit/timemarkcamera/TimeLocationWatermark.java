@@ -11,7 +11,7 @@ import android.text.TextPaint;
 
 /** Native text layout for the camera's template 34, reconstructed from the 1034 binding.
  * Keep device dp rounding before the original 375 dp width normalization (x50.d.D).
- * JPEG export reuses the native layout with its own output scale and address-column width.
+ * JPEG export reuses the native layout with its own output scale and line-breaking policy.
  */
 final class TimeLocationWatermark {
     private static final ThreadLocal<Entry> CACHE = new ThreadLocal<>();
@@ -126,7 +126,7 @@ final class TimeLocationWatermark {
         }
 
         Entry(int width, float density, String time, String date, String weekday, String address,
-              Typeface clockFont, Typeface textFont, boolean scaleLocationColumn) {
+              Typeface clockFont, Typeface textFont, boolean balancedLineBreaking) {
             this.width = width;
             this.density = density;
             this.time = time;
@@ -150,11 +150,12 @@ final class TimeLocationWatermark {
             dividerHeight = (int) (dp(38, density) * totalScale);
             detailX = dividerX + dividerWidth + dp(6, density);
             locationInset = dp(3, density);
+            // The root's 245 dp width scales with the screen; locationText also has
+            // an independent 260 dp maxWidth (s10.a9 binding / y50.d.S3 = 1).
             int columnWidth = Math.min(width - 2 * margin,
-                    scaleLocationColumn ? (int) (dp(245, density) * totalScale)
-                            : dp(245, density) + dp(6, density));
+                    Math.min((int) (dp(245, density) * totalScale), dp(260, density)));
             location = layout(this.address, textPaint(dp(15, density) * totalScale, textFont, true),
-                    columnWidth - locationInset, true, scaleLocationColumn);
+                    columnWidth - locationInset, true, balancedLineBreaking);
         }
 
         boolean matches(int width, float density, String time, String date, String weekday,

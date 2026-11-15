@@ -44,8 +44,8 @@ final class NativeTextWatermarkProbe {
                 textFont, true, true, 0);
         int locationInset = Math.round(3 * density);
         TextView location = text(context, address, Math.round(15 * density) * normalization,
-                textFont, true, true, Math.round(245 * density) + Math.round(6 * density)
-                        - locationInset);
+                textFont, true, true, Math.min((int) (Math.round(245 * density) * normalization),
+                        Math.round(260 * density)) - locationInset);
         int margin = Math.round(8 * density);
         int inset = Math.round(4 * density);
         int headerHeight = Math.max(clock.getHeight(), date.getHeight() + weekday.getHeight()
