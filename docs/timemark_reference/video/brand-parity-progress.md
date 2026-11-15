@@ -122,7 +122,13 @@ The unchanged `compare_video_brand.py` gives subtitle contrast IoU 0.184679 →
 0.509579 on .311 and 0.157468 → 0.452328 on .316. Wordmark IoUs stay unchanged.
 Inputs and results are retained as `renderer-shell/subtitle-verified-output/`,
 `subtitle-production-final-311.json` and `subtitle-production-final-316.json`.
-The debug build passed. Encoded verification of this subtitle revision is pending.
+The debug build passed. The installed base APK was verified against SHA-256
+`8ecd2095afeb1723ed82ddcf7cfa8dcd9e71f9959e075520f3563cf5af48e171`.
+The installed clock/cache/none probe passed again. Fresh MediaStore clip
+ID1000011501 (`verified-subtitle-recording.mp4`) fully decodes without errors:
+H.264 720×1280, 34.130356 seconds, no display-matrix rotation, AAC stereo 48kHz.
+The inspected 2-second frame confirms the smaller subtitle in the encoded file.
+This confirms implementation/output behavior; it does not establish full parity.
 
 The later detached original-layout probe failed closed on an ambiguous context
 slot. Raw DEX inspection explains why a generic Context injection is unsuitable:
