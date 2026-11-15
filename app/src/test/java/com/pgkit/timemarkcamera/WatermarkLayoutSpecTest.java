@@ -12,6 +12,16 @@ public final class WatermarkLayoutSpecTest {
         assertEquals(1f, WatermarkLayoutSpec.scaleFor(1152, 1536), DELTA);
     }
 
+    @Test public void savedBrandUsesNativeDpBeforePhotoProjection() {
+        // LG and Xiaomi reference captures have different display densities and widths.
+        assertEquals(267.73334f,
+                WatermarkLayoutSpec.savedBrandSize(1536, 2048, 1440, 2.50625f), DELTA);
+        assertEquals(499.55557f,
+                WatermarkLayoutSpec.savedBrandSize(1920, 2560, 1080, 2.8125f), DELTA);
+        assertEquals(499.55557f,
+                WatermarkLayoutSpec.savedBrandSize(2560, 1920, 1080, 2.8125f), DELTA);
+    }
+
     @Test public void dividerTracksTheMeasuredTimeWidth() {
         assertEquals(252f, WatermarkLayoutSpec.dividerX(189f, 1f), DELTA);
         assertEquals(235f, WatermarkLayoutSpec.dividerX(172f, 1f), DELTA);

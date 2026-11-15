@@ -37,6 +37,12 @@ final class WatermarkLayoutSpec {
         return Math.min(width / referenceWidth, height / referenceHeight);
     }
 
+    /** Projects the original 100 dp official-logo view into the saved photo. */
+    static float savedBrandSize(int width, int height, int displayWidth, float density) {
+        int nativeSize = Math.round(100f * density);
+        return nativeSize * (Math.min(width, height) / (float) displayWidth);
+    }
+
     static float dividerTop(int imageHeight, float scale) {
         return imageHeight - (DIVIDER_BOTTOM + DIVIDER_HEIGHT) * scale;
     }

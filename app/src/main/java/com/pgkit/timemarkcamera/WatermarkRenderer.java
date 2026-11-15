@@ -159,7 +159,8 @@ final class WatermarkRenderer {
             // The original Vietnamese asset contains both glyphs and their baked shadow.
             // JPEG geometry is measured independently from the video composition path.
             float outputScale = Math.min(width, height) / 1536f;
-            float size = 267.75f * outputScale;
+            float size = WatermarkLayoutSpec.savedBrandSize(width, height,
+                    nativeLayoutWidth, nativeLayoutDensity);
             RectF destination = new RectF(width - size + outputScale, height - size,
                     width + outputScale, height);
             canvas.drawBitmap(wordmarkBitmap, null, destination,
