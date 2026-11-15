@@ -104,12 +104,14 @@ final class VideoWatermarkRenderer {
         paint.setShadowLayer(3.5f * scale, 0, 1.5f * scale, 0x59000000);
         paint.setTypeface(subtitleFont);
         paint.setTextScaleX(1f);
-        paint.setTextSize(32f * scale);
+        // Native 1080 raster -> 720 output, calibrated on .311 and checked on .316.
+        // The active original subtitle asset remains unknown; this is not pixel parity.
+        paint.setTextSize(24.8f * scale);
         paint.setColor(0xffbebebe);
         paint.getTextBounds(subtitle, 0, subtitle.length(), bounds);
         paint.setTextScaleX(174f * scale / Math.max(1, bounds.width()));
         paint.getTextBounds(subtitle, 0, subtitle.length(), bounds);
-        canvas.drawText(subtitle, width - 18f * scale - bounds.right,
-                height - 20f * scale - bounds.bottom, paint);
+        canvas.drawText(subtitle, width - 16.4f * scale - bounds.right,
+                height - 18.4f * scale - bounds.bottom, paint);
     }
 }

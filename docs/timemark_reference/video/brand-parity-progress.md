@@ -106,3 +106,29 @@ rotation; AAC stereo 48kHz. The 2-second frame shows the new wordmark bottom-rig
 and the main watermark bottom-left. The physical hold was not newly confirmed;
 this validates the encoded renderer change, not another four-direction run.
 Full pixel parity, subtitle and other-template gaps remain open.
+
+## Subtitle native-raster follow-up
+
+A second bounded sweep rendered all candidates at the actual 1080 raster before
+filtering to 720, rather than choosing from direct-720 glyphs. The retained
+implementation keeps Roboto Condensed Regular, reduces its size from 32 to 24.8
+in the existing `layoutShortEdge / 1152` scale, and adjusts right/bottom offsets
+from 18/20 to 16.4/18.4. The shadow, color and target text width stay unchanged.
+This is an empirical improvement; the active original subtitle asset is unknown.
+
+The actual private production `drawBrand` method was then invoked with the same
+display metrics and downsampling, independently of the candidate-sprite fitter.
+The unchanged `compare_video_brand.py` gives subtitle contrast IoU 0.184679 →
+0.509579 on .311 and 0.157468 → 0.452328 on .316. Wordmark IoUs stay unchanged.
+Inputs and results are retained as `renderer-shell/subtitle-verified-output/`,
+`subtitle-production-final-311.json` and `subtitle-production-final-316.json`.
+The debug build passed. Encoded verification of this subtitle revision is pending.
+
+The later detached original-layout probe failed closed on an ambiguous context
+slot. Raw DEX inspection explains why a generic Context injection is unsuitable:
+`n.g(float)` reads `com.facebook.imageutils.c.a` typed as `TodayApplication`, not
+`Context`. The probe did not initialize the original Application or access private
+data. The same DEX inspection retains the official-logo query annotation
+`watermark/official/query`; a runtime response or active downloaded asset has not
+been obtained. `official_watermark2_vn.png` was inspected: its subtitle is “Máy
+ảnh”, which differs from the observed MP4 variant.
