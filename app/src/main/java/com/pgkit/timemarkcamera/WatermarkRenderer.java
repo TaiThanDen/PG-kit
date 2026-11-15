@@ -37,7 +37,6 @@ final class WatermarkRenderer {
     private static Typeface brandTypeface = DEFAULT_TEXT_TYPEFACE;
     private static Bitmap shieldBitmap;
     private static Bitmap wordmarkBitmap;
-    private static final Rect WORDMARK_SOURCE = new Rect(98, 186, 276, 226);
     // Display metrics reproduce native dp rounding; JPEG bounds own the final scale.
     private static int nativeLayoutWidth = 1080;
     private static float nativeLayoutDensity = 450f / 160f;
@@ -67,7 +66,7 @@ final class WatermarkRenderer {
             brandTypeface = DEFAULT_TEXT_TYPEFACE;
         }
         shieldBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_shield);
-        try (InputStream source = context.getAssets().open("video/official_wm_new.webp")) {
+        try (InputStream source = context.getAssets().open("video/official_vi.png")) {
             wordmarkBitmap = BitmapFactory.decodeStream(source);
         } catch (IOException ignored) {
             wordmarkBitmap = null;
@@ -160,19 +159,18 @@ final class WatermarkRenderer {
 
     private static void drawBrand(Canvas canvas, int width, int height, float scale) {
         if (wordmarkBitmap != null) {
-            // Measured JPEG geometry at a 1536 px short side. Reuse original glyph outlines;
-            // the packaged English subtitle is outside WORDMARK_SOURCE.
+            // The original Vietnamese asset contains both glyphs and their baked shadow.
+            // JPEG geometry is measured independently from the video composition path.
             float outputScale = Math.min(width, height) / 1536f;
-            float left = width - 181.75f * outputScale;
-            float top = height - 82.8125f * outputScale;
-            RectF destination = new RectF(left, top, left + 172.4375f * outputScale,
-                    top + 38.75f * outputScale);
-            canvas.drawBitmap(wordmarkBitmap, WORDMARK_SOURCE, destination,
+            float size = 267.75f * outputScale;
+            RectF destination = new RectF(width - size + outputScale, height - size,
+                    width + outputScale, height);
+            canvas.drawBitmap(wordmarkBitmap, null, destination,
                     new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
         } else {
             drawFallbackWordmark(canvas, width, height, scale * 2f / 3f);
+            drawBrandSubtitle(canvas, width, height, Math.min(width, height) / 1536f);
         }
-        drawBrandSubtitle(canvas, width, height, Math.min(width, height) / 1536f);
     }
 
     private static void drawFallbackWordmark(Canvas canvas, int width, int height, float scale) {
