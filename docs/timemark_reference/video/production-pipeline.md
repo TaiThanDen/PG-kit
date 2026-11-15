@@ -51,9 +51,9 @@ The 2-second decoded frame contains native-style template 34 at bottom-left and 
 
 `VideoWatermarkRenderer` rasterizes the existing live renderer into a software ARGB bitmap at native layout density, caches it for the current device-clock second, and composites it for every frame. Template and address are constructor snapshots. Branding is a measured reconstruction of the default-34 clip, not proven for other brand variants. `none` suppresses video watermark layers. CameraEngine clears every effect canvas, applies crop/rotation/mirror in buffer coordinates and releases session bitmaps on the effect thread. HD is preferred with device capability fallback; 24 FPS is a target, not a guarantee.
 
-This is a reproduction using CameraX, not a port of Timemark's recorder. Shared JPEG renderer was not changed. Other templates remain prototypes. Font/layout/bitmap matching, H.264/RGBA parity, front camera, clock boundary, four physical directions, interruption/storage errors and filter variants require validation. The proposed MainActivity/UI integration changes, if needed, will be supplied as small patches here rather than overwriting other chats' files.
+This is a reproduction using CameraX, not a port of Timemark's recorder. Shared JPEG renderer was not changed. Other templates remain prototypes. Font/layout/bitmap matching, H.264/RGBA parity, front camera, an actual MP4 clock boundary, interruption/storage errors and filter variants require validation. Four physical rear-camera directions passed the controlled playback checks below. The proposed MainActivity/UI integration changes, if needed, will be supplied as small patches here rather than overwriting other chats' files.
 
-Build of `.codexvideo` succeeded with JDK17/build-tools35. First real-phone install was canceled by the phone (`INSTALL_FAILED_USER_RESTRICTED`); no unchanged retry was made. Waiting for the user to unlock/accept installation while continuing static analysis.
+Build of `.codexvideo` succeeded with JDK17/build-tools35. First real-phone install was canceled by the phone (`INSTALL_FAILED_USER_RESTRICTED`); no unchanged retry was made. Installation subsequently succeeded after the user explicitly confirmed readiness and accepted it on the phone.
 
 ## Coordination lock recovery
 
@@ -65,10 +65,25 @@ An isolated debug instrumentation probe (ignored source tree, excluded from prod
 
 ## Resume checkpoint, 2026-11-15
 
-The `.codexvideo` APK installed successfully after explicit user readiness. A newly retrieved previous-session clip (MediaStore1000011464) decodes as H.264720x1280, about23.27 FPS, AAC stereo48kHz,9.626444s. The frame has readable bottom-left native-layout watermark and bottom-right branding, without side verification text. Physical orientation at the creation of this unsupervised clip is not attributed; the four-direction acceptance test remains pending. Its audio sample rate differs from the original44.1kHz and remains a known CameraX-profile difference.
+The `.codexvideo` APK installed successfully after explicit user readiness. A newly retrieved previous-session clip (MediaStore1000011464) decodes as H.264720x1280, about23.27 FPS, AAC stereo48kHz,9.626444s. The frame has readable bottom-left native-layout watermark and bottom-right branding, without side verification text. Physical orientation at the creation of this unsupervised clip is not attributed; the separately controlled four-direction test below supplies that evidence. Its audio sample rate differs from the original44.1kHz and remains a known CameraX-profile difference.
 
-## Controlled physical portrait, transfer pending
+## Controlled physical portrait and USB recovery
 
-On2026-11-15 the user explicitly confirmed normal portrait. Foreground was corrected from the separate `.codextest` UI package to `.codexvideo`; the before/recording screenshots show upright watermark and a portrait Activity. The controlled recording finalized as MediaStoreID1000011481, filename`TIMEMARK_VIDEO_20261115_091217_44-12-to-44-kp3-example-district-ho-.mp4`,16304ms,720x1280,is_pending0. Xiaomi disconnected before the MP4 transfer. The local `controlled-portrait.mp4` is an empty failed-transfer placeholder and is not valid output evidence. Final MP4 decoding, normalized orientation and the other three physical holds remain pending. LG serialDEVICE_SERIAL_REDACTED was not substituted. Shared runtime lock was released.
+On2026-11-15 the user explicitly confirmed normal portrait. Foreground was corrected from the separate `.codextest` UI package to `.codexvideo`; the before/recording screenshots show upright watermark and a portrait Activity. The controlled recording finalized as MediaStoreID1000011481, filename`TIMEMARK_VIDEO_20261115_091217_44-12-to-44-kp3-example-district-ho-.mp4`,16304ms,720x1280,is_pending0. Xiaomi disconnected before the initial transfer. After the phone reappeared in both USB and ADB, this exact MP4 was retrieved successfully; the empty placeholder was replaced with the validated8,490,082-byte file. Full ffmpeg decoding passed. LG serialDEVICE_SERIAL_REDACTED was not substituted.
 
 A fresh JDK17 clean assembleDebug passed with35 tasks executed; the test APK was frozen under the video evidence directory. Owned-file diff checks passed. Whole-checkout diff check still reports pre-existing CRLF/trailing whitespace in old reference captures and gradlew.bat; these unrelated files were preserved.
+
+## Four physical video orientations, 2026-11-15
+
+The user confirmed each physical hold individually. Under the runtime lock, the foreground `.codexvideo` Activity was verified before each adaptive tap, preview/recording screenshots were retained, and each new finalized MP4 was downloaded by its exact MediaStore ID. All four clips passed full ffmpeg video/audio decoding. The inspected2-second playback frames have upright bottom-left watermark and bottom-right brand, with no app controls burned into the output. The Activity remained portrait; its preview watermark followed each hold, including180 degrees for inverted portrait.
+
+| Confirmed hold | MediaStore ID | Duration | Coded pixels | Display-matrix rotation | Playback size | Observed average FPS |
+| --- | --- | --- | --- | --- | --- | --- |
+| Normal portrait | 1000011481 | 16.304200s | 720x1280 | 0 | 720x1280 | 16.8055 |
+| Landscape, top edge left | 1000011482 | 15.627333s | 720x1280 | +90 | 1280x720 | 23.9964 |
+| Landscape, top edge right | 1000011483 | 16.335744s | 720x1280 | -90 | 1280x720 | 23.9965 |
+| Inverted portrait | 1000011484 | 17.377622s | 720x1280 | -180 | 720x1280 | 23.7662 |
+
+These are successful orientation-aware playback checks for the installed test build, rear camera and default template34. They do not establish normalized encoded pixels or parity with Timemark: CameraX retains720x1280 coded buffers and uses the MP4 display matrix, whereas the inspected original recording route rotates pixels and sets muxer orientation0. The clone's AAC-LC stereo audio is48kHz/about256kb/s in these controlled clips, versus44.1kHz/about96kb/s in the original sample. Original-app landscape/inverted runtime clips, front camera, all other templates and interruption/storage cases remain unverified. Preview also retains the existing3:4 UI viewport rather than the original observed9:16 video region.
+
+Ignored evidence: `video/controlled-{portrait,top-left,top-right,inverted}.mp4`, corresponding metadata/frames/screenshots, and `video/controlled-four-orientations.json` with hashes and measurements. Device media, screenshots, APKs and probe data are not committed. Runtime lock was released after the final transfer; the user was told to return the phone to normal portrait.
