@@ -1,0 +1,95 @@
+--- a/app/src/main/java/com/pgkit/timemarkcamera/CameraEngine.java
++++ b/app/src/main/java/com/pgkit/timemarkcamera/CameraEngine.java
+@@ -38,0 +39 @@
++import androidx.camera.video.FallbackStrategy;
+@@ -89,0 +91 @@
++    private OverlayEffect videoWatermarkEffect;
+@@ -98,3 +100 @@
+-    private volatile Date videoWatermarkTime;
+-    private volatile WatermarkTemplate.Snapshot videoWatermarkTemplate;
+-    private volatile String videoWatermarkAddress;
++    private volatile VideoWatermarkRenderer videoWatermarkRenderer;
+@@ -151,0 +152 @@
++        closeVideoWatermarkEffect();
+@@ -259 +260 @@
+-    /** Starts or stops MP4 capture. The watermark data is frozen at the start of the clip. */
++    /** Freezes template/location/orientation at start; the video clock keeps device time. */
+@@ -273,3 +274 @@
+-        videoWatermarkTime = requestedTime;
+-        videoWatermarkTemplate = template;
+-        videoWatermarkAddress = requestedAddress;
++        videoWatermarkRenderer = new VideoWatermarkRenderer(activity, requestedAddress, template);
+@@ -298 +297,7 @@
+-        activeRecording = pending.start(mainExecutor, this::handleVideoEvent);
++        try {
++            activeRecording = pending.start(mainExecutor, this::handleVideoEvent);
++        } catch (RuntimeException exception) {
++            releaseVideoWatermark();
++            callback.onVideoRecordingChanged(false);
++            callback.onCameraError("Không thể bắt đầu quay video: " + exception.getMessage());
++        }
+@@ -308,0 +314 @@
++            closeVideoWatermarkEffect();
+@@ -320 +326,5 @@
+-                    .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
++                    .setQualitySelector(QualitySelector.from(Quality.HD,
++                            FallbackStrategy.lowerQualityOrHigherThan(Quality.HD)))
++                    .build();
++            videoCapture = new VideoCapture.Builder<>(recorder)
++                    .setTargetFrameRate(new Range<>(24, 24))
+@@ -322 +331,0 @@
+-            videoCapture = VideoCapture.withOutput(recorder);
+@@ -337,0 +347 @@
++            closeVideoWatermarkEffect();
+@@ -345,0 +356 @@
++        videoWatermarkEffect = effect;
+@@ -352,4 +363,3 @@
+-            Date when = videoWatermarkTime;
+-            String address = videoWatermarkAddress;
+-            if (when != null && address != null) {
+-                drawVideoWatermark(frame, overlayCanvas, when, address);
++            VideoWatermarkRenderer renderer = videoWatermarkRenderer;
++            if (renderer != null) {
++                drawVideoWatermark(frame, overlayCanvas, renderer);
+@@ -362,3 +372,4 @@
+-    private void drawVideoWatermark(Frame frame, Canvas canvas, Date when, String address) {
+-        int sourceWidth = frame.getSize().getWidth();
+-        int sourceHeight = frame.getSize().getHeight();
++    private void drawVideoWatermark(Frame frame, Canvas canvas, VideoWatermarkRenderer renderer) {
++        android.graphics.Rect crop = frame.getCropRect();
++        int sourceWidth = crop.width();
++        int sourceHeight = crop.height();
+@@ -366,0 +378,2 @@
++        canvas.clipRect(crop);
++        canvas.translate(crop.left, crop.top);
+@@ -370 +383 @@
+-        // upright MP4 coordinate system before using the same renderer as saved JPEGs.
++        // upright MP4 coordinate system before placing the live-layout video bitmap.
+@@ -385,2 +398,5 @@
+-        WatermarkRenderer.drawSaved(canvas, outputWidth, outputHeight, new Date(), address,
+-                verificationCode, videoWatermarkTemplate);
++        if (frame.isMirroring()) {
++            canvas.translate(outputWidth, 0);
++            canvas.scale(-1f, 1f);
++        }
++        renderer.draw(canvas, outputWidth, outputHeight, System.currentTimeMillis());
+@@ -398,2 +414,2 @@
+-        videoWatermarkTime = null;
+-        videoWatermarkAddress = null;
++        releaseVideoWatermark();
++        if (videoCapture != null) videoCapture.setTargetRotation(sensorRotation);
+@@ -415,0 +432,14 @@
++    }
++
++    private void releaseVideoWatermark() {
++        VideoWatermarkRenderer renderer = videoWatermarkRenderer;
++        videoWatermarkRenderer = null;
++        // Draw callbacks and bitmap recycling share one thread, including a frame in flight.
++        if (renderer != null) effectHandler.post(renderer::release);
++    }
++
++    private void closeVideoWatermarkEffect() {
++        if (videoWatermarkEffect != null) {
++            videoWatermarkEffect.close();
++            videoWatermarkEffect = null;
++        }
