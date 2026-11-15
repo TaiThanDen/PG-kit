@@ -5,9 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ImageDecoder;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.os.Build;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -22,6 +24,21 @@ final class SavedVerificationRenderer {
     static void load(Context context) {
         codeTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/PTMono-Regular.ttf");
         labelTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/RobotoCondensed-Regular.ttf");
+        if (Build.VERSION.SDK_INT >= 28) {
+            try {
+                int targetDensity = context.getResources().getDisplayMetrics().densityDpi;
+                icon = ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.getAssets(),
+                        "verification/anti_code_icon_small.webp"), (decoder, info, source) -> {
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                    decoder.setTargetSize(Math.round(info.getSize().getWidth() * targetDensity / 480f),
+                            Math.round(info.getSize().getHeight() * targetDensity / 480f));
+                });
+                icon.setDensity(targetDensity);
+                return;
+            } catch (IOException ignored) {
+                // Android 8 and decode failures retain the BitmapFactory resource-density path.
+            }
+        }
         try (InputStream input = context.getAssets().open("verification/anti_code_icon_small.webp")) {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inDensity = 480; // The original drawable is in drawable-xxhdpi.
@@ -59,14 +76,15 @@ final class SavedVerificationRenderer {
             if (icon != null) {
                 int iconWidth = Math.round(8f * density);
                 int iconHeight = Math.round(9f * density);
-                float iconLeft = (codeWidth - iconWidth) / 2f - Math.round(density) / 2f;
+                // ConstraintLayout rounds the centered ImageView's native-pixel position.
+                float iconLeft = Math.round((codeWidth - iconWidth - Math.round(density)) / 2f);
                 float iconTop = codeTop + codeHeight + Math.round(density);
                 nativeCanvas.save();
                 nativeCanvas.rotate(-90f, iconLeft + iconWidth / 2f,
                         iconTop + iconHeight / 2f);
                 nativeCanvas.drawBitmap(icon, null,
                         new RectF(iconLeft, iconTop, iconLeft + iconWidth, iconTop + iconHeight),
-                        new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
+                        new Paint(Paint.DITHER_FLAG | Paint.FILTER_BITMAP_FLAG));
                 nativeCanvas.restore();
             }
             canvas.drawBitmap(layer, null,
