@@ -138,3 +138,32 @@ data. The same DEX inspection retains the official-logo query annotation
 `watermark/official/query`; a runtime response or active downloaded asset has not
 been obtained. `official_watermark2_vn.png` was inspected: its subtitle is “Máy
 ảnh”, which differs from the observed MP4 variant.
+
+## Covered-camera reference and protocol trace
+
+The user explicitly covered the rear camera for a new original Timemark video.
+MediaStore ID1000011503 (`original-dark-reference.mp4`) was retrieved and fully
+decoded without errors. Its 2-second frame has near-uniform dark camera pixels
+(median channel level about 3, 99th percentile about 5 outside the watermark).
+This removes much of the earlier unknown-scene confounder, but it remains a lossy
+encoded RGB sample, not the original pre-compositor RGBA layer. The user was told
+the clip had saved and could remove the cover.
+
+A native-raster subtitle sweep against this new sample again favors the retained
+Roboto Condensed Regular / output size 15.5 candidate and approximately +1,+1
+placement relative to the old subtitle. Its low-threshold shape IoU is about
+0.64; higher thresholds remain lower. Color minimization can hide shape errors
+by dimming glyphs, so no color/shadow change was made from that fit.
+`subtitle-native-probe/fit-dark.json` retains the candidate scores and caveats.
+
+The .316 `NetworkService` constructor reads `R.string.global_host_url`, resolved
+from this APK as `https://app.timemark.com/next/`. Raw DEX annotations on
+`TodayApiServiceKt.queryOfficial` specify `watermark/official/query`. An anonymous
+query containing only an empty checksum returned an encrypted `result` envelope;
+it does not establish that the server accepted the request or returned a logo.
+No account/device identifiers or original private data were sent.
+
+The inspected client wraps JSON as encrypted `params` and decodes response
+`result` with `ep0.a` AES/CBC/PKCS5Padding. Its key/IV start empty and are initialized
+elsewhere. Static protocol tracing continues; no decoded configuration or active
+downloaded logo has been obtained at this checkpoint.
