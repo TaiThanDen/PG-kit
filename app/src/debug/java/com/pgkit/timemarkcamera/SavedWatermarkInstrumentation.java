@@ -28,16 +28,43 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
             int height = Integer.parseInt(options.getString("height", "2048"));
             File root = new File(getTargetContext().getFilesDir(), "watermark-probe");
             if (!root.exists() && !root.mkdirs()) throw new IllegalStateException("mkdir");
-            String address = "44/12 Tổ 44 KP3, Example District, Hồ Chí Minh";
+            String address = options.getString("address", "44/12 Tổ 44 KP3, Example District, Hồ Chí Minh");
             Calendar date = Calendar.getInstance();
-            date.set(2026, Calendar.NOVEMBER, 15, 9, 23, 0);
-            for (int mode = 0; mode < 4; mode++) for (int background = 0; background < 3; background++) {
+            date.set(2026, Calendar.NOVEMBER, 15,
+                    Integer.parseInt(options.getString("hour", "9")),
+                    Integer.parseInt(options.getString("minute", "23")), 0);
+            WatermarkTemplate.Snapshot fixtureTemplate = null;
+            if ("false".equals(options.getString("location"))) {
+                for (WatermarkTemplate candidate : WatermarkTemplate.defaults(getTargetContext())) {
+                    if ("34".equals(candidate.id))
+                        fixtureTemplate = candidate.defaultSnapshot().withField(2, false, "");
+                }
+                if (fixtureTemplate == null) throw new IllegalStateException("Missing template 34");
+            }
+            for (int mode = 0; mode < 6; mode++) for (int background = 0; background < 3; background++) {
                 Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmap);
                 canvas.drawColor(background == 0 ? Color.BLACK
                         : background == 1 ? Color.WHITE : Color.TRANSPARENT);
                 if (mode == 0 || mode == 1) {
-                    WatermarkRenderer.drawSaved(canvas, width, height, date.getTime(), address, "TESTCODE");
+                    WatermarkRenderer.drawSaved(canvas, width, height, date.getTime(), address,
+                            "TESTCODE", fixtureTemplate);
+                } else if (mode == 5) {
+                    // Diagnostic: stamp at the LG camera's 4032-pixel long side, then reduce.
+                    float sourceScale = 4032f / Math.max(width, height);
+                    Bitmap layer = Bitmap.createBitmap(Math.round(width * sourceScale),
+                            Math.round(height * sourceScale), Bitmap.Config.ARGB_8888);
+                    try {
+                        WatermarkRenderer.drawSaved(new Canvas(layer), layer.getWidth(),
+                                layer.getHeight(), date.getTime(), address, "TESTCODE", fixtureTemplate);
+                        canvas.drawBitmap(layer, null, new Rect(0, 0, width, height),
+                                new Paint(Paint.FILTER_BITMAP_FLAG));
+                    } finally {
+                        layer.recycle();
+                    }
+                } else if (mode == 4) {
+                    runOnMainSync(() -> NativeTextWatermarkProbe.draw(getTargetContext(), canvas,
+                            width, height, clock, text, address));
                 } else if (mode == 3) {
                     // Diagnostic: distinguish scaled glyph rasterization from scaling a cached layer.
                     int nativeShortSide = Math.min(getTargetContext().getResources()
@@ -48,7 +75,7 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
                             Math.round(height / scale), Bitmap.Config.ARGB_8888);
                     try {
                         WatermarkRenderer.drawSaved(new Canvas(layer), layer.getWidth(),
-                                layer.getHeight(), date.getTime(), address, "TESTCODE");
+                                layer.getHeight(), date.getTime(), address, "TESTCODE", fixtureTemplate);
                         canvas.drawBitmap(layer, null, new Rect(0, 0, width, height),
                                 new Paint(Paint.FILTER_BITMAP_FLAG));
                     } finally {
@@ -82,6 +109,9 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
                 }
                 bitmap.recycle();
             }
+            try (FileOutputStream output = new FileOutputStream(new File(root, "native-metrics.txt"))) {
+                output.write(NativeTextWatermarkProbe.metrics.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
             result.putString("stream", "Rendered watermark fixtures at " + root);
             finish(-1, result);
         } catch (Exception | AssertionError error) {
@@ -89,4 +119,5 @@ public final class SavedWatermarkInstrumentation extends Instrumentation {
             finish(0, result);
         }
     }
+
 }
