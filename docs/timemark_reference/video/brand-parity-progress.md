@@ -165,5 +165,48 @@ No account/device identifiers or original private data were sent.
 
 The inspected client wraps JSON as encrypted `params` and decodes response
 `result` with `ep0.a` AES/CBC/PKCS5Padding. Its key/IV start empty and are initialized
-elsewhere. Static protocol tracing continues; no decoded configuration or active
-downloaded logo has been obtained at this checkpoint.
+elsewhere. This was unresolved at that checkpoint; the follow-up below resolves
+the public configuration protocol and obtains the Vietnamese image.
+
+## Vietnamese official asset recovered
+
+Static .316 evidence traces the protocol initialization to `TodayApplication`
+`onCreate` DEX offset476. The obfuscated constant decoder and public protocol
+were reproduced locally; the original Application was never executed by the
+analysis harness. An anonymous correctly wrapped query returns code200 and logo
+URLs. The plain-JSON attempt above decodes to code400 / `param error`, not a logo.
+The request interceptor proves headers `countryCode`, `appLan` and `fullappLan`.
+Only public language/region/build headers were used, without tokens, account
+identifiers or device identifiers. `appLan: vi` selects the Vietnamese covers.
+
+The Vietnamese configuration checksum is `71c8145276bc911914118353360ce782`.
+Its position0 image is:
+`https://global-cloud.dayscamera.com/official/official_watermark_diposition/cde8d1cb-0f4a-4bb6-9b0d-a5292f7d1d2d.png`.
+The exact 300×300 transparent PNG is included as `assets/video/official_vi.png`,
+SHA-256 `d192e612622cae176c561673a8e65aa4b7855d5c060d10a2c01db97c09ac8e2d`.
+It contains both the gold/white wordmark and the Vietnamese subtitle with shadow.
+This supersedes the interim font reconstruction and packaged English-wordmark
+crop for video. The packaged asset remains used by the independent JPEG path.
+
+The full source padding is preserved. A covered-camera bilinear fit gives a
+roughly187px square flush to the bottom/right of a720×1280 output. Production
+draws that square in native layout coordinates before existing downsampling.
+No extra text or synthetic shadow is drawn over this image. Other official
+variants and other device/output scales remain unverified.
+
+Actual Android production `drawBrand`, 1080→720, compared without alignment:
+
+| Reference | Wordmark IoU before / asset | Subtitle contrast IoU before / asset |
+| --- | ---: | ---: |
+| .311 scene holdout | 0.869565 / 0.874603 | 0.509579 / 0.843091 |
+| .316 scene holdout | 0.875190 / 0.844702 | 0.452328 / 0.790451 |
+| .316 covered camera | 0.846422 / 0.879581 | 0.601515 / 0.894180 |
+
+Metrics retain the threshold/estimated-backdrop caveats. The .316 wordmark
+threshold score is slightly lower than the interim crop; the complete source
+image substantially improves the subtitle and preserves the original combined
+shape, padding and shadow. On the dark sample, integer translations within±2px
+have best RGB error at(0,0), so no pixel-shift correction was added.
+Debug build passed. APK SHA-256:
+`532598e54efc27e8eaf1a2bfe30f9012ba4ba599e54b386c9d7c0427bbdad174`.
+Fresh installed/encoded verification for this asset revision is pending.

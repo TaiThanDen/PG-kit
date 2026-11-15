@@ -7,9 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 
 import java.util.Date;
 import java.io.IOException;
@@ -27,9 +25,7 @@ final class VideoWatermarkRenderer {
     private final int layoutShortEdge;
     private final float density;
     private final Bitmap brandWordmark;
-    private final Rect brandWordmarkSource = new Rect(98, 186, 276, 226);
     private final RectF brandWordmarkDestination = new RectF();
-    private final Typeface subtitleFont;
     private final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final RectF destination = new RectF();
     private Bitmap overlay;
@@ -43,15 +39,14 @@ final class VideoWatermarkRenderer {
         // This is the native layout's rasterization density, never JPEG/PreviewView geometry.
         layoutShortEdge = Math.max(1, context.getResources().getDisplayMetrics().widthPixels);
         density = context.getResources().getDisplayMetrics().density;
-        // The packaged wordmark has the original glyph shapes. Its "Camera" subtitle is
-        // excluded: the observed recording uses a separate Vietnamese subtitle variant.
-        try (InputStream source = context.getAssets().open("video/official_wm_new.webp")) {
+        // Vietnamese official-logo response contains both the wordmark and subtitle.
+        // Keep its native transparent padding and shadows; do not reconstruct glyphs.
+        try (InputStream source = context.getAssets().open("video/official_vi.png")) {
             brandWordmark = BitmapFactory.decodeStream(source);
         } catch (IOException error) {
             throw new IllegalStateException("Video wordmark asset missing", error);
         }
         if (brandWordmark == null) throw new IllegalStateException("Video wordmark asset invalid");
-        subtitleFont = Typeface.createFromAsset(context.getAssets(), "fonts/RobotoCondensed-Regular.ttf");
     }
 
     /** Called only on CameraEngine's effect thread, in upright output coordinates. */
@@ -87,31 +82,10 @@ final class VideoWatermarkRenderer {
     }
 
     private void drawBrand(Canvas canvas, int width, int height) {
-        // Measured against the original default-34 MP4. Other brand variants remain unverified.
-        float scale = layoutShortEdge / 1152f;
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
-        // Calibrated on .311 and independently checked against the .316 MP4, with
-        // premultiplied alpha. These measurements do not establish full logo parity.
-        float outputScale = layoutShortEdge / 720f;
-        float left = width - 127.125f * outputScale;
-        float top = height - 57.75f * outputScale;
-        brandWordmarkDestination.set(left, top, left + 119.794f * outputScale,
-                top + 26.92f * outputScale);
-        canvas.drawBitmap(brandWordmark, brandWordmarkSource, brandWordmarkDestination, bitmapPaint);
-
-        String subtitle = "100% Chân thực";
-        Rect bounds = new Rect();
-        paint.setShadowLayer(3.5f * scale, 0, 1.5f * scale, 0x59000000);
-        paint.setTypeface(subtitleFont);
-        paint.setTextScaleX(1f);
-        // Native 1080 raster -> 720 output, calibrated on .311 and checked on .316.
-        // The active original subtitle asset remains unknown; this is not pixel parity.
-        paint.setTextSize(24.8f * scale);
-        paint.setColor(0xffbebebe);
-        paint.getTextBounds(subtitle, 0, subtitle.length(), bounds);
-        paint.setTextScaleX(174f * scale / Math.max(1, bounds.width()));
-        paint.getTextBounds(subtitle, 0, subtitle.length(), bounds);
-        canvas.drawText(subtitle, width - 16.4f * scale - bounds.right,
-                height - 18.4f * scale - bounds.bottom, paint);
+        // Full 300px source fits a 187px square at the measured 720 short edge.
+        // Covered-camera .316 fit; .311/.316 scene references remain holdouts.
+        float size = 187f * layoutShortEdge / 720f;
+        brandWordmarkDestination.set(width - size, height - size, width, height);
+        canvas.drawBitmap(brandWordmark, null, brandWordmarkDestination, bitmapPaint);
     }
 }
