@@ -11,3 +11,9 @@ The video renderer uses the existing live template renderer; all non-34 template
 Validation artifacts remain ignored under reference_app/v10.0.311/video: exact original MP4, frames/metadata, REA bundles, baseline/diff, APK hash, renderer probe and build log. Build/test package is com.pgkit.timemarkcamera.codexvideo. Do not overwrite other test packages or install over the user's differently signed original clone.
 
 Use flock --close with all shared lock commands. A daemon inherited a runtime lock during automatic ADB startup; recovery left the server running and quarantined that stale inode. The current canonical runtime lock is usable.
+
+## Current checkpoint
+
+Owned commits: `b8b41b2` (production video analysis, ledger and engine review patch) and `9e8e3b7` (new raster/cache helper). A fresh `clean assembleDebug` passed with35 tasks executed. CameraEngine changes are already present but intentionally remain uncommitted with the pre-existing shared baseline; the review patch excludes later photo-save edits. No UI, photo-save or orientation-mapping change from another chat was staged.
+
+Runtime blocker: controlled portrait MP4 ID1000011481 finalized on Xiaomi, but the USB device disappeared before transfer. The device was still absent from both ADB and USB after the user reported reconnecting; only LG LM_V510N and the UI chat's emulator5582 were visible. No substitute device was used. The runtime lock is released. Next: retrieve that exact MP4 when Xiaomi reappears, inspect decoded frames and metadata, then ask for landscape top-left/top-right and inverted portrait holds one at a time. Do not mark four-direction verification complete from the earlier photo tests or emulator orientation.
