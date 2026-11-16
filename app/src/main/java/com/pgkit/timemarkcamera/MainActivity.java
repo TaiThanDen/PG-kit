@@ -93,6 +93,8 @@ public final class MainActivity extends ComponentActivity implements
                 != PackageManager.PERMISSION_GRANTED) {
             missing.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }
+        if (Build.VERSION.SDK_INT <= 28 && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.READ_EXTERNAL_STORAGE);
         if (missing.isEmpty()) {
             startFeatures();
         } else {
@@ -181,18 +183,9 @@ public final class MainActivity extends ComponentActivity implements
     }
 
     @Override public void onOpenGallery() {
-        if (latestPhoto == null) {
-            toast("Chưa có ảnh nào được chụp");
-            return;
-        }
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(latestPhoto, "image/jpeg");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        try {
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            toast("Ảnh đã lưu trong DCIM/Camera");
-        }
+        Intent intent = new Intent(this, MediaViewerActivity.class);
+        if (latestPhoto != null) intent.setData(latestPhoto);
+        startActivity(intent);
     }
 
     @Override public void onCapture() {

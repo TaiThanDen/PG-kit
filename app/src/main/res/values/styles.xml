@@ -8,4 +8,8 @@
         <item name="android:colorAccent">@color/timemark_yellow</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+    <style name="CameraSheetAnimation">
+        <item name="android:windowEnterAnimation">@anim/sheet_enter</item>
+        <item name="android:windowExitAnimation">@anim/sheet_exit</item>
+    </style>
 </resources>
