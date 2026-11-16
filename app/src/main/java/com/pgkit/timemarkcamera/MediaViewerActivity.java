@@ -37,35 +37,23 @@ public final class MediaViewerActivity extends ComponentActivity {
     };
     private FrameLayout stage;
     private LinearLayout header, footer;
-    private TextView title, subtitle, status, play, timeline, headerAction;
+    private TextView title, subtitle, status, headerAction;
     private final Set<String> selected = new LinkedHashSet<>();
     private boolean selecting;
     private ZoomImageView photo;
-    private VideoView video;
-    private SeekBar seek;
+    private VideoPlayerView video;
+    private boolean videoMuted, videoLooping;
+    private float videoRate = 1f;
     private Bitmap shownBitmap;
     private int index;
     private int request;
     private boolean grid;
     private boolean chrome = true;
-    private boolean draggingSeek;
-    private boolean videoPrepared;
     private int resumePosition;
     private int initialIndex;
     private boolean initialGrid;
     private boolean restored;
     private boolean firstOpen = true;
-    private final Runnable updateTimeline = new Runnable() {
-        @Override public void run() {
-            if (video != null && videoPrepared) {
-                if (!draggingSeek) seek.setProgress(video.getCurrentPosition());
-                String label = duration(video.getCurrentPosition()) + " / " + duration(video.getDuration());
-                if (!label.contentEquals(timeline.getText())) timeline.setText(label);
-                main.postDelayed(this, 250);
-            }
-        }
-    };
-
     @Override protected void onCreate(Bundle savedState) {
         super.onCreate(savedState);
         if (savedState != null) {
@@ -73,6 +61,9 @@ public final class MediaViewerActivity extends ComponentActivity {
             initialIndex = savedState.getInt("index");
             initialGrid = savedState.getBoolean("grid");
             resumePosition = savedState.getInt("video_position");
+            videoMuted = savedState.getBoolean("video_muted");
+            videoLooping = savedState.getBoolean("video_looping");
+            videoRate = savedState.getFloat("video_rate", 1f);
             selecting = savedState.getBoolean("selecting");
             ArrayList<String> savedSelection = savedState.getStringArrayList("selection");
             if (savedSelection != null) selected.addAll(savedSelection);
@@ -464,53 +455,10 @@ public final class MediaViewerActivity extends ComponentActivity {
     private void notice(String heading, String message) { new AppSheet(this, heading, message).show(); }
 
     private void showVideo(MediaLibrary.Item item) {
-        video = new VideoView(this);
-        final VideoView playerView = video;
-        final int ticket = request;
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1, Gravity.CENTER);
-        params.bottomMargin = dp(88);
-        stage.addView(video, params);
-        LinearLayout controls = new LinearLayout(this);
-        controls.setOrientation(LinearLayout.VERTICAL);
-        controls.setPadding(dp(20), dp(4), dp(20), dp(4));
-        seek = new SeekBar(this);
-        seek.setProgressTintList(ColorStateList.valueOf(CameraUi.BLUE));
-        seek.setThumbTintList(ColorStateList.valueOf(CameraUi.BLUE));
-        seek.setContentDescription("Tiến độ video");
-        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onStartTrackingTouch(SeekBar bar) { draggingSeek = true; }
-            @Override public void onStopTrackingTouch(SeekBar bar) {
-                if (video != null && videoPrepared) video.seekTo(bar.getProgress());
-                draggingSeek = false;
-            }
-            @Override public void onProgressChanged(SeekBar bar, int progress, boolean user) { }
-        });
-        controls.addView(seek, lp(-1, 32));
-        LinearLayout row = new LinearLayout(this);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        play = CameraUi.action(this, "Phát", true, () -> {
-            if (video == null || !videoPrepared) return;
-            if (video.isPlaying()) { video.pause(); play.setText("Phát"); }
-            else { video.start(); play.setText("Tạm dừng"); }
-        });
-        play.setEnabled(false);
-        row.addView(play, lp(120, 44));
-        timeline = text("Đang tải video…", 13, false);
-        timeline.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        row.addView(timeline, new LinearLayout.LayoutParams(0, -1, 1));
-        controls.addView(row, lp(-1, 44));
-        stage.addView(controls, new FrameLayout.LayoutParams(-1, dp(88), Gravity.BOTTOM));
-        video.setOnPreparedListener(player -> {
-            if (ticket != request || video != playerView || isDestroyed()) return;
-            videoPrepared = true;
-            seek.setMax(video.getDuration());
-            if (resumePosition > 0) { video.seekTo(resumePosition); resumePosition = 0; }
-            play.setEnabled(true);
-            updateTimeline.run();
-        });
-        video.setOnCompletionListener(player -> { if (ticket == request && video == playerView) play.setText("Phát lại"); });
-        video.setOnErrorListener((player, what, extra) -> { if (ticket == request && video == playerView) timeline.setText("Không phát được video này"); return true; });
-        video.setVideoURI(item.uri);
+        video = new VideoPlayerView(this, item.uri, resumePosition, videoMuted, videoLooping, videoRate,
+                delta -> open(index + delta), () -> showChrome(true));
+        resumePosition = 0;
+        stage.addView(video, new FrameLayout.LayoutParams(-1, -1));
     }
 
     private void showInfo() {
@@ -540,10 +488,10 @@ public final class MediaViewerActivity extends ComponentActivity {
 
     private void clearStage() {
         request++;
-        main.removeCallbacks(updateTimeline);
-        videoPrepared = false;
-        draggingSeek = false;
-        if (video != null) { video.stopPlayback(); video = null; }
+        if (video != null) {
+            videoMuted = video.muted(); videoLooping = video.looping(); videoRate = video.rate();
+            video.dispose(); video = null;
+        }
         if (photo != null) { photo.setImageBitmap(null); photo = null; }
         stage.removeAllViews();
         // Detached image draw commands can still reference their bitmap. Let GC own disposal.
@@ -556,14 +504,17 @@ public final class MediaViewerActivity extends ComponentActivity {
         else finish();
     }
     @Override protected void onPause() {
-        if (video != null && videoPrepared) { resumePosition = video.getCurrentPosition(); video.pause(); play.setText("Phát"); }
+        if (video != null) { resumePosition = video.position(); video.pause(); }
         super.onPause();
     }
     @Override protected void onSaveInstanceState(Bundle state) {
         state.putInt("index", index); state.putBoolean("grid", grid);
         state.putBoolean("selecting", selecting);
         state.putStringArrayList("selection", new ArrayList<>(selected));
-        state.putInt("video_position", video != null && videoPrepared ? video.getCurrentPosition() : resumePosition);
+        state.putInt("video_position", video != null ? video.position() : resumePosition);
+        state.putBoolean("video_muted", video != null ? video.muted() : videoMuted);
+        state.putBoolean("video_looping", video != null ? video.looping() : videoLooping);
+        state.putFloat("video_rate", video != null ? video.rate() : videoRate);
         super.onSaveInstanceState(state);
     }
     @Override protected void onDestroy() {
@@ -581,5 +532,4 @@ public final class MediaViewerActivity extends ComponentActivity {
     private LinearLayout.LayoutParams lp(int width, int height) {
         return new LinearLayout.LayoutParams(width < 0 ? width : dp(width), height < 0 ? height : dp(height));
     }
-    private static String duration(int millis) { return String.format(Locale.US, "%d:%02d", millis/60000, (millis/1000)%60); }
 }

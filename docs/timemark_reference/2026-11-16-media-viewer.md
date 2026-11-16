@@ -35,3 +35,14 @@ Bundle REA lưu tạm tại `/tmp/pg-timemark-gallery-rea-evidence.json`. Screen
 - Sheet thông tin và xác nhận xóa hiển thị đúng; hủy xóa giữ nguyên dữ liệu. Chưa kiểm thử thao tác xóa thực tế hoặc khôi phục quyền xóa.
 - Video phát hết đoạn 31 giây trong app và hiển thị “Phát lại”; có play/pause/seek.
 - Chưa kiểm thử Android 8/9, thiết bị khác LG hoặc đo frame time bằng profiler.
+
+## Tiện ích video bổ sung
+
+Theo yêu cầu tiếp theo của người dùng: thay nút Phát/Tạm dừng lớn nằm ngoài video bằng nút icon ở giữa khung. `VideoPlayerView` tách phần phát khỏi Activity, giữ khung video fit nguyên tỷ lệ và căn điều khiển theo phần hình thực tế.
+
+- Nút giữa: phát/tạm dừng/phát lại. Tua lùi/tới 10 giây, có clamp đầu/cuối video. Chạm hai lần bên trái/phải cũng tua 10 giây.
+- SeekBar và thời gian nằm trên gradient mờ dưới video. Tắt/bật tiếng, phát lặp và tốc độ 0.5×, 0.75×, 1×, 1.25×, 1.5×, 2×. Đổi tốc độ chỉ ảnh hưởng lúc xem, không sửa tệp.
+- Điều khiển tự ẩn sau 2.5 giây khi đang phát; chạm để hiện. Không tự ẩn trong lúc kéo SeekBar, mở sheet tốc độ hoặc bật TalkBack touch exploration. Animation theo cấu hình hệ thống.
+- Vuốt ngang chuyển ảnh/video; video dừng khi rời màn hoặc đưa app xuống nền. Vị trí, mute, loop và tốc độ được lưu khi Activity tạo lại.
+- LG thật: tua tới hiển thị 0:10/0:31, tua lùi về 0:00; mute và loop đổi nhãn thao tác; chọn tốc độ 1.5×; phát, tự ẩn, chạm hiện và tạm dừng đã kiểm tra. Không đo âm lượng/nhịp phát bằng profiler hoặc thiết bị đo.
+- Chưa kiểm thử đủ với video nằm ngang, TalkBack, bộ giải mã khác hoặc file hỏng.
