@@ -9,11 +9,9 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Looper;
-import android.text.TextUtils;
 
 import androidx.activity.ComponentActivity;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -86,7 +84,7 @@ final class LocationController implements LocationListener {
         // Keep any previously resolved address while a new reverse-geocoding request runs.
         callback.onLocationStatus("Vị trí hệ thống: " + coordinates);
 
-        Geocoder geocoder = new Geocoder(activity, new Locale("vi", "VN"));
+        Geocoder geocoder = new Geocoder(activity);
         if (!Geocoder.isPresent()) return;
         if (Build.VERSION.SDK_INT >= 33) {
             geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1,
@@ -109,16 +107,7 @@ final class LocationController implements LocationListener {
     }
 
     private void applyAddress(Address address) {
-        String display = address.getAddressLine(0);
-        if (display == null || display.trim().isEmpty()) {
-            List<String> pieces = new ArrayList<>();
-            addIfPresent(pieces, address.getFeatureName());
-            addIfPresent(pieces, address.getThoroughfare());
-            addIfPresent(pieces, address.getSubLocality());
-            addIfPresent(pieces, address.getLocality());
-            addIfPresent(pieces, address.getAdminArea());
-            display = TextUtils.join(", ", pieces);
-        }
+        String display = LocationAddressFormatter.format(address);
         if (display == null || display.trim().isEmpty()) return;
         String resolved = display;
         activity.runOnUiThread(() -> {
@@ -127,7 +116,4 @@ final class LocationController implements LocationListener {
         });
     }
 
-    private static void addIfPresent(List<String> list, String value) {
-        if (value != null && !value.trim().isEmpty() && !list.contains(value)) list.add(value);
-    }
 }
