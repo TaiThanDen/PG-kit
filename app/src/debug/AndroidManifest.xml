@@ -5,4 +5,6 @@
         android:targetPackage="${applicationId}" />
     <instrumentation android:name="com.pgkit.timemarkcamera.VerificationStripInstrumentation"
         android:targetPackage="${applicationId}" />
+    <instrumentation android:name="com.pgkit.timemarkcamera.LocalizationInstrumentation"
+        android:targetPackage="${applicationId}" />
 </manifest>

@@ -76,12 +76,12 @@ final class MediaLibrary {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         try (InputStream stream = resolver.openInputStream(uri)) { BitmapFactory.decodeStream(stream, null, options); }
-        if (options.outWidth <= 0 || options.outHeight <= 0) throw new IllegalArgumentException("Ảnh không hợp lệ");
+        if (options.outWidth <= 0 || options.outHeight <= 0) throw new IllegalArgumentException(context.getString(R.string.ui_invalid_photo));
         options.inSampleSize = sampleSize(options.outWidth, options.outHeight, edge);
         options.inJustDecodeBounds = false;
         Bitmap bitmap;
         try (InputStream stream = resolver.openInputStream(uri)) { bitmap = BitmapFactory.decodeStream(stream, null, options); }
-        if (bitmap == null) throw new IllegalArgumentException("Không đọc được ảnh");
+        if (bitmap == null) throw new IllegalArgumentException(context.getString(R.string.ui_could_not_read_photo));
         Matrix matrix = new Matrix();
         try (InputStream stream = resolver.openInputStream(uri)) {
             int orientation = new ExifInterface(stream).getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);

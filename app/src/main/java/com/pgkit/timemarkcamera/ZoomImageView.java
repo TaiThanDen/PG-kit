@@ -29,7 +29,7 @@ final class ZoomImageView extends ImageView {
         this.onSwipe = onSwipe;
         this.onTap = onTap;
         setScaleType(ScaleType.MATRIX);
-        setContentDescription("Ảnh đã chụp. Chụm hai ngón để zoom; chạm hai lần để phóng to; vuốt để đổi ảnh.");
+        setContentDescription(context.getString(R.string.ui_photo_pinch_to_zoom_double_tap_to_zoom));
         setFocusable(true);
         taps = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override public boolean onDown(MotionEvent e) { return true; }

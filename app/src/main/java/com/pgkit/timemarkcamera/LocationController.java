@@ -35,14 +35,14 @@ final class LocationController implements LocationListener {
     /** @return true when location permission exists and an update was requested. */
     boolean start() {
         if (!hasPermission()) {
-            callback.onLocationStatus("Chạm để cấp quyền vị trí");
+            callback.onLocationStatus(activity.getString(R.string.ui_tap_to_grant_location_permission));
             return false;
         }
         if (locationManager == null) {
             locationManager = (LocationManager) activity.getSystemService(
                     ComponentActivity.LOCATION_SERVICE);
         }
-        callback.onLocationStatus("Đang cập nhật vị trí hệ thống…");
+        callback.onLocationStatus(activity.getString(R.string.ui_updating_system_location));
         Location best = null;
         try {
             for (String provider : locationManager.getProviders(true)) {
@@ -54,7 +54,7 @@ final class LocationController implements LocationListener {
                         provider, 1500L, 1f, this, Looper.getMainLooper());
             }
         } catch (SecurityException ignored) {
-            callback.onLocationStatus("Không thể đọc vị trí hệ thống");
+            callback.onLocationStatus(activity.getString(R.string.ui_could_not_read_system_location));
         }
         if (best != null) resolveAddress(best);
         return true;
@@ -82,7 +82,7 @@ final class LocationController implements LocationListener {
                 location.getLatitude(), location.getLongitude());
         // GPS coordinates belong to the coordinate field, not the postal-address field.
         // Keep any previously resolved address while a new reverse-geocoding request runs.
-        callback.onLocationStatus("Vị trí hệ thống: " + coordinates);
+        callback.onLocationStatus(activity.getString(R.string.ui_system_location) + coordinates);
 
         Geocoder geocoder = new Geocoder(activity);
         if (!Geocoder.isPresent()) return;
@@ -112,7 +112,7 @@ final class LocationController implements LocationListener {
         String resolved = display;
         activity.runOnUiThread(() -> {
             callback.onAddressChanged(resolved);
-            callback.onLocationStatus("Đã xác định vị trí • Chạm để làm mới");
+            callback.onLocationStatus(activity.getString(R.string.ui_location_found_tap_to_refresh));
         });
     }
 

@@ -48,7 +48,7 @@ final class AppSheet {
         close.setImageTintList(ColorStateList.valueOf(CameraUi.INK));
         close.setBackgroundColor(Color.TRANSPARENT);
         close.setPadding(dp(12), dp(12), dp(12), dp(12));
-        close.setContentDescription("Đóng");
+        close.setContentDescription(activity.getString(R.string.ui_close));
         close.setOnClickListener(v -> dialog.dismiss());
         UiMotion.press(close);
         header.addView(close, new LinearLayout.LayoutParams(dp(48), dp(48)));
@@ -68,7 +68,7 @@ final class AppSheet {
     }
 
     void actions(String primary, Runnable accept) {
-        TextView cancel = CameraUi.action(activity, "Hủy", false, dialog::dismiss);
+        TextView cancel = CameraUi.action(activity, activity.getString(R.string.ui_cancel), false, dialog::dismiss);
         TextView apply = CameraUi.action(activity, primary, true, accept);
         LinearLayout.LayoutParams left = new LinearLayout.LayoutParams(0, dp(48), 1);
         left.rightMargin = dp(12);
@@ -129,7 +129,7 @@ final class AppSheet {
             row.setMinimumHeight(sheet.dp(64));
             row.setFocusable(true);
             row.setSelected(active);
-            row.setContentDescription(labels[i] + (active ? ", đang chọn" : ""));
+            row.setContentDescription(labels[i] + (active ? activity.getString(R.string.ui_selected_alternate) : ""));
             row.setOnClickListener(v -> { onSelected.accept(index); sheet.dialog.dismiss(); });
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
             params.bottomMargin = sheet.dp(8);

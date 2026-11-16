@@ -41,7 +41,7 @@ final class FocusExposureView extends View {
         this.onStart = onStart;
         this.onEnd = onEnd;
         density = getResources().getDisplayMetrics().density;
-        setContentDescription("Kéo lên để tăng sáng, kéo xuống để giảm sáng");
+        setContentDescription(context.getString(R.string.ui_drag_up_to_brighten_down_to_darken));
         setFocusable(true);
         setClickable(true);
     }

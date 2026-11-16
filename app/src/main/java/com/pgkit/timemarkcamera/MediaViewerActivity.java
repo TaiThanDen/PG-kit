@@ -82,16 +82,16 @@ public final class MediaViewerActivity extends ComponentActivity {
         header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(8), 0, dp(8), 0);
-        header.addView(icon(R.drawable.ic_close, "Đóng thư viện", this::finish), lp(48, 56));
+        header.addView(icon(R.drawable.ic_close, getString(R.string.ui_close_gallery), this::finish), lp(48, 56));
         LinearLayout heading = new LinearLayout(this);
         heading.setOrientation(LinearLayout.VERTICAL);
-        title = text("Thư viện", 18, true);
-        subtitle = text("Ảnh và video của bạn", 12, false);
+        title = text(getString(R.string.ui_gallery), 18, true);
+        subtitle = text(getString(R.string.ui_your_photos_and_videos), 12, false);
         subtitle.setTextColor(CameraUi.MUTED);
         heading.addView(title);
         heading.addView(subtitle);
         header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
-        headerAction = CameraUi.text(this, "Chia sẻ hàng loạt", 16, CameraUi.BLUE, false);
+        headerAction = CameraUi.text(this, getString(R.string.ui_share_multiple), 16, CameraUi.BLUE, false);
         headerAction.setGravity(Gravity.CENTER);
         headerAction.setPadding(dp(12), 0, dp(12), 0);
         headerAction.setOnClickListener(v -> {
@@ -109,7 +109,7 @@ public final class MediaViewerActivity extends ComponentActivity {
         footer.setPadding(dp(12), dp(8), dp(12), dp(8));
         root.addView(footer, lp(-1, 96));
         setContentView(root);
-        status = text("Đang tải thư viện…", 16, false);
+        status = text(getString(R.string.ui_loading_gallery), 16, false);
         status.setGravity(Gravity.CENTER);
         stage.addView(status, new FrameLayout.LayoutParams(-1, -1));
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -122,14 +122,14 @@ public final class MediaViewerActivity extends ComponentActivity {
                 main.post(() -> {
                     if (isDestroyed()) return;
                     items.addAll(loaded);
-                    if (items.isEmpty()) { empty("Chưa có ảnh hoặc video", "Ảnh bạn chụp trong app sẽ xuất hiện ở đây."); return; }
+                    if (items.isEmpty()) { empty(getString(R.string.ui_no_photos_or_videos_yet), getString(R.string.ui_photos_you_take_in_the_app_will_appear)); return; }
                     int selectedIndex = 0;
                     for (int i = 0; i < items.size(); i++) if (items.get(i).uri.equals(selected)) selectedIndex = i;
                     if (restored) selectedIndex = Math.min(initialIndex, items.size()-1);
                     if (restored && initialGrid) showGrid(); else open(selectedIndex);
                 });
             } catch (Exception error) {
-                main.post(() -> { if (!isDestroyed()) empty("Không đọc được thư viện", "Quay lại camera và thử mở thư viện lần nữa."); });
+                main.post(() -> { if (!isDestroyed()) empty(getString(R.string.ui_could_not_load_gallery), getString(R.string.ui_return_to_the_camera_and_try_opening_the)); });
             }
         });
     }
@@ -138,15 +138,15 @@ public final class MediaViewerActivity extends ComponentActivity {
         clearStage();
         title.setVisibility(View.VISIBLE);
         subtitle.setVisibility(View.VISIBLE);
-        title.setText("Thư viện");
-        subtitle.setText("Ảnh và video trong app");
+        title.setText(getString(R.string.ui_gallery));
+        subtitle.setText(getString(R.string.ui_photos_and_videos_in_the_app));
         headerAction.setVisibility(View.GONE);
         TextView notice = text(heading + "\n\n" + message, 16, false);
         notice.setGravity(Gravity.CENTER);
         notice.setPadding(dp(32), dp(24), dp(32), dp(24));
         stage.addView(notice, new FrameLayout.LayoutParams(-1, -1));
         footer.removeAllViews();
-        TextView camera = CameraUi.action(this, "Về camera", true, this::finish);
+        TextView camera = CameraUi.action(this, getString(R.string.ui_back_to_camera), true, this::finish);
         footer.addView(camera, new LinearLayout.LayoutParams(-1, dp(48)));
     }
 
@@ -157,10 +157,10 @@ public final class MediaViewerActivity extends ComponentActivity {
         showChrome(true);
         title.setVisibility(View.VISIBLE);
         subtitle.setVisibility(View.VISIBLE);
-        title.setText(selecting ? "Xuất & chia sẻ" : "Thư viện");
-        subtitle.setText(items.size() + " ảnh và video");
+        title.setText(selecting ? getString(R.string.ui_export_share) : getString(R.string.ui_gallery));
+        subtitle.setText(getResources().getQuantityString(R.plurals.media_count, items.size(), items.size()));
         headerAction.setVisibility(View.VISIBLE);
-        headerAction.setText(selecting ? "Bỏ chọn" : "Chọn");
+        headerAction.setText(selecting ? getString(R.string.ui_deselect) : getString(R.string.ui_select));
         List<int[]> rows = new ArrayList<>();
         String previousDay = "";
         int start = 0;
@@ -209,7 +209,7 @@ public final class MediaViewerActivity extends ComponentActivity {
                         FrameLayout touch = new FrameLayout(MediaViewerActivity.this);
                         touch.addView(check, new FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER));
                         final boolean remove = all;
-                        touch.setContentDescription((remove ? "Bỏ chọn " : "Chọn ") + dayLabel(items.get(first).date));
+                        touch.setContentDescription(getString(remove ? R.string.deselect_day : R.string.select_day, dayLabel(items.get(first).date)));
                         touch.setOnClickListener(v -> {
                             for (MediaLibrary.Item item : items) if (dayKey(item.date).equals(day)) {
                                 if (remove) selected.remove(item.uri.toString()); else selected.add(item.uri.toString());
@@ -237,7 +237,7 @@ public final class MediaViewerActivity extends ComponentActivity {
                     cell.addView(thumbnail, new FrameLayout.LayoutParams(-1, -1));
                     loadThumbnail(thumbnail, item, edge);
                     if (item.video) {
-                        TextView badge = CameraUi.text(MediaViewerActivity.this, "Video", 12, Color.WHITE, true);
+                        TextView badge = CameraUi.text(MediaViewerActivity.this, getString(R.string.ui_video), 12, Color.WHITE, true);
                         badge.setPadding(dp(6), dp(3), dp(6), dp(3));
                         badge.setBackground(CameraUi.shape(MediaViewerActivity.this, 0x99000000, 0, 4));
                         FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
@@ -252,8 +252,8 @@ public final class MediaViewerActivity extends ComponentActivity {
                         thumbnail.setAlpha(checked ? .72f : 1f);
                     }
                     cell.setSelected(checked);
-                    cell.setContentDescription((item.video ? "Video " : "Ảnh ") + (mediaIndex+1)
-                            + (selecting ? (checked ? ", đã chọn" : ", chưa chọn") : ""));
+                    cell.setContentDescription(getString(item.video ? R.string.video_number : R.string.photo_number, mediaIndex + 1)
+                            + (selecting ? (checked ? getString(R.string.ui_selected) : getString(R.string.ui_not_selected)) : ""));
                     cell.setOnClickListener(v -> {
                         if (selecting) {
                             if (!selected.add(item.uri.toString())) selected.remove(item.uri.toString());
@@ -304,11 +304,11 @@ public final class MediaViewerActivity extends ComponentActivity {
     private void buildGridFooter() {
         footer.removeAllViews();
         footer.setOrientation(LinearLayout.VERTICAL);
-        TextView caption = text(selecting ? (selected.isEmpty() ? "Chọn ảnh để chia sẻ" : "Đã chọn " + selected.size() + " mục")
-                : "Chạm ảnh để xem · Nhấn giữ để chọn nhiều", 14, false);
+        TextView caption = text(selecting ? (selected.isEmpty() ? getString(R.string.ui_select_photos_to_share) : getResources().getQuantityString(R.plurals.selected_count, selected.size(), selected.size()))
+                : getString(R.string.ui_tap_to_view_hold_to_select_multiple), 14, false);
         caption.setGravity(Gravity.CENTER);
         footer.addView(caption, lp(-1, 28));
-        TextView action = CameraUi.action(this, selecting ? "Chia sẻ" : "Chọn nhiều ảnh", true, () -> {
+        TextView action = CameraUi.action(this, selecting ? getString(R.string.ui_share) : getString(R.string.ui_select_multiple_photos), true, () -> {
             if (selecting) share(true); else { selecting = true; selected.clear(); showGrid(); }
         });
         action.setEnabled(!selecting || !selected.isEmpty());
@@ -320,8 +320,8 @@ public final class MediaViewerActivity extends ComponentActivity {
         return new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date(date));
     }
     private String dayLabel(long date) {
-        if (dayKey(date).equals(dayKey(System.currentTimeMillis()))) return "Hôm nay";
-        return new SimpleDateFormat("dd 'tháng' MM, yyyy", new Locale("vi", "VN")).format(new Date(date));
+        if (dayKey(date).equals(dayKey(System.currentTimeMillis()))) return getString(R.string.ui_today);
+        return UiDateTime.date(this, date);
     }
 
     private void open(int position) {
@@ -335,12 +335,12 @@ public final class MediaViewerActivity extends ComponentActivity {
         title.setVisibility(View.GONE);
         subtitle.setVisibility(View.GONE);
         headerAction.setVisibility(View.VISIBLE);
-        headerAction.setText("Chia sẻ hàng loạt");
+        headerAction.setText(getString(R.string.ui_share_multiple));
         showChrome(true);
         index = position;
         MediaLibrary.Item item = items.get(index);
-        title.setText((item.video ? "Video" : "Ảnh") + " · " + (index+1) + "/" + items.size());
-        subtitle.setText(new SimpleDateFormat("HH:mm · dd/MM/yyyy", new Locale("vi", "VN")).format(new Date(item.date)));
+        title.setText((item.video ? getString(R.string.ui_video) : getString(R.string.ui_photo_alternate)) + " · " + (index+1) + "/" + items.size());
+        subtitle.setText(UiDateTime.dateTime(this, item.date, false));
         buildFooter();
         if (item.video) { showVideo(item); return; }
         photo = new ZoomImageView(this, delta -> open(index+delta), () -> showChrome(!chrome));
@@ -362,7 +362,7 @@ public final class MediaViewerActivity extends ComponentActivity {
                 main.post(() -> {
                     if (ticket != request || isDestroyed()) return;
                     stage.removeView(loading);
-                    TextView failed = text("Không mở được ảnh. Tệp có thể đã bị di chuyển.", 16, false);
+                    TextView failed = text(getString(R.string.ui_could_not_open_photo_the_file_may_have), 16, false);
                     failed.setGravity(Gravity.CENTER);
                     stage.addView(failed, new FrameLayout.LayoutParams(-1, -1));
                 });
@@ -373,10 +373,10 @@ public final class MediaViewerActivity extends ComponentActivity {
     private void buildFooter() {
         footer.removeAllViews();
         footer.setOrientation(LinearLayout.HORIZONTAL);
-        footer.addView(tool(R.drawable.ic_share, "Chia sẻ", () -> share(false)), new LinearLayout.LayoutParams(0, -1, 1));
-        footer.addView(tool(R.drawable.ic_more, "Thêm", this::showMore), new LinearLayout.LayoutParams(0, -1, 1));
-        footer.addView(tool(R.drawable.ic_info, "Thông tin", this::showInfo), new LinearLayout.LayoutParams(0, -1, 1));
-        footer.addView(tool(R.drawable.ic_delete, "Xóa", this::confirmDelete), new LinearLayout.LayoutParams(0, -1, 1));
+        footer.addView(tool(R.drawable.ic_share, getString(R.string.ui_share), () -> share(false)), new LinearLayout.LayoutParams(0, -1, 1));
+        footer.addView(tool(R.drawable.ic_more, getString(R.string.ui_more), this::showMore), new LinearLayout.LayoutParams(0, -1, 1));
+        footer.addView(tool(R.drawable.ic_info, getString(R.string.ui_info), this::showInfo), new LinearLayout.LayoutParams(0, -1, 1));
+        footer.addView(tool(R.drawable.ic_delete, getString(R.string.ui_delete), this::confirmDelete), new LinearLayout.LayoutParams(0, -1, 1));
     }
 
     private View tool(int drawable, String label, Runnable action) {
@@ -401,7 +401,7 @@ public final class MediaViewerActivity extends ComponentActivity {
     }
 
     private void showMore() {
-        AppSheet.choices(this, "Thêm", null, new String[]{"Xem lưới ảnh", "Chia sẻ hàng loạt"}, null, -1, choice -> {
+        AppSheet.choices(this, getString(R.string.ui_more), null, new String[]{getString(R.string.ui_photo_grid), getString(R.string.ui_share_multiple)}, null, -1, choice -> {
             selecting = choice == 1; selected.clear(); showGrid();
         });
     }
@@ -417,35 +417,35 @@ public final class MediaViewerActivity extends ComponentActivity {
         intent.setType(hasVideo ? (hasImage ? "*/*" : "video/mp4") : "image/jpeg");
         if (uris.size() > 1) intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
         else intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
-        ClipData clip = ClipData.newUri(getContentResolver(), "Ảnh và video", uris.get(0));
+        ClipData clip = ClipData.newUri(getContentResolver(), getString(R.string.ui_photos_and_videos_alternate), uris.get(0));
         for (int i = 1; i < uris.size(); i++) clip.addItem(new ClipData.Item(uris.get(i)));
         intent.setClipData(clip);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        try { startActivity(Intent.createChooser(intent, "Chia sẻ")); }
-        catch (android.content.ActivityNotFoundException error) { notice("Không thể chia sẻ", "Chưa có ứng dụng nhận ảnh hoặc video này."); }
+        try { startActivity(Intent.createChooser(intent, getString(R.string.ui_share))); }
+        catch (android.content.ActivityNotFoundException error) { notice(getString(R.string.ui_could_not_share), getString(R.string.ui_no_app_is_available_to_receive_this_photo)); }
     }
 
     private void confirmDelete() {
         MediaLibrary.Item item = items.get(index);
-        AppSheet sheet = new AppSheet(this, item.video ? "Xóa video?" : "Xóa ảnh?",
-                "Tệp sẽ bị xóa khỏi thiết bị. Thao tác này không thể hoàn tác.");
+        AppSheet sheet = new AppSheet(this, item.video ? getString(R.string.ui_delete_video) : getString(R.string.ui_delete_photo),
+                getString(R.string.ui_the_file_will_be_deleted_from_your_device));
         TextView name = text(item.name, 14, false);
         name.setPadding(0, dp(8), 0, dp(8));
         sheet.content.addView(name);
-        sheet.actions("Xóa", () -> {
+        sheet.actions(getString(R.string.ui_delete), () -> {
             sheet.dialog.dismiss();
             images.execute(() -> {
                 try {
                     int deleted = getContentResolver().delete(item.uri, null, null);
                     main.post(() -> {
                         if (isDestroyed()) return;
-                        if (deleted == 0) { notice("Không thể xóa", "Tệp đã bị di chuyển hoặc không còn tồn tại."); return; }
+                        if (deleted == 0) { notice(getString(R.string.ui_could_not_delete), getString(R.string.ui_the_file_has_been_moved_or_no_longer)); return; }
                         items.remove(item); cache.remove(item.uri.toString());
-                        if (items.isEmpty()) empty("Chưa có ảnh hoặc video", "Ảnh bạn chụp trong app sẽ xuất hiện ở đây.");
+                        if (items.isEmpty()) empty(getString(R.string.ui_no_photos_or_videos_yet), getString(R.string.ui_photos_you_take_in_the_app_will_appear));
                         else open(Math.min(index, items.size()-1));
                     });
                 } catch (Exception error) {
-                    main.post(() -> { if (!isDestroyed()) notice("Không thể xóa", "Không có quyền xóa tệp này. Tệp vẫn được giữ nguyên."); });
+                    main.post(() -> { if (!isDestroyed()) notice(getString(R.string.ui_could_not_delete), getString(R.string.ui_permission_to_delete_this_file_was_denied_the)); });
                 }
             });
         });
@@ -463,9 +463,9 @@ public final class MediaViewerActivity extends ComponentActivity {
 
     private void showInfo() {
         MediaLibrary.Item item = items.get(index);
-        AppSheet sheet = new AppSheet(this, item.video ? "Thông tin video" : "Thông tin ảnh", null);
-        String date = new SimpleDateFormat("dd/MM/yyyy · HH:mm:ss", new Locale("vi", "VN")).format(new Date(item.date));
-        for (String line : new String[]{item.name, date, item.width + " × " + item.height + " px", item.video ? "Video MP4" : "Ảnh JPEG"}) {
+        AppSheet sheet = new AppSheet(this, item.video ? getString(R.string.ui_video_info) : getString(R.string.ui_photo_info), null);
+        String date = UiDateTime.dateTime(this, item.date, true);
+        for (String line : new String[]{item.name, date, item.width + " × " + item.height + " px", item.video ? getString(R.string.ui_mp4_video) : getString(R.string.ui_jpeg_photo)}) {
             TextView value = CameraUi.text(this, line, 15, CameraUi.INK, false);
             value.setPadding(0, dp(10), 0, dp(10));
             value.setTextIsSelectable(true);

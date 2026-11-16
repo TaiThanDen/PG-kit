@@ -14,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.*;
-import java.util.Locale;
 import java.util.function.IntConsumer;
 
 /** Video fills the viewing area; controls overlay it without changing media geometry. */
@@ -67,19 +66,19 @@ final class VideoPlayerView extends FrameLayout {
             }
         });
         View touch = new View(activity);
-        touch.setContentDescription("Video. Chạm để hiện điều khiển; chạm hai lần bên trái hoặc phải để tua 10 giây.");
+        touch.setContentDescription(activity.getString(R.string.ui_video_tap_for_controls_double_tap_left_or));
         touch.setOnTouchListener((v, event) -> gestures.onTouchEvent(event));
         addView(touch, new FrameLayout.LayoutParams(-1, -1));
 
         top = new LinearLayout(activity);
         top.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         top.setPadding(dp(12), dp(8), dp(12), dp(8));
-        mute = button(R.drawable.ic_volume, "Tắt tiếng", this::toggleMute);
+        mute = button(R.drawable.ic_volume, activity.getString(R.string.ui_mute), this::toggleMute);
         top.addView(mute, linear(48, 48));
         speed = CameraUi.text(activity, "1×", 14, Color.WHITE, true);
         speed.setGravity(Gravity.CENTER);
         speed.setBackground(CameraUi.shape(activity, 0x88000000, 0, 24));
-        speed.setContentDescription("Tốc độ phát");
+        speed.setContentDescription(activity.getString(R.string.ui_playback_speed));
         speed.setOnClickListener(v -> showSpeed());
         UiMotion.press(speed);
         LinearLayout.LayoutParams speedParams = linear(56, 48); speedParams.leftMargin = dp(8);
@@ -89,7 +88,7 @@ final class VideoPlayerView extends FrameLayout {
         center = new LinearLayout(activity);
         center.setGravity(Gravity.CENTER);
         center.addView(skipControl(false), linear(56, 56));
-        play = button(R.drawable.ic_play, "Phát video", this::togglePlayback);
+        play = button(R.drawable.ic_play, activity.getString(R.string.ui_play_video), this::togglePlayback);
         play.setPadding(dp(18), dp(18), dp(18), dp(18));
         LinearLayout.LayoutParams playParams = linear(64, 64);
         playParams.leftMargin = playParams.rightMargin = dp(24);
@@ -107,7 +106,7 @@ final class VideoPlayerView extends FrameLayout {
         seek.setProgressTintList(ColorStateList.valueOf(Color.WHITE));
         seek.setProgressBackgroundTintList(ColorStateList.valueOf(0x66ffffff));
         seek.setThumbTintList(ColorStateList.valueOf(Color.WHITE));
-        seek.setContentDescription("Tiến độ video");
+        seek.setContentDescription(activity.getString(R.string.ui_video_progress));
         seek.setEnabled(false);
         seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onStartTrackingTouch(SeekBar bar) { dragging = true; handler.removeCallbacks(hide); }
@@ -120,9 +119,9 @@ final class VideoPlayerView extends FrameLayout {
         bottom.addView(seek, linear(-1, 40));
         LinearLayout row = new LinearLayout(activity);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        time = CameraUi.text(activity, "Đang tải video…", 13, Color.WHITE, false);
+        time = CameraUi.text(activity, activity.getString(R.string.ui_loading_video), 13, Color.WHITE, false);
         row.addView(time, new LinearLayout.LayoutParams(0, -2, 1));
-        repeat = button(R.drawable.ic_repeat, "Bật phát lặp", this::toggleLoop);
+        repeat = button(R.drawable.ic_repeat, activity.getString(R.string.ui_enable_repeat), this::toggleLoop);
         row.addView(repeat, linear(48, 48));
         bottom.addView(row, linear(-1, 48));
         addView(bottom, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
@@ -154,7 +153,7 @@ final class VideoPlayerView extends FrameLayout {
         video.setOnErrorListener((media, what, extra) -> {
             if (!disposed) {
                 prepared = false; handler.removeCallbacks(tick); handler.removeCallbacks(hide);
-                time.setText("Không phát được video"); play.setEnabled(false); seek.setEnabled(false);
+                time.setText(activity.getString(R.string.ui_could_not_play_video)); play.setEnabled(false); seek.setEnabled(false);
                 setControls(true);
             }
             return true;
@@ -170,9 +169,9 @@ final class VideoPlayerView extends FrameLayout {
         arrow.setImageResource(forward ? R.drawable.ic_forward : R.drawable.ic_rewind);
         arrow.setImageTintList(ColorStateList.valueOf(Color.WHITE));
         control.addView(arrow, linear(24, 24));
-        TextView label = CameraUi.text(activity, "10 giây", 11, Color.WHITE, false);
+        TextView label = CameraUi.text(activity, activity.getString(R.string.ui_10_sec), 11, Color.WHITE, false);
         control.addView(label);
-        control.setContentDescription(forward ? "Tua tới 10 giây" : "Tua lùi 10 giây");
+        control.setContentDescription(forward ? activity.getString(R.string.ui_skip_forward_10_seconds) : activity.getString(R.string.ui_skip_back_10_seconds));
         control.setFocusable(true); control.setOnClickListener(v -> skip(forward ? 10000 : -10000));
         UiMotion.press(control); return control;
     }
@@ -190,7 +189,7 @@ final class VideoPlayerView extends FrameLayout {
         if (!prepared) return;
         int target = (int)Math.max(0L, Math.min((long)video.getDuration(), (long)video.getCurrentPosition()+delta));
         video.seekTo(target); seek.setProgress(target); updateTime(target);
-        feedback.setText(delta < 0 ? "Lùi 10 giây" : "Tới 10 giây");
+        feedback.setText(delta < 0 ? activity.getString(R.string.ui_back_10_seconds) : activity.getString(R.string.ui_forward_10_seconds));
         feedbackVisibility(true); handler.removeCallbacks(clearFeedback); handler.postDelayed(clearFeedback, 700);
         setControls(true);
     }
@@ -207,7 +206,7 @@ final class VideoPlayerView extends FrameLayout {
         if (!prepared) return;
         settingsOpen = true; handler.removeCallbacks(hide);
         float[] rates = {.5f, .75f, 1f, 1.25f, 1.5f, 2f};
-        AppSheet sheet = new AppSheet(activity, "Tốc độ phát", "Chỉ đổi tốc độ xem, video gốc giữ nguyên.");
+        AppSheet sheet = new AppSheet(activity, activity.getString(R.string.ui_playback_speed), activity.getString(R.string.ui_changes_playback_speed_only_the_original_video_is));
         for (float value : rates) {
             TextView choice = CameraUi.action(activity, speedLabel(value), value == rate, () -> {
                 if (!disposed && prepared) {
@@ -216,7 +215,7 @@ final class VideoPlayerView extends FrameLayout {
                         player.setPlaybackParams(player.getPlaybackParams().setSpeed(value));
                         if (!wasPlaying) player.pause();
                         rate = value;
-                    } catch (RuntimeException error) { feedback.setText("Video không hỗ trợ tốc độ này"); feedbackVisibility(true); handler.postDelayed(clearFeedback, 1600); }
+                    } catch (RuntimeException error) { feedback.setText(activity.getString(R.string.ui_this_playback_speed_is_not_supported)); feedbackVisibility(true); handler.postDelayed(clearFeedback, 1600); }
                     updateButtons();
                 }
                 sheet.dialog.dismiss();
@@ -230,14 +229,18 @@ final class VideoPlayerView extends FrameLayout {
     private void updateButtons() {
         boolean playing = prepared && video.isPlaying();
         play.setImageResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
-        play.setContentDescription(playing ? "Tạm dừng video" : (prepared && video.getCurrentPosition() >= video.getDuration()-100 ? "Phát lại video" : "Phát video"));
+        play.setContentDescription(playing ? activity.getString(R.string.ui_pause_video) : (prepared && video.getCurrentPosition() >= video.getDuration()-100 ? activity.getString(R.string.ui_replay_video) : activity.getString(R.string.ui_play_video)));
         mute.setImageResource(muted ? R.drawable.ic_muted : R.drawable.ic_volume);
-        mute.setContentDescription(muted ? "Bật tiếng" : "Tắt tiếng");
+        mute.setContentDescription(muted ? activity.getString(R.string.ui_unmute) : activity.getString(R.string.ui_mute));
         repeat.setImageTintList(ColorStateList.valueOf(looping ? 0xff86b5ff : Color.WHITE));
-        repeat.setSelected(looping); repeat.setContentDescription(looping ? "Tắt phát lặp" : "Bật phát lặp");
+        repeat.setSelected(looping); repeat.setContentDescription(looping ? activity.getString(R.string.ui_disable_repeat) : activity.getString(R.string.ui_enable_repeat));
         speed.setText(speedLabel(rate));
     }
-    private static String speedLabel(float value) { return String.format(Locale.US, "%s×", value == (int)value ? String.valueOf((int)value) : String.valueOf(value)); }
+    private String speedLabel(float value) {
+        java.text.NumberFormat format = java.text.NumberFormat.getNumberInstance(UiDateTime.locale(activity));
+        format.setMaximumFractionDigits(2);
+        return format.format(value) + "×";
+    }
     private void updateTime(int position) { time.setText(duration(position) + " / " + duration(video.getDuration())); }
     private void scheduleHide() {
         handler.removeCallbacks(hide);
@@ -278,5 +281,5 @@ final class VideoPlayerView extends FrameLayout {
     }
     private int dp(int value) { return CameraUi.dp(activity, value); }
     private LinearLayout.LayoutParams linear(int width, int height) { return new LinearLayout.LayoutParams(width < 0 ? width : dp(width), height < 0 ? height : dp(height)); }
-    private static String duration(int millis) { return String.format(Locale.US, "%d:%02d", millis/60000, (millis/1000)%60); }
+    private String duration(int millis) { return String.format(UiDateTime.locale(activity), "%d:%02d", millis/60000, (millis/1000)%60); }
 }
