@@ -44,8 +44,7 @@ public final class MainActivity extends ComponentActivity implements
         watermarkTemplate = WatermarkTemplate.fromJson(this, storedTemplate);
         screen.watermarkView().setTemplate(watermarkTemplate);
         locationController = new LocationController(this, this);
-        cameraEngine = new CameraEngine(this, screen.previewView(), this,
-                VerificationCodeStore.obtain(this));
+        cameraEngine = new CameraEngine(this, screen.previewView(), this);
         gestureController = new CameraGestureController(this, screen.previewView(),
                 new CameraGestureController.Listener() {
                     @Override public void onTapToFocus(float x, float y) {

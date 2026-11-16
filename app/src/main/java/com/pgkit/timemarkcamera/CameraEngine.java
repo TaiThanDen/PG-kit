@@ -58,7 +58,6 @@ final class CameraEngine {
     private final ComponentActivity activity;
     private final PreviewView previewView;
     private final Callback callback;
-    private final String verificationCode;
     private final Executor mainExecutor;
     private final ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
 
@@ -72,12 +71,10 @@ final class CameraEngine {
     private boolean ready;
     private boolean torchEnabled;
 
-    CameraEngine(ComponentActivity activity, PreviewView previewView, Callback callback,
-                 String verificationCode) {
+    CameraEngine(ComponentActivity activity, PreviewView previewView, Callback callback) {
         this.activity = activity;
         this.previewView = previewView;
         this.callback = callback;
-        this.verificationCode = verificationCode;
         this.mainExecutor = ContextCompat.getMainExecutor(activity);
         this.orientationListener = new OrientationEventListener(activity) {
             @Override public void onOrientationChanged(int orientation) {
@@ -186,6 +183,7 @@ final class CameraEngine {
             return;
         }
         final Date requestedTime = new Date();
+        final String requestedVerificationCode = VerificationCodeStore.create();
         final String requestedAddress = address == null || address.trim().isEmpty()
                 ? "" : address.trim();
         final int requestedRotation = sensorRotation;
@@ -199,7 +197,7 @@ final class CameraEngine {
             capture.takePicture(output, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
                 @Override public void onImageSaved(ImageCapture.OutputFileResults result) {
                     renderAndSave(rawFile, requestedTime, requestedAddress, requestedRotation,
-                            template, requestedLongEdge);
+                            template, requestedLongEdge, requestedVerificationCode);
                 }
 
                 @Override public void onError(ImageCaptureException exception) {
@@ -269,7 +267,7 @@ final class CameraEngine {
 
     private void renderAndSave(File rawFile, Date requestedTime, String requestedAddress,
                                int requestedRotation, WatermarkTemplate.Snapshot template,
-                               int requestedLongEdge) {
+                               int requestedLongEdge, String requestedVerificationCode) {
         Bitmap decoded = null;
         Bitmap oriented = null;
         Bitmap mutable = null;
@@ -294,7 +292,7 @@ final class CameraEngine {
             if (mutable == null) throw new IllegalStateException("Không tạo được bitmap để render");
             if (mutable != oriented) oriented.recycle();
             WatermarkRenderer.drawSaved(new android.graphics.Canvas(mutable), mutable.getWidth(),
-                    mutable.getHeight(), requestedTime, requestedAddress, verificationCode, template);
+                    mutable.getHeight(), requestedTime, requestedAddress, requestedVerificationCode, template);
             Uri saved = saveBitmap(mutable, requestedTime, requestedAddress);
             callback.onPhotoSaved(saved);
         } catch (Exception e) {
