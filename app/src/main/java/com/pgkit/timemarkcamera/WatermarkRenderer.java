@@ -64,7 +64,24 @@ final class WatermarkRenderer {
         }
         SavedVerificationRenderer.load(context);
         try (InputStream source = context.getAssets().open("video/official_vi.png")) {
-            wordmarkBitmap = BitmapFactory.decodeStream(source);
+            Bitmap original = BitmapFactory.decodeStream(source);
+            if (original == null) throw new IOException("Official logo decode failed");
+            // Timemark j.a draws the 100dp ImageView into a native-size bitmap first.
+            // Scaling the 300px source straight onto the JPEG skips that raster pass:
+            // subtitle strokes and antialiasing become visibly sharper/heavier.
+            int nativeSize = Math.round(100f * nativeLayoutDensity);
+            Bitmap nativeLogo = Bitmap.createBitmap(nativeSize, nativeSize,
+                    Bitmap.Config.ARGB_8888);
+            try {
+                android.widget.ImageView logo = new android.widget.ImageView(context);
+                logo.setImageBitmap(original);
+                logo.layout(0, 0, nativeSize, nativeSize);
+                logo.draw(new Canvas(nativeLogo));
+            } finally {
+                original.recycle();
+            }
+            if (wordmarkBitmap != null) wordmarkBitmap.recycle();
+            wordmarkBitmap = nativeLogo;
         } catch (IOException ignored) {
             wordmarkBitmap = null;
         }
@@ -156,8 +173,8 @@ final class WatermarkRenderer {
 
     private static void drawBrand(Canvas canvas, int width, int height, float scale) {
         if (wordmarkBitmap != null) {
-            // The original Vietnamese asset contains both glyphs and their baked shadow.
-            // JPEG geometry is measured independently from the video composition path.
+            // This is the native 100dp raster, including padding, alpha and baked shadow.
+            // JPEG projection is separate from preview and video geometry.
             float outputScale = Math.min(width, height) / 1536f;
             float size = WatermarkLayoutSpec.savedBrandSize(width, height,
                     nativeLayoutWidth, nativeLayoutDensity);

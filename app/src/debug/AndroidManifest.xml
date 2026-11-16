@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <instrumentation android:name="com.pgkit.timemarkcamera.LogoRasterInstrumentation"
+        android:targetPackage="${applicationId}" />
     <instrumentation android:name="com.pgkit.timemarkcamera.SavedWatermarkInstrumentation"
         android:targetPackage="${applicationId}" />
     <instrumentation android:name="com.pgkit.timemarkcamera.VerificationStripInstrumentation"
