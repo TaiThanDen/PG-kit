@@ -399,6 +399,7 @@ final class CameraEngine {
         }
     }
 
+    @androidx.annotation.OptIn(markerClass = androidx.camera.camera2.interop.ExperimentalCamera2Interop.class)
     private void bindUseCases() {
         if (cameraProvider == null || previewView.getWidth() == 0 || previewView.getHeight() == 0) {
             previewView.postDelayed(this::bindUseCases, 80L);

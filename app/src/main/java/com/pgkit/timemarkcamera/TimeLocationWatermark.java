@@ -87,6 +87,9 @@ final class TimeLocationWatermark {
         return paint;
     }
 
+    // Layout constants are the API 23 aliases of LineBreaker constants (API 29).
+    // Keep the aliases for Android 8 support; compileSdk 35 annotates the builder with LineBreaker.
+    @android.annotation.SuppressLint("WrongConstant")
     private static StaticLayout layout(String value, TextPaint paint, int width,
                                        boolean includePadding, boolean multiline) {
         return StaticLayout.Builder.obtain(value, 0, value.length(), paint, Math.max(1, width))
