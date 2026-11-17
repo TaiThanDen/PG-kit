@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Timemark Camera</string>
+    <string name="app_name">Timecounter</string>
     <string name="ui_watermark_date_time">"Watermark date &amp; time"</string>
     <string name="ui_hour">"Hour"</string>
     <string name="ui_date">"Date"</string>
