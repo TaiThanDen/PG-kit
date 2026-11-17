@@ -41,6 +41,8 @@ public final class MediaViewerActivity extends ComponentActivity {
     private final Set<String> selected = new LinkedHashSet<>();
     private boolean selecting;
     private ZoomImageView photo;
+    private ZoomImageView outgoingPhoto;
+    private boolean changingPhoto;
     private VideoPlayerView video;
     private boolean videoMuted, videoLooping;
     private float videoRate = 1f;
@@ -343,7 +345,7 @@ public final class MediaViewerActivity extends ComponentActivity {
         subtitle.setText(UiDateTime.dateTime(this, item.date, false));
         buildFooter();
         if (item.video) { showVideo(item); return; }
-        photo = new ZoomImageView(this, delta -> open(index+delta), () -> showChrome(!chrome));
+        photo = createPhoto();
         stage.addView(photo, new FrameLayout.LayoutParams(-1, -1));
         ProgressBar loading = new ProgressBar(this);
         stage.addView(loading, new FrameLayout.LayoutParams(dp(36), dp(36), Gravity.CENTER));
@@ -356,7 +358,6 @@ public final class MediaViewerActivity extends ComponentActivity {
                     shownBitmap = bitmap;
                     photo.setImageBitmap(bitmap);
                     stage.removeView(loading);
-                    UiMotion.reveal(photo);
                 });
             } catch (Exception | OutOfMemoryError error) {
                 main.post(() -> {
@@ -368,6 +369,61 @@ public final class MediaViewerActivity extends ComponentActivity {
                 });
             }
         });
+    }
+
+    private ZoomImageView createPhoto() {
+        return new ZoomImageView(this, this::swipePhoto, () -> showChrome(!chrome));
+    }
+
+    private void swipePhoto(int delta) {
+        int next = index + delta;
+        if (changingPhoto || next < 0 || next >= items.size()) return;
+        MediaLibrary.Item item = items.get(next);
+        if (item.video) { open(next); return; }
+        // Keep the current image opaque and visible while decoding its neighbour.
+        changingPhoto = true;
+        int ticket = ++request;
+        images.execute(() -> {
+            try {
+                Bitmap bitmap = MediaLibrary.image(this, item.uri, 2560);
+                main.post(() -> {
+                    if (isDestroyed() || ticket != request) { bitmap.recycle(); return; }
+                    ZoomImageView incoming = createPhoto();
+                    incoming.setImageBitmap(bitmap);
+                    outgoingPhoto = photo;
+                    photo = incoming;
+                    shownBitmap = bitmap;
+                    index = next;
+                    resumePosition = 0;
+                    stage.addView(incoming, new FrameLayout.LayoutParams(-1, -1));
+                    if (!android.animation.ValueAnimator.areAnimatorsEnabled()) {
+                        finishPhotoSlide();
+                        return;
+                    }
+                    float distance = stage.getWidth() * (delta > 0 ? 1f : -1f);
+                    incoming.setTranslationX(distance);
+                    android.view.animation.DecelerateInterpolator easing = new android.view.animation.DecelerateInterpolator();
+                    outgoingPhoto.animate().translationX(-distance).setDuration(240).setInterpolator(easing).start();
+                    incoming.animate().translationX(0).setDuration(240).setInterpolator(easing)
+                            .withEndAction(this::finishPhotoSlide).start();
+                });
+            } catch (Exception | OutOfMemoryError error) {
+                main.post(() -> {
+                    if (isDestroyed() || ticket != request) return;
+                    changingPhoto = false;
+                    Toast.makeText(this, R.string.ui_could_not_open_photo_the_file_may_have, Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    private void finishPhotoSlide() {
+        if (outgoingPhoto != null) {
+            stage.removeView(outgoingPhoto);
+            outgoingPhoto.setImageBitmap(null);
+            outgoingPhoto = null;
+        }
+        changingPhoto = false;
     }
 
     private void buildFooter() {
@@ -488,11 +544,17 @@ public final class MediaViewerActivity extends ComponentActivity {
 
     private void clearStage() {
         request++;
+        changingPhoto = false;
+        if (outgoingPhoto != null) {
+            outgoingPhoto.animate().cancel();
+            outgoingPhoto.setImageBitmap(null);
+            outgoingPhoto = null;
+        }
         if (video != null) {
             videoMuted = video.muted(); videoLooping = video.looping(); videoRate = video.rate();
             video.dispose(); video = null;
         }
-        if (photo != null) { photo.setImageBitmap(null); photo = null; }
+        if (photo != null) { photo.animate().cancel(); photo.setImageBitmap(null); photo = null; }
         stage.removeAllViews();
         // Detached image draw commands can still reference their bitmap. Let GC own disposal.
         shownBitmap = null;
