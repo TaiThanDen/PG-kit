@@ -14,12 +14,14 @@ final class CameraViewportLayout extends FrameLayout {
         setMeasuredDimension(width, height);
         if (getChildCount() < 2) return;
         int panelMinimum = CameraUi.dp(getContext(), 200);
-        int available = ratio == PhotoAspectRatio.TALL ? height : Math.max(1, height-panelMinimum);
+        // Keep the camera at full width on compact 9:16 displays too. The panel may
+        // cover the preview bottom; WatermarkOverlayView already avoids those controls.
+        int available = height;
         int previewWidth = Math.min(width, Math.round(available * ratio.width/(float)ratio.height));
         int previewHeight = Math.round(previewWidth * ratio.height/(float)ratio.width);
         getChildAt(0).measure(MeasureSpec.makeMeasureSpec(previewWidth, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(previewHeight, MeasureSpec.EXACTLY));
-        int panelHeight = ratio == PhotoAspectRatio.TALL ? Math.min(height, panelMinimum) : height-previewHeight;
+        int panelHeight = ratio == PhotoAspectRatio.TALL ? Math.min(height, panelMinimum) : Math.max(Math.min(height, panelMinimum), height-previewHeight);
         getChildAt(1).measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(panelHeight, MeasureSpec.EXACTLY));
     }

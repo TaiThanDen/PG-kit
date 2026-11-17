@@ -371,8 +371,7 @@ final class CameraScreen {
 
     private void updateViewportControls() {
         if (bottomPanel == null || viewport == null) return;
-        int overlap = selectedRatio == PhotoAspectRatio.TALL
-                ? Math.max(0, previewLayer.getBottom() - bottomPanel.getTop()) : 0;
+        int overlap = Math.max(0, previewLayer.getBottom() - bottomPanel.getTop());
         for (View control : new View[]{zoomControls, clockControl, locationControl}) {
             if (control != null) control.setTranslationY(-overlap);
         }
