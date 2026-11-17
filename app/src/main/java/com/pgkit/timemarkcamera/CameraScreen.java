@@ -257,7 +257,7 @@ final class CameraScreen {
         selectedRatio = ratio;
         ((PortraitPreviewFrame) previewLayer).setAspectRatio(ratio);
         viewport.setAspectRatio(ratio);
-        bottomPanel.setBackgroundColor(ratio == PhotoAspectRatio.TALL ? 0xe6ffffff : Color.WHITE);
+        bottomPanel.setBackgroundColor(Color.WHITE);
         viewport.post(this::updateViewportControls);
         if (ratioButton != null) ratioButton.setText(ratio.label);
     }
