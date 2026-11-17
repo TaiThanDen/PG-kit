@@ -515,13 +515,20 @@ final class CameraScreen {
         shutterParams.setMargins(dp(20), 0, dp(20), 0);
         captureRow.addView(shutter, shutterParams);
 
-        TextView templates = transparentLabel(activity.getString(R.string.camera_templates), 15, Color.rgb(82, 82, 82));
+        LinearLayout templates = new LinearLayout(activity);
+        templates.setOrientation(LinearLayout.VERTICAL);
         templates.setGravity(Gravity.CENTER);
-        templates.setTypeface(Typeface.DEFAULT_BOLD);
-        templates.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_template, 0, 0);
-        templates.setCompoundDrawablePadding(dp(4));
         templates.setContentDescription(activity.getString(R.string.ui_open_watermark_templates));
+        templates.setFocusable(true);
         templates.setOnClickListener(v -> actions.onOpenTemplates());
+        ImageView templateIcon = new ImageView(activity);
+        templateIcon.setImageResource(R.drawable.ic_template);
+        templateIcon.setScaleType(ImageView.ScaleType.CENTER);
+        templates.addView(templateIcon, fixed(dp(48), dp(42)));
+        TextView templateLabel = transparentLabel(activity.getString(R.string.camera_templates), 15, Color.rgb(82, 82, 82));
+        templateLabel.setTypeface(Typeface.DEFAULT_BOLD);
+        templateLabel.setGravity(Gravity.CENTER);
+        templates.addView(templateLabel, fixed(ViewGroup.LayoutParams.MATCH_PARENT, dp(30)));
         captureRow.addView(templates, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
