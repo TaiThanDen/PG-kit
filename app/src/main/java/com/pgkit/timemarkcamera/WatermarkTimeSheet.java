@@ -9,7 +9,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
@@ -27,6 +26,7 @@ final class WatermarkTimeSheet {
     private final Calendar month = Calendar.getInstance();
     private final Dialog dialog;
     private final LinearLayout body;
+    private ScrollView scroll;
     private TextView summary;
     private TextView hourTab;
     private TextView dateTab;
@@ -49,7 +49,11 @@ final class WatermarkTimeSheet {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(20), dp(16), dp(20), dp(20));
-        root.setBackground(CameraUi.shape(activity, Color.WHITE, 0, 24));
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setColor(Color.WHITE);
+        float radius = dp(24);
+        background.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
+        root.setBackground(background);
         TextView heading = label(activity.getString(R.string.ui_watermark_date_time), 21, true);
         root.addView(heading, lp(-1, 40));
         LinearLayout tabs = new LinearLayout(activity);
@@ -62,8 +66,13 @@ final class WatermarkTimeSheet {
         summary = label("", 14, false);
         summary.setTextColor(CameraUi.MUTED);
         summary.setGravity(Gravity.CENTER);
-        root.addView(summary, lp(-1, 40));
-        root.addView(body, lp(-1, 324));
+        LinearLayout.LayoutParams bodyParams = lp(-1, -2);
+        bodyParams.topMargin = dp(12);
+        root.addView(body, bodyParams);
+        LinearLayout.LayoutParams summaryParams = lp(-1, 40);
+        summaryParams.topMargin = dp(8);
+        summaryParams.bottomMargin = dp(8);
+        root.addView(summary, summaryParams);
 
         LinearLayout mode = new LinearLayout(activity);
         mode.setGravity(Gravity.CENTER_VERTICAL);
@@ -104,7 +113,7 @@ final class WatermarkTimeSheet {
         footer.addView(cancel, left);
         footer.addView(apply, new LinearLayout.LayoutParams(0, dp(48), 1));
         root.addView(footer, lp(-1, 48));
-        ScrollView scroll = new ScrollView(activity);
+        scroll = new ScrollView(activity);
         scroll.setFillViewport(false);
         scroll.addView(root);
         dialog.setContentView(scroll);
@@ -116,12 +125,9 @@ final class WatermarkTimeSheet {
             window.setWindowAnimations(R.style.CameraSheetAnimation);
             window.setGravity(Gravity.BOTTOM);
         }
-        dialog.show();
-        if (window != null) {
-            int available = activity.getWindow().getDecorView().getHeight() - dp(32);
-            window.setLayout(-1, Math.min(dp(720), available));
-        }
         showTab(false);
+        dialog.show();
+        resizeToContent();
     }
 
     private void showTab(boolean date) {
@@ -134,6 +140,7 @@ final class WatermarkTimeSheet {
         body.removeAllViews();
         updateSummary();
         if (date) showCalendar(); else showWheels();
+        resizeToContent();
         UiMotion.reveal(body);
     }
 
@@ -142,12 +149,6 @@ final class WatermarkTimeSheet {
     }
 
     private void showWheels() {
-        TextView input = label(activity.getString(R.string.ui_type_numbers), 15, true);
-        input.setTextColor(CameraUi.BLUE);
-        input.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        input.setOnClickListener(v -> showInput());
-        input.setContentDescription(activity.getString(R.string.ui_enter_hours_and_minutes_with_the_keyboard));
-        body.addView(input, lp(-1, 48));
         LinearLayout columns = new LinearLayout(activity);
         columns.setGravity(Gravity.CENTER);
         addWheel(columns, activity.getString(R.string.ui_hour), 23, Calendar.HOUR_OF_DAY);
@@ -190,42 +191,17 @@ final class WatermarkTimeSheet {
         host.addView(column, new LinearLayout.LayoutParams(0, -1, 1));
     }
 
-    private void showInput() {
-        LinearLayout row = new LinearLayout(activity);
-        row.setPadding(dp(24), dp(12), dp(24), 0);
-        EditText hour = numberInput(draft.get(Calendar.HOUR_OF_DAY), activity.getString(R.string.ui_hour_00_23));
-        EditText minute = numberInput(draft.get(Calendar.MINUTE), activity.getString(R.string.ui_minute_00_59));
-        LinearLayout.LayoutParams hourParams = new LinearLayout.LayoutParams(0, dp(64), 1);
-        hourParams.rightMargin = dp(12);
-        row.addView(hour, hourParams);
-        row.addView(minute, new LinearLayout.LayoutParams(0, dp(64), 1));
-        AppSheet inputSheet = new AppSheet(activity, activity.getString(R.string.ui_enter_24_hour_time), activity.getString(R.string.ui_hours_00_23_minutes_00_59));
-        row.setPadding(0, dp(8), 0, dp(8));
-        inputSheet.content.addView(row, new LinearLayout.LayoutParams(-1, -2));
-        inputSheet.actions(activity.getString(R.string.ui_done), () -> {
-            try {
-                int h = Integer.parseInt(hour.getText().toString());
-                int m = Integer.parseInt(minute.getText().toString());
-                if (h < 0 || h > 23) { hour.setError(activity.getString(R.string.ui_enter_a_value_from_00_to_23)); return; }
-                if (m < 0 || m > 59) { minute.setError(activity.getString(R.string.ui_enter_a_value_from_00_to_59)); return; }
-                draft.set(Calendar.HOUR_OF_DAY, h);
-                draft.set(Calendar.MINUTE, m);
-                inputSheet.dialog.dismiss();
-                showTab(false);
-            } catch (NumberFormatException error) { hour.setError(activity.getString(R.string.ui_enter_both_hours_and_minutes)); }
-        });
-        inputSheet.show();
-    }
-
-    private EditText numberInput(int value, String hint) {
-        EditText input = AppSheet.input(activity, "", hint, false);
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        input.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(2)});
-        input.setText(String.format(UiDateTime.locale(activity), "%02d", value));
-        input.setHint(hint);
-        input.setContentDescription(hint);
-        input.setSelectAllOnFocus(true);
-        return input;
+    private void resizeToContent() {
+        if (scroll == null || !dialog.isShowing()) return;
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        android.graphics.Rect visible = new android.graphics.Rect();
+        activity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visible);
+        int available = Math.max(dp(180), visible.height() - dp(16));
+        scroll.measure(View.MeasureSpec.makeMeasureSpec(visible.width(), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(available, View.MeasureSpec.AT_MOST));
+        // The window must fit the painted sheet; extra transparent height floats it above the bottom.
+        window.setLayout(-1, scroll.getMeasuredHeight());
     }
 
     private void showCalendar() {
