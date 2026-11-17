@@ -27,9 +27,12 @@ final class CameraScreen {
         void onSwitchCamera();
         void onEditWatermark();
         void onRefreshLocation();
+        void onEditTime();
+        void onSelectAspectRatio();
         void onOpenGallery();
         void onCapture();
         void onOpenTemplates();
+        void onModeChanged(boolean videoMode);
         void onZoomSelected(float ratio);
         void onExposureChanged(int direction);
     }
@@ -39,9 +42,21 @@ final class CameraScreen {
     private final PreviewView previewView;
     private final WatermarkOverlayView watermarkView;
     private final FrameLayout previewLayer;
+    private CameraViewportLayout viewport;
+    private View bottomPanel;
+    private View clockControl, locationControl;
+    private PhotoAspectRatio selectedRatio = PhotoAspectRatio.STANDARD;
     private TextView locationState;
+    private TextView ratioButton;
+    private TextView recordingTimer;
     private ImageButton flashButton;
     private Button shutter;
+    private TextView photoTab;
+    private TextView videoTab;
+    private FrameLayout modeSwitch;
+    private View modeIndicator;
+    private boolean videoMode;
+    private boolean recording;
     private TextView zoomHalf;
     private TextView zoomOne;
     private TextView zoomTwo;
@@ -80,18 +95,16 @@ final class CameraScreen {
                 View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         activity.setContentView(root);
 
-        root.addView(createTopBar(), new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
-
         previewLayer = new PortraitPreviewFrame(activity);
         previewLayer.setBackgroundColor(Color.rgb(28, 28, 28));
-        root.addView(previewLayer, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        viewport = new CameraViewportLayout(activity);
+        root.addView(viewport, new LinearLayout.LayoutParams(-1, 0, 1));
+        viewport.addView(previewLayer, new FrameLayout.LayoutParams(-1, -1));
 
         previewView = new PreviewView(activity);
         previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         previewView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
-        previewView.setContentDescription("Khung xem trước camera");
+        previewView.setContentDescription(activity.getString(R.string.ui_camera_preview));
         previewLayer.addView(previewView, matchFrame());
 
         watermarkView = new WatermarkOverlayView(activity);
@@ -99,8 +112,10 @@ final class CameraScreen {
         addFocusIndicator(previewLayer);
         addPreviewControls(previewLayer);
 
-        root.addView(createBottomPanel(), new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        bottomPanel = createBottomPanel();
+        viewport.addView(bottomPanel, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+        viewport.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateViewportControls());
+        previewLayer.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateViewportControls());
     }
 
     PreviewView previewView() {
@@ -112,14 +127,14 @@ final class CameraScreen {
     }
 
     void setLocationStatus(String text) {
-        locationState.setText(text);
+        locationState.setContentDescription(activity.getString(R.string.time_status, text));
     }
 
     void setFlashEnabled(boolean enabled) {
         flashButton.setImageResource(enabled ? R.drawable.ic_flash : R.drawable.ic_flash_off);
         flashButton.setImageTintList(ColorStateList.valueOf(
-                enabled ? WatermarkRenderer.YELLOW : Color.rgb(30, 30, 30)));
-        announce(enabled ? "Đã bật flash" : "Đã tắt flash");
+                enabled ? CameraUi.BLUE : Color.WHITE));
+        announce(enabled ? activity.getString(R.string.ui_flash_on) : activity.getString(R.string.ui_flash_off));
     }
 
     void setCaptureEnabled(boolean enabled) {
@@ -127,9 +142,43 @@ final class CameraScreen {
         shutter.setAlpha(enabled ? 1f : 0.55f);
     }
 
+    boolean isVideoMode() {
+        return videoMode;
+    }
+
+    void setRecording(boolean recording) {
+        this.recording = recording;
+        if (recordingTimer != null) {
+            recordingTimer.setText("00:00");
+            recordingTimer.setVisibility(recording ? View.VISIBLE : View.GONE);
+        }
+        shutter.setBackgroundResource(recording ? R.drawable.recording_stop : R.drawable.shutter_ring);
+        shutter.setContentDescription(recording ? activity.getString(R.string.ui_stop_recording_video) : activity.getString(R.string.ui_start_recording_video));
+        announce(recording ? activity.getString(R.string.ui_recording_video) : activity.getString(R.string.ui_video_recording_stopped));
+    }
+
+    private void setCaptureMode(boolean video) {
+        if (recording) return;
+        if (videoMode == video) return;
+        videoMode = video;
+        applyTabStyle(photoTab, !video);
+        applyTabStyle(videoTab, video);
+        shutter.setBackgroundResource(R.drawable.shutter_ring);
+        shutter.setContentDescription(video ? activity.getString(R.string.ui_start_recording_video) : activity.getString(R.string.ui_take_photo));
+        if (modeIndicator != null) {
+            modeIndicator.animate().cancel();
+            float destination = video ? modeSwitch.getWidth()/2f : 0f;
+            if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+                modeIndicator.animate().translationX(destination).setDuration(150)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+            } else modeIndicator.setTranslationX(destination);
+        }
+        actions.onModeChanged(video);
+    }
+
     void setZoomRatio(float ratio) {
         if (!Float.isFinite(ratio)) return;
-        boolean half = Math.abs(ratio - 0.5f) < 0.03f;
+        boolean half = ratio < 0.99f;
         boolean two = Math.abs(ratio - 2f) < 0.03f;
         zoomOne.setText(String.format(java.util.Locale.US, "%.1fx", half || two ? 1f : ratio));
         applyZoomStyle(zoomHalf, half);
@@ -140,7 +189,9 @@ final class CameraScreen {
     /** Camera capability hook, called after binding or changing lenses. */
     void setZoomRange(float minimum, float maximum) {
         if (!Float.isFinite(minimum) || !Float.isFinite(maximum) || minimum > maximum) return;
-        zoomHalf.setVisibility(minimum <= 0.5f && maximum >= 0.5f ? View.VISIBLE : View.GONE);
+        zoomHalf.setVisibility(minimum < 1f ? View.VISIBLE : View.GONE);
+        zoomHalf.setText(String.format(java.util.Locale.US, "%.1fx", minimum));
+        zoomHalf.setOnClickListener(v -> actions.onZoomSelected(minimum));
         zoomTwo.setVisibility(maximum >= 2f ? View.VISIBLE : View.GONE);
         updateZoomLayout();
     }
@@ -148,21 +199,33 @@ final class CameraScreen {
     void setExposureValue(float ev) {
         if (!Float.isFinite(ev)) {
             focusExposureControl.setEnabled(false);
-            announce("Thiết bị không hỗ trợ bù sáng");
+            announce(activity.getString(R.string.ui_exposure_compensation_is_not_supported));
             return;
         }
         focusExposureControl.setEnabled(true);
-        focusExposureControl.setContentDescription(String.format(java.util.Locale.US,
-                "Bù sáng %+.1f EV", ev));
-        announce(String.format(java.util.Locale.US, "Bù sáng %+.1f", ev));
+        focusExposureControl.setContentDescription(activity.getString(R.string.ui_exposure_1f_ev, ev));
+        announce(activity.getString(R.string.ui_exposure_1f, ev));
     }
 
     /** Replaces the library placeholder with the just-saved photo, without changing its action. */
-    void setLatestPhoto(Uri uri) {
-        if (uri == null || latestPhotoPreview == null) return;
+    void setLatestPhotoBitmap(android.graphics.Bitmap bitmap) {
+        if (bitmap == null || latestPhotoPreview == null) return;
         latestPhotoPreview.setImageTintList(null);
-        latestPhotoPreview.setImageURI(uri);
-        latestPhotoPreview.setContentDescription("Xem trước ảnh vừa chụp");
+        latestPhotoPreview.setImageBitmap(bitmap);
+        latestPhotoPreview.setContentDescription(activity.getString(R.string.ui_preview_latest_photo));
+    }
+
+    void setRecordingDuration(long durationNanos) {
+        if (recording && recordingTimer != null) {
+            recordingTimer.setText(RecordingTime.format(durationNanos));
+        }
+    }
+
+    void setLatestVideo() {
+        if (latestPhotoPreview == null) return;
+        latestPhotoPreview.setImageResource(R.drawable.ic_gallery);
+        latestPhotoPreview.setImageTintList(ColorStateList.valueOf(WatermarkRenderer.YELLOW));
+        latestPhotoPreview.setContentDescription(activity.getString(R.string.ui_open_latest_video));
     }
 
     void showFocusIndicator(float x, float y) {
@@ -190,93 +253,132 @@ final class CameraScreen {
         previewLayer.postDelayed(hideFocusControls, 2700L);
     }
 
+    void setAspectRatio(PhotoAspectRatio ratio) {
+        selectedRatio = ratio;
+        ((PortraitPreviewFrame) previewLayer).setAspectRatio(ratio);
+        viewport.setAspectRatio(ratio);
+        bottomPanel.setBackgroundColor(ratio == PhotoAspectRatio.TALL ? 0xe6ffffff : Color.WHITE);
+        viewport.post(this::updateViewportControls);
+        if (ratioButton != null) ratioButton.setText(ratio.label);
+    }
+
     private View createTopBar() {
         LinearLayout bar = new LinearLayout(activity);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(dp(4), dp(2), dp(14), dp(2));
-        bar.setBackgroundColor(Color.WHITE);
-
-        ImageButton menu = imageButton(R.drawable.ic_menu, "Mở menu", Color.rgb(30, 30, 30));
-        menu.setOnClickListener(v -> actions.onMenu());
-        bar.addView(menu, fixed(dp(54), dp(48)));
-
-        flashButton = imageButton(R.drawable.ic_flash_off, "Bật hoặc tắt đèn flash",
-                Color.rgb(30, 30, 30));
+        bar.setPadding(dp(12), dp(8), dp(12), 0);
+        flashButton = previewIcon(R.drawable.ic_flash_off, activity.getString(R.string.ui_toggle_flash));
         flashButton.setOnClickListener(v -> actions.onToggleFlash());
-        bar.addView(flashButton, fixed(dp(54), dp(48)));
+        bar.addView(flashButton, fixed(dp(48), dp(48)));
 
-        bar.addView(new View(activity), fixed(dp(20), 1));
+        ImageButton editor = previewIcon(R.drawable.ic_edit, activity.getString(R.string.ui_edit_watermark));
+        editor.setOnClickListener(v -> actions.onEditWatermark());
+        addSpacedControl(bar, editor, 48);
+        bar.addView(new View(activity), new LinearLayout.LayoutParams(0, 1, 1));
 
-        TextView verified = textButton("Xác thực ảnh", "Xác thực ảnh", 15, Color.BLACK);
-        verified.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
-        verified.setSingleLine(true);
-        verified.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                R.drawable.ic_verified, 0, 0, 0);
-        verified.setCompoundDrawablePadding(dp(4));
-        verified.setBackgroundResource(R.drawable.pill_outline);
-        bar.addView(verified, fixed(dp(106), dp(27)));
-
-        View flexibleSpace = new View(activity);
-        bar.addView(flexibleSpace, new LinearLayout.LayoutParams(0, 1, 1f));
-
-        TextView plus = textButton("Plus", "Gói Plus", 15, Color.WHITE);
-        plus.setTypeface(Typeface.DEFAULT_BOLD);
-        plus.setSingleLine(true);
-        plus.setPadding(dp(5), 0, dp(5), 0);
-        plus.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_plus, 0, 0, 0);
-        plus.setCompoundDrawablePadding(dp(3));
-        plus.setBackgroundResource(R.drawable.pill_dark);
-        bar.addView(plus, fixed(dp(58), dp(24)));
-
-        ImageButton switchCamera = imageButton(R.drawable.ic_switch_camera,
-                "Đổi camera trước sau", Color.rgb(30, 30, 30));
-        switchCamera.setOnClickListener(v -> actions.onSwitchCamera());
-        bar.addView(switchCamera, fixed(dp(44), dp(48)));
+        ratioButton = textButton("3:4", activity.getString(R.string.ui_choose_photo_ratio), 14, Color.WHITE);
+        ratioButton.setShadowLayer(dp(1), 0, dp(1), 0x99000000);
+        ratioButton.setBackground(previewControlBackground());
+        ratioButton.setOnClickListener(v -> actions.onSelectAspectRatio());
+        addSpacedControl(bar, ratioButton, 48);
+        ImageButton settings = previewIcon(R.drawable.ic_settings, activity.getString(R.string.ui_resolution_settings));
+        settings.setOnClickListener(v -> actions.onMenu());
+        addSpacedControl(bar, settings, 48);
+        ImageButton flip = previewIcon(R.drawable.ic_switch_camera, activity.getString(R.string.ui_switch_front_and_rear_cameras));
+        flip.setOnClickListener(v -> actions.onSwitchCamera());
+        addSpacedControl(bar, flip, 48);
         return bar;
+    }
+
+    private void addSpacedControl(LinearLayout host, View control, int width) {
+        LinearLayout.LayoutParams params = fixed(dp(width), dp(48));
+        params.leftMargin = dp(8);
+        host.addView(control, params);
+    }
+
+    private android.graphics.drawable.Drawable previewControlBackground() {
+        return new InsetDrawable(CameraUi.shape(activity, 0x33666b73, 0, 24), dp(3));
+    }
+
+    private ImageButton previewIcon(int drawable, String description) {
+        ImageButton button = imageButton(drawable, description, Color.WHITE);
+        button.setBackground(previewControlBackground());
+        UiMotion.press(button);
+        return button;
     }
 
     private void addPreviewControls(FrameLayout preview) {
         LinearLayout zoom = new LinearLayout(activity);
         zoomControls = zoom;
         zoom.setOrientation(LinearLayout.VERTICAL);
+        zoom.setBackground(CameraUi.shape(activity, 0x33666b73, 0, 24));
         zoom.setGravity(Gravity.CENTER);
-        zoomTwo = zoomButton("2", 2f, "Thu phóng 2 lần");
-        zoomOne = zoomButton("1.0x", 1f, "Thu phóng 1 lần");
-        zoomHalf = zoomButton("0.5", 0.5f, "Góc siêu rộng 0 phẩy 5 lần");
+        zoomTwo = zoomButton("2", 2f, activity.getString(R.string.ui_zoom_2_times));
+        zoomOne = zoomButton("1.0x", 1f, activity.getString(R.string.ui_zoom_1_time));
+        zoomHalf = zoomButton("0.5", 0.5f, activity.getString(R.string.ui_ultra_wide));
         applyZoomStyle(zoomOne, true);
-        zoom.addView(zoomTwo, fixed(dp(44), dp(44)));
-        zoom.addView(zoomOne, fixed(dp(44), dp(44)));
-        zoom.addView(zoomHalf, fixed(dp(44), dp(44)));
-        FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(48), dp(132),
+        zoom.addView(zoomTwo, fixed(dp(48), dp(48)));
+        zoom.addView(zoomOne, fixed(dp(48), dp(48)));
+        zoom.addView(zoomHalf, fixed(dp(48), dp(48)));
+        FrameLayout.LayoutParams zoomParams = new FrameLayout.LayoutParams(dp(48), dp(144),
                 Gravity.END | Gravity.BOTTOM);
-        zoomParams.rightMargin = 0;
-        zoomParams.bottomMargin = dp(105);
+        zoomParams.rightMargin = dp(12);
+        zoomParams.bottomMargin = dp(132);
         preview.addView(zoom, zoomParams);
 
-        ImageButton edit = imageButton(R.drawable.ic_edit, "Chỉnh sửa watermark", Color.WHITE);
-        edit.setOnClickListener(v -> actions.onEditWatermark());
+        ImageButton edit = previewIcon(R.drawable.ic_clock, activity.getString(R.string.ui_adjust_watermark_date_and_time));
+        clockControl = edit;
+        edit.setOnClickListener(v -> actions.onEditTime());
         FrameLayout.LayoutParams editParams = new FrameLayout.LayoutParams(dp(48), dp(48),
                 Gravity.END | Gravity.BOTTOM);
-        editParams.rightMargin = 0;
-        editParams.bottomMargin = dp(51);
+        editParams.rightMargin = dp(12);
+        editParams.bottomMargin = dp(68);
         preview.addView(edit, editParams);
 
-        ImageButton pin = imageButton(R.drawable.ic_location_target, "Làm mới vị trí", Color.WHITE);
+        ImageButton pin = previewIcon(R.drawable.ic_location_target, activity.getString(R.string.ui_change_watermark_location));
+        locationControl = pin;
         pin.setOnClickListener(v -> actions.onRefreshLocation());
         FrameLayout.LayoutParams pinParams = new FrameLayout.LayoutParams(dp(48), dp(48),
                 Gravity.END | Gravity.BOTTOM);
-        pinParams.rightMargin = 0;
-        pinParams.bottomMargin = 0;
+        pinParams.rightMargin = dp(12);
+        pinParams.bottomMargin = dp(12);
         preview.addView(pin, pinParams);
+        preview.addView(createTopBar(), new FrameLayout.LayoutParams(-1, dp(56), Gravity.TOP));
+        recordingTimer = CameraUi.text(activity, "00:00", 15, Color.WHITE, true);
+        recordingTimer.setGravity(Gravity.CENTER);
+        recordingTimer.setPadding(dp(12), dp(6), dp(12), dp(6));
+        recordingTimer.setBackground(CameraUi.shape(activity, 0xbb202124, 0, 18));
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL); dot.setColor(0xffff453a);
+        dot.setBounds(0, 0, dp(8), dp(8));
+        recordingTimer.setCompoundDrawables(dot, null, null, null);
+        recordingTimer.setCompoundDrawablePadding(dp(8));
+        recordingTimer.setContentDescription(activity.getString(R.string.ui_recording_duration));
+        recordingTimer.setVisibility(View.GONE);
+        FrameLayout.LayoutParams timerParams = new FrameLayout.LayoutParams(-2, dp(36), Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        timerParams.topMargin = dp(64);
+        preview.addView(recordingTimer, timerParams);
     }
 
     private void updateZoomLayout() {
         int count = 1 + (zoomHalf.getVisibility() == View.VISIBLE ? 1 : 0)
                 + (zoomTwo.getVisibility() == View.VISIBLE ? 1 : 0);
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) zoomControls.getLayoutParams();
-        params.height = dp(count * 44);
-        params.bottomMargin = dp(105);
+        params.width = dp(48);
+        params.height = dp(count * 48);
+        params.bottomMargin = dp(132);
         zoomControls.setLayoutParams(params);
+    }
+
+    private void updateViewportControls() {
+        if (bottomPanel == null || viewport == null) return;
+        int overlap = selectedRatio == PhotoAspectRatio.TALL
+                ? Math.max(0, previewLayer.getBottom() - bottomPanel.getTop()) : 0;
+        for (View control : new View[]{zoomControls, clockControl, locationControl}) {
+            if (control != null) control.setTranslationY(-overlap);
+        }
+        int[] origin = new int[2];
+        bottomPanel.getLocationOnScreen(origin);
+        watermarkView.setControlsBottomOnScreen(overlap > 0 ? origin[1] : Integer.MAX_VALUE);
     }
 
     private void addFocusIndicator(FrameLayout preview) {
@@ -319,6 +421,7 @@ final class CameraScreen {
     private TextView zoomButton(String label, float ratio, String description) {
         TextView button = transparentLabel(label, "1.0x".equals(label) ? 12 : 11, Color.WHITE);
         button.setGravity(Gravity.CENTER);
+        button.setShadowLayer(dp(1), 0, dp(1), 0x99000000);
         button.setContentDescription(description);
         button.setClickable(true);
         button.setFocusable(true);
@@ -330,8 +433,9 @@ final class CameraScreen {
         if (button == null) return;
         GradientDrawable background = new GradientDrawable();
         background.setShape(GradientDrawable.OVAL);
-        background.setColor(selected ? 0x33000000 : 0x4d000000);
-        if (selected) background.setStroke(dp(1), Color.WHITE);
+        background.setColor(selected ? 0xdfffffff : Color.TRANSPARENT);
+        button.setTextColor(selected ? CameraUi.INK : Color.WHITE);
+        button.setShadowLayer(selected ? 0 : dp(1), 0, dp(1), 0x99000000);
         button.setBackground(new InsetDrawable(background, dp(6)));
     }
 
@@ -341,12 +445,39 @@ final class CameraScreen {
         panel.setPadding(dp(16), dp(8), dp(16), dp(6));
         panel.setBackgroundColor(Color.WHITE);
 
-        locationState = textButton("Đang lấy thời gian và vị trí hệ thống…",
-                "Trạng thái vị trí", 14, Color.rgb(23, 75, 131));
-        locationState.setBackgroundResource(R.drawable.login_background);
-        locationState.setOnClickListener(v -> actions.onRefreshLocation());
-        panel.addView(locationState, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        locationState = textButton(activity.getString(R.string.ui_adjust_time_alternate), activity.getString(R.string.ui_adjust_time_alternate), 15, CameraUi.BLUE);
+        locationState.setTypeface(Typeface.DEFAULT_BOLD);
+        locationState.setBackground(CameraUi.shape(activity, 0xffeaf1ff, 0, 12));
+        locationState.setOnClickListener(v -> actions.onEditTime());
+        panel.addView(locationState, new LinearLayout.LayoutParams(-1, dp(44)));
+
+        modeSwitch = new FrameLayout(activity);
+        modeSwitch.setBackground(CameraUi.shape(activity, CameraUi.SURFACE, 0, 24));
+        modeSwitch.setClipToOutline(true);
+        modeIndicator = new View(activity);
+        modeIndicator.setBackground(CameraUi.shape(activity, CameraUi.BLUE, 0, 24));
+        modeSwitch.addView(modeIndicator, new FrameLayout.LayoutParams(0, -1));
+        LinearLayout tabs = new LinearLayout(activity);
+        photoTab = textButton(activity.getString(R.string.ui_photo_alternate), activity.getString(R.string.ui_photo_mode), 15, CameraUi.BLUE);
+        videoTab = textButton(activity.getString(R.string.ui_video), activity.getString(R.string.ui_video_mode), 15, CameraUi.INK);
+        photoTab.setOnClickListener(v -> setCaptureMode(false));
+        videoTab.setOnClickListener(v -> setCaptureMode(true));
+        tabs.addView(photoTab, new LinearLayout.LayoutParams(0, -1, 1));
+        tabs.addView(videoTab, new LinearLayout.LayoutParams(0, -1, 1));
+        modeSwitch.addView(tabs, new FrameLayout.LayoutParams(-1, -1));
+        modeSwitch.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            if (r-l == or-ol) return;
+            ViewGroup.LayoutParams indicatorParams = modeIndicator.getLayoutParams();
+            indicatorParams.width = (r-l)/2;
+            modeIndicator.setLayoutParams(indicatorParams);
+            modeIndicator.setTranslationX(videoMode ? (r-l)/2f : 0f);
+        });
+        LinearLayout.LayoutParams switchParams = fixed(dp(208), dp(44));
+        switchParams.gravity = Gravity.CENTER_HORIZONTAL;
+        switchParams.topMargin = dp(8);
+        panel.addView(modeSwitch, switchParams);
+        applyTabStyle(photoTab, true);
+        applyTabStyle(videoTab, false);
 
         LinearLayout captureRow = new LinearLayout(activity);
         captureRow.setGravity(Gravity.CENTER);
@@ -357,7 +488,7 @@ final class CameraScreen {
         LinearLayout gallery = new LinearLayout(activity);
         gallery.setOrientation(LinearLayout.VERTICAL);
         gallery.setGravity(Gravity.CENTER);
-        gallery.setContentDescription("Mở ảnh vừa chụp trong thư viện");
+        gallery.setContentDescription(activity.getString(R.string.ui_open_latest_photo_in_gallery));
         gallery.setOnClickListener(v -> actions.onOpenGallery());
         latestPhotoPreview = new ImageView(activity);
         latestPhotoPreview.setImageResource(R.drawable.ic_gallery);
@@ -366,7 +497,7 @@ final class CameraScreen {
         latestPhotoPreview.setAdjustViewBounds(true);
         latestPhotoPreview.setOnClickListener(v -> actions.onOpenGallery());
         gallery.addView(latestPhotoPreview, fixed(dp(48), dp(42)));
-        TextView galleryLabel = transparentLabel("Thư viện", 15, Color.rgb(82, 82, 82));
+        TextView galleryLabel = transparentLabel(activity.getString(R.string.ui_gallery), 15, Color.rgb(82, 82, 82));
         galleryLabel.setTypeface(Typeface.DEFAULT_BOLD);
         galleryLabel.setGravity(Gravity.CENTER);
         galleryLabel.setOnClickListener(v -> actions.onOpenGallery());
@@ -376,42 +507,33 @@ final class CameraScreen {
 
         shutter = new Button(activity);
         shutter.setText("");
-        shutter.setContentDescription("Chụp ảnh");
+        shutter.setStateListAnimator(null);
+        shutter.setContentDescription(activity.getString(R.string.ui_take_photo));
         shutter.setBackgroundResource(R.drawable.shutter_ring);
         shutter.setOnClickListener(v -> actions.onCapture());
+        UiMotion.press(shutter);
         LinearLayout.LayoutParams shutterParams = fixed(dp(80), dp(80));
         shutterParams.setMargins(dp(20), 0, dp(20), 0);
         captureRow.addView(shutter, shutterParams);
 
-        TextView templates = transparentLabel("Bản mẫu", 15, Color.rgb(82, 82, 82));
+        TextView templates = transparentLabel(activity.getString(R.string.camera_templates), 15, Color.rgb(82, 82, 82));
         templates.setGravity(Gravity.CENTER);
         templates.setTypeface(Typeface.DEFAULT_BOLD);
         templates.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_template, 0, 0);
         templates.setCompoundDrawablePadding(dp(4));
-        templates.setContentDescription("Mở bản mẫu watermark");
+        templates.setContentDescription(activity.getString(R.string.ui_open_watermark_templates));
         templates.setOnClickListener(v -> actions.onOpenTemplates());
         captureRow.addView(templates, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
-        LinearLayout tabs = new LinearLayout(activity);
-        tabs.setGravity(Gravity.CENTER);
-        String[] labels = {"Báo cáo", "Video", "Ảnh", "Chấm công", "Danh sách"};
-        for (String label : labels) {
-            boolean selected = "Ảnh".equals(label);
-            TextView tab = transparentLabel(label,
-                    14, selected ? Color.BLACK : Color.rgb(150, 150, 150));
-            tab.setGravity(Gravity.CENTER);
-            tab.setTypeface(Typeface.DEFAULT_BOLD);
-            if (selected) {
-                tab.setCompoundDrawablesWithIntrinsicBounds(
-                        0, 0, 0, R.drawable.ic_tab_selected);
-                tab.setCompoundDrawablePadding(dp(4));
-            }
-            tabs.addView(tab, new LinearLayout.LayoutParams(0, dp(48), 1f));
-        }
-        panel.addView(tabs, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
         return panel;
+    }
+
+    private void applyTabStyle(TextView tab, boolean selected) {
+        if (tab == null) return;
+        tab.setTextColor(selected ? Color.WHITE : CameraUi.INK);
+        tab.setBackgroundColor(Color.TRANSPARENT);
+        tab.setSelected(selected);
     }
 
     private ImageButton imageButton(int drawable, String description, int tint) {

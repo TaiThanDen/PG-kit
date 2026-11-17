@@ -5,7 +5,7 @@
         <item name="android:navigationBarColor">@color/white</item>
         <item name="android:statusBarColor">@color/white</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:colorAccent">@color/timemark_yellow</item>
+        <item name="android:colorAccent">#1256DF</item>
         <item name="android:windowNoTitle">true</item>
     </style>
     <style name="CameraSheetAnimation">

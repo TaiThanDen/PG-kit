@@ -15,9 +15,14 @@ public final class WatermarkOverlayView extends View {
     static final String DEFAULT_ADDRESS = "";
 
     private String address = DEFAULT_ADDRESS;
+    private WatermarkClock clock = new WatermarkClock();
+
+    void setClock(WatermarkClock clock) { this.clock = clock; invalidate(); }
     private int cameraRotation = Surface.ROTATION_0;
     private final Date currentTime = new Date();
     private WatermarkTemplate.Snapshot template;
+    private int controlsBottomOnScreen = Integer.MAX_VALUE;
+    void setControlsBottomOnScreen(int bottom) { controlsBottomOnScreen = bottom; invalidate(); }
     private int visibleBottomOnScreen = Integer.MAX_VALUE;
     private final int[] screenPosition = new int[2];
     private Supplier<String> addressSource;
@@ -85,12 +90,13 @@ public final class WatermarkOverlayView extends View {
             if (value != null) address = value;
         }
         if (rotationSource != null) cameraRotation = rotationSource.getAsInt();
-        currentTime.setTime(System.currentTimeMillis());
+        currentTime.setTime(clock.now());
         int viewWidth = getWidth();
         int viewHeight = getHeight();
-        if (visibleBottomOnScreen != Integer.MAX_VALUE) {
+        int visibleBottom = Math.min(visibleBottomOnScreen, controlsBottomOnScreen);
+        if (visibleBottom != Integer.MAX_VALUE) {
             getLocationOnScreen(screenPosition);
-            viewHeight = Math.min(viewHeight, Math.max(0, visibleBottomOnScreen - screenPosition[1]));
+            viewHeight = Math.min(viewHeight, Math.max(0, visibleBottom - screenPosition[1]));
         }
         if (viewWidth == 0 || viewHeight == 0) return;
 

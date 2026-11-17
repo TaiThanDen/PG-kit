@@ -11,6 +11,9 @@ import android.widget.Switch;
 final class WatermarkSwitch extends Switch {
     private final Paint brush = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float progress;
+    private int accentColor = 0xff2dca58;
+
+    void setAccentColor(int color) { accentColor = color; invalidate(); }
     private ValueAnimator motion;
 
     WatermarkSwitch(Context context) {
@@ -41,7 +44,7 @@ final class WatermarkSwitch extends Switch {
         float density = getResources().getDisplayMetrics().density;
         float trackWidth = 44 * density, trackHeight = 26 * density;
         float left = (getWidth() - trackWidth) / 2, top = (getHeight() - trackHeight) / 2;
-        int off = 0xffe9e9eb, on = 0xff2dca58;
+        int off = 0xffe9e9eb, on = accentColor;
         brush.setColor(Color.rgb(
                 Math.round(Color.red(off) + (Color.red(on) - Color.red(off)) * progress),
                 Math.round(Color.green(off) + (Color.green(on) - Color.green(off)) * progress),
