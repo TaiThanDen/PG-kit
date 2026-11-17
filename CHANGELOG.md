@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-beta.4
+
+- Center the watermark template icon and label together, aligned with the gallery control on tall and compact camera panels.
+- Keep sheet content opaque while sliding in and out; remove the date/time editor fade.
+- Use an opaque white capture panel in 9:16 mode to remove the grey camera bleed-through.
+
+Debug builds and the affected screens were checked on LG. Full four-direction preview/JPEG/video validation has not been repeated for this beta.
+
 ## 1.0.0-beta.3
 
 - Anchor the watermark date/time sheet to the bottom, remove the numeric-input shortcut, and place the selected date/time below the editor.
