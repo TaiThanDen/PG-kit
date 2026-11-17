@@ -15,3 +15,11 @@ tools/jadx.zip
 *.jks
 *.keystore
 *.p12
+
+# Local research and generated evidence
+output/
+watermark-analysis-kit/
+docs/timemark_reference/evidence/
+.env
+.env.*
+*.aab

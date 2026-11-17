@@ -1,0 +1,2 @@
+# Keep third-party license text byte-for-byte.
+app/src/main/assets/licenses/*.txt -whitespace

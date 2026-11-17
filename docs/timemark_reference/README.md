@@ -1,3 +1,5 @@
+> Community archive: raw device dumps, serials and private capture evidence are excluded. Some links below describe local research workflows and are not distributed artifacts.
+
 # Timemark APK evidence index
 
 This folder contains only facts extracted from the installed Timemark APK or separately labelled screenshot observations. It intentionally contains no proposed clone design and no inferred hidden behavior.

@@ -1,34 +1,79 @@
-# Timemark Camera
+<p align="center"><img src="app/src/main/res/drawable-nodpi/app_icon.png" width="112" alt="Timecounter app icon"></p>
 
-Ứng dụng Android native chụp ảnh kèm thời gian, ngày/thứ và vị trí lấy trực tiếp từ hệ thống điện thoại. Watermark được render vào pixel JPEG trước khi lưu, không phải lớp phủ tạm thời.
+# Timecounter
 
-## Chạy dự án
+An Android camera that saves photos and videos with time and location watermarks. Built with Java and CameraX, with a portrait interface and physical-orientation-aware output.
 
-1. Mở dự án bằng Android Studio hoặc đặt đường dẫn Android SDK trong `local.properties`.
-2. Build with JDK 17–21: `gradlew.bat assembleDebug` (the system default JDK 24 is not supported by this Gradle/Android Gradle Plugin combination).
-3. APK debug: `app/build/outputs/apk/debug/app-debug.apk`
+**Community beta · Android 8.0+ · English and Vietnamese UI**
 
-Ảnh chụp được lưu tại `DCIM/Camera` qua Android MediaStore. `WatermarkRenderer` được dùng cho live overlay và JPEG cuối, vì vậy timestamp/address được burn trực tiếp vào pixel ảnh.
+[Download APK](https://github.com/TaiThanDen/PG-kit/releases) · [Report a bug](https://github.com/TaiThanDen/PG-kit/issues) · [Privacy](PRIVACY.md) · [Changelog](CHANGELOG.md)
 
-Preview hỗ trợ các thao tác CameraX cơ bản: chọn mức zoom, pinch-to-zoom, chạm để focus/đo sáng, bù sáng EV, flash và đổi camera trước/sau. Mọi giá trị zoom/EV đều được giới hạn theo khả năng camera thực tế của thiết bị.
+## Features
 
-## Cấu trúc
+- JPEG photos and MP4 videos with watermarks burned into the saved media.
+- A portrait-only interface; output orientation follows the way you hold the phone.
+- Aspect ratios, output-size options, editable watermark templates and a custom clock.
+- Flash, front/rear camera switching, pinch zoom, tap focus and exposure adjustment.
+- Auxiliary wide-camera support where the device and camera provider expose it.
+- System location and reverse geocoding, with an editable address label.
+- A local gallery with sharing, photo zoom and video playback controls.
 
-- `MainActivity`: điều phối lifecycle, quyền runtime và callback.
-- `CameraScreen`: toàn bộ giao diện dọc; UI không đổi layout khi xoay điện thoại.
-- `CameraEngine`: CameraX preview/capture, sửa EXIF, render watermark và lưu MediaStore.
-- `CameraGestureController`: tap-to-focus và pinch-to-zoom trên preview.
-- `DeviceOrientation`: ánh xạ duy nhất cho bốn hướng cầm thiết bị.
-- `LocationController`: GPS và reverse geocoding.
-- `WatermarkOverlayView` + `WatermarkRenderer`: watermark realtime và bản render JPEG chung style.
-- `VerificationCodeStore`: tạo và lưu mã xác thực cục bộ.
+The launcher uses the owner's custom Timecounter icon. The reference-style watermark, fonts, template catalogue and camera behavior are intentionally preserved. **This project is an independent Timemark-style implementation, not an official Timemark product or service.**
 
-Trước khi sửa hành vi mô phỏng app mẫu, đọc chỉ mục `docs/timemark_reference/README.md`. Dữ liệu runtime/JPEG/resource của package mẫu `com.oceangalaxy.camera.new` có độ tin cậy cao hơn tài liệu tổng hợp; ảnh của clone `com.pgkit.timemarkcamera` không được dùng làm bằng chứng cho app mẫu.
+## Install
 
-`watermark_spec.md` mô tả renderer của clone. `reference_analysis.md` chỉ là bản tổng hợp đã đối chiếu; bằng chứng thô không được sửa bằng suy đoán.
+1. Download `timecounter-*.apk` from [Releases](https://github.com/TaiThanDen/PG-kit/releases).
+2. Open the APK and allow installation from your browser/file manager if Android asks.
+3. Grant camera access. Location enables location labels; microphone access enables video audio.
+4. Take a test photo and open the saved file to check its orientation and watermark.
 
-## Quyền sử dụng
+Release downloads include a `SHA256SUMS` file for checking file integrity. Android will reject an update over a development APK signed with a different key. Export any app-private data before uninstalling a development build. Official updates must retain the same release signing key.
 
-- Camera: xem trước và chụp ảnh.
-- Vị trí chính xác/gần đúng: lấy GPS hệ thống và chuyển tọa độ thành địa chỉ khi Geocoder của thiết bị có dữ liệu.
-- Android 9 trở xuống: quyền bộ nhớ để lưu vào thư viện ảnh.
+New photos are saved to `Pictures/TimemarkCamera` and videos to `DCIM/Camera`. The package ID is `com.pgkit.timemarkcamera` for compatibility with existing installations.
+
+## What a watermark means
+
+The default clock follows the device. Users can also select a custom date/time, pause that clock or edit the visible address. Location accuracy and address availability depend on the device and geocoder.
+
+The photo's local code is randomly generated. The reference-style “Timemark Verified” label is reproduced visually; it **does not perform server verification, certify authenticity, or prove the time/location of capture**. Timecounter does not connect to Timemark's verification service. Check visible text and embedded metadata before sharing files.
+
+## Beta limitations
+
+- Camera availability, zoom range, output sizes and auxiliary lenses vary by hardware.
+- Watermark dates and some template labels remain Vietnamese.
+- Automated tests and limited LG device checks have passed. Full preview, JPEG and video validation in all four physical orientations remains pending for this beta.
+- An emulator cannot substitute for physical orientation testing.
+
+## Privacy
+
+No account, advertising SDK, analytics service or app-operated upload server is included. Captures are stored locally. Android's location/geocoding services may use their own network providers. Saved files may include visible location information and GPS/camera metadata. See [PRIVACY.md](PRIVACY.md).
+
+## Build from source
+
+Requirements: JDK 17–21, Android SDK Platform 35, and an SDK path configured through Android Studio, `ANDROID_HOME`, or `local.properties` (`sdk.dir=...`).
+
+```bash
+./gradlew clean assembleDebug testDebugUnitTest
+```
+
+On Windows, use `gradlew.bat` with the same tasks. The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
+
+See [docs/RELEASING.md](docs/RELEASING.md) for release signing. No signing keys or passwords belong in Git.
+
+## Code map
+
+| Component | Responsibility |
+| --- | --- |
+| `MainActivity` | Permissions, lifecycle and coordination |
+| `CameraScreen` | Portrait camera UI and user actions |
+| `CameraEngine` | CameraX preview/capture, video, pixel rotation and saving |
+| `DeviceOrientation` | Physical-orientation mapping |
+| `WatermarkRenderer` / `VideoWatermarkRenderer` | Live and saved-media annotations |
+| `LocationController` | Location fixes and system geocoding |
+| `MediaLibrary` / `MediaViewerActivity` | Local browsing, viewing and playback |
+
+[CONTRIBUTING.md](CONTRIBUTING.md) describes development checks. Sanitized research notes live under [docs/timemark_reference](docs/timemark_reference); raw device dumps and private capture evidence are excluded from the shared repository. Historical research claims are not proof that every feature works on every phone.
+
+## License and attribution
+
+[MIT](LICENSE) applies to the project's original source code. Fonts, reference-derived assets and third-party libraries are excluded from that grant and retain their own terms. **This is not a claim that all bundled reference assets have been cleared for unrestricted redistribution.** The custom app artwork is reserved for project identification. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the exact scope and known provenance limits.
