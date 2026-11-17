@@ -141,7 +141,6 @@ final class WatermarkTimeSheet {
         updateSummary();
         if (date) showCalendar(); else showWheels();
         resizeToContent();
-        UiMotion.reveal(body);
     }
 
     private void updateSummary() {
