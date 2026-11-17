@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-beta.2
+
+- Restore watermark date and time to the device clock with one tap; the setting persists across restarts.
+- Slide horizontally between photos without fading or clearing the current image while the next photo loads.
+- Keep the current photo visible if the next photo cannot be loaded; respect disabled system animations.
+
+The beta.1 hardware and orientation validation limits still apply.
+
 ## 1.0.0-beta.1
 
 First downloadable community beta of Timecounter.
