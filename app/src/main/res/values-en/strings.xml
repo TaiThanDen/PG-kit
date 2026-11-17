@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Timecounter</string>
     <string name="ui_watermark_date_time">"Watermark date &amp; time"</string>
+    <string name="ui_use_device_date_time">Use device date &amp; time</string>
     <string name="ui_hour">"Hour"</string>
     <string name="ui_date">"Date"</string>
     <string name="ui_keep_clock_running">"Keep clock running"</string>

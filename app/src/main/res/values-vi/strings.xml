@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Timecounter</string>
     <string name="ui_watermark_date_time">"Ngày &amp; giờ watermark"</string>
+    <string name="ui_use_device_date_time">Dùng ngày giờ thiết bị</string>
     <string name="ui_hour">"Giờ"</string>
     <string name="ui_date">"Ngày"</string>
     <string name="ui_keep_clock_running">"Đồng hồ tiếp tục chạy"</string>

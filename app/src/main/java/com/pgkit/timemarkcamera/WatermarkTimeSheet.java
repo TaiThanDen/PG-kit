@@ -18,7 +18,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import java.util.Calendar;
 
-/** Draft-only editor: tab changes preserve values; only Apply changes the shared clock. */
+/** Tab changes preserve the draft; Apply or reset commits changes to the shared clock. */
 final class WatermarkTimeSheet {
     private final Activity activity;
     private final WatermarkClock clock;
@@ -81,6 +81,15 @@ final class WatermarkTimeSheet {
         helper.setTextColor(CameraUi.MUTED);
         root.addView(helper, lp(-1, 28));
 
+        TextView reset = CameraUi.action(activity, activity.getString(R.string.ui_use_device_date_time), false, () -> {
+            clock.reset();
+            onApplied.run();
+            dialog.dismiss();
+        });
+        LinearLayout.LayoutParams resetParams = lp(-1, 48);
+        resetParams.bottomMargin = dp(12);
+        root.addView(reset, resetParams);
+
         LinearLayout footer = new LinearLayout(activity);
         TextView cancel = CameraUi.action(activity, activity.getString(R.string.ui_cancel), false, dialog::dismiss);
         TextView apply = CameraUi.action(activity, activity.getString(R.string.ui_apply), true, () -> {
@@ -110,7 +119,7 @@ final class WatermarkTimeSheet {
         dialog.show();
         if (window != null) {
             int available = activity.getWindow().getDecorView().getHeight() - dp(32);
-            window.setLayout(-1, Math.min(dp(660), available));
+            window.setLayout(-1, Math.min(dp(720), available));
         }
         showTab(false);
     }

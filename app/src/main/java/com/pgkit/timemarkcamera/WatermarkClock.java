@@ -18,6 +18,12 @@ final class WatermarkClock {
         value = keepRunning ? selectedMillis - deviceMillis : selectedMillis;
     }
 
+    synchronized void reset() {
+        custom = false;
+        running = true;
+        value = 0;
+    }
+
     synchronized void restore(boolean custom, boolean running, long value) {
         this.custom = custom;
         this.running = running;

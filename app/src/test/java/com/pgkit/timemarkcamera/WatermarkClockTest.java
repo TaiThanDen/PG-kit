@@ -34,4 +34,27 @@ public class WatermarkClockTest {
         restored.restore(clock.isCustom(), clock.isRunning(), clock.storedValue());
         assertEquals(65_000L, restored.millis(61_000L));
     }
+
+    @Test public void resetRunningOffsetFollowsDeviceTimeChanges() {
+        WatermarkClock clock = new WatermarkClock();
+        clock.set(5_000L, 1_000L, true);
+        clock.reset();
+        assertFalse(clock.isCustom());
+        assertTrue(clock.isRunning());
+        assertEquals(0L, clock.storedValue());
+        assertEquals(61_000L, clock.millis(61_000L));
+        assertEquals(12_000L, clock.millis(12_000L));
+    }
+
+    @Test public void resetFrozenTimeSurvivesRestart() {
+        WatermarkClock clock = new WatermarkClock();
+        clock.set(5_000L, 1_000L, false);
+        clock.reset();
+        WatermarkClock restored = new WatermarkClock();
+        restored.restore(clock.isCustom(), clock.isRunning(), clock.storedValue());
+        assertFalse(restored.isCustom());
+        assertTrue(restored.isRunning());
+        assertEquals(61_000L, restored.millis(61_000L));
+        assertEquals(62_000L, restored.millis(62_000L));
+    }
 }
