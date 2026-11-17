@@ -63,7 +63,7 @@ final class WatermarkRenderer {
             brandTypeface = DEFAULT_TEXT_TYPEFACE;
         }
         SavedVerificationRenderer.load(context);
-        try (InputStream source = context.getAssets().open("video/timecounter_brand.png")) {
+        try (InputStream source = context.getAssets().open("video/official_vi.png")) {
             Bitmap original = BitmapFactory.decodeStream(source);
             if (original == null) throw new IOException("Official logo decode failed");
             // Timemark j.a draws the 100dp ImageView into a native-size bitmap first.
@@ -191,18 +191,18 @@ final class WatermarkRenderer {
     private static void drawFallbackWordmark(Canvas canvas, int width, int height, float scale) {
         Paint timeLogo = savedPaint(SAVED_YELLOW, 40f * scale, brandTypeface, scale);
         timeLogo.setTextAlign(Paint.Align.LEFT);
-        Rect wordmarkBounds = textBounds("Timecounter", timeLogo);
+        Rect wordmarkBounds = textBounds("Timemark", timeLogo);
         timeLogo.setTextScaleX(REFERENCE_WORDMARK_WIDTH * scale
                 / Math.max(1f, wordmarkBounds.width()));
         Paint markLogo = new Paint(timeLogo);
         markLogo.setColor(Color.WHITE);
         float timeWidth = timeLogo.measureText("Time");
-        wordmarkBounds = textBounds("Timecounter", timeLogo);
-        float wordmarkBaseline = baselineForTextBottom("Timecounter", timeLogo,
+        wordmarkBounds = textBounds("Timemark", timeLogo);
+        float wordmarkBaseline = baselineForTextBottom("Timemark", timeLogo,
                 height - WatermarkLayoutSpec.WORDMARK_BOTTOM * scale);
         float wordmarkLeft = width - WatermarkLayoutSpec.WORDMARK_RIGHT * scale - wordmarkBounds.right;
         drawText(canvas, "Time", wordmarkLeft, wordmarkBaseline, timeLogo);
-        drawText(canvas, "counter", wordmarkLeft + timeWidth, wordmarkBaseline, markLogo);
+        drawText(canvas, "mark", wordmarkLeft + timeWidth, wordmarkBaseline, markLogo);
 
     }
 
@@ -210,13 +210,13 @@ final class WatermarkRenderer {
         Paint subtitle = savedPaint(SAVED_SUBTITLE, 20f * scale,
                 Typeface.create("sans-serif-medium", Typeface.NORMAL), scale);
         subtitle.setShadowLayer(3.111111f * scale, 0f, 1.333333f * scale, 0x66000000);
-        Rect subtitleBounds = textBounds("Timecounter", subtitle);
+        Rect subtitleBounds = textBounds("100% Chân thực", subtitle);
         subtitle.setTextScaleX(155f * scale
                 / Math.max(1f, subtitleBounds.width()));
-        subtitleBounds = textBounds("Timecounter", subtitle);
+        subtitleBounds = textBounds("100% Chân thực", subtitle);
         float subtitleLeft = width - 16f * scale - subtitleBounds.right;
-        drawText(canvas, "Timecounter", subtitleLeft,
-                baselineForTextBottom("Timecounter", subtitle,
+        drawText(canvas, "100% Chân thực", subtitleLeft,
+                baselineForTextBottom("100% Chân thực", subtitle,
                         height - 18f * scale), subtitle);
     }
 

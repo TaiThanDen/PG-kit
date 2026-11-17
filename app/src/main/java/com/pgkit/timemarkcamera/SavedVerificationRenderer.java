@@ -59,7 +59,7 @@ final class SavedVerificationRenderer {
         float textSize = Math.round(9f * density) * layoutWidth / (375f * density);
         Paint codePaint = textPaint(codeTypeface, textSize);
         Paint labelPaint = textPaint(labelTypeface, textSize);
-        String label = "Timecounter code";
+        String label = "Timemark Verified";
         int codeWidth = measuredWidth(codePaint);
         int labelWidth = measuredWidth(labelPaint);
         int stripWidth = Math.max(codeWidth, labelWidth);

@@ -41,7 +41,7 @@ final class VideoWatermarkRenderer {
         density = context.getResources().getDisplayMetrics().density;
         // Vietnamese official-logo response contains both the wordmark and subtitle.
         // Keep its native transparent padding and shadows; do not reconstruct glyphs.
-        try (InputStream source = context.getAssets().open("video/timecounter_brand.png")) {
+        try (InputStream source = context.getAssets().open("video/official_vi.png")) {
             brandWordmark = BitmapFactory.decodeStream(source);
         } catch (IOException error) {
             throw new IllegalStateException("Video wordmark asset missing", error);
