@@ -6,9 +6,9 @@ An Android camera that saves photos and videos with time and location watermarks
 
 **Community beta · Android 8.0+ · English and Vietnamese UI**
 
-**[Download Timecounter APK — Android 8.0+](https://github.com/TaiThanDen/Timecounter/releases/download/v1.0.0-beta.3/timecounter-1.0.0-beta.3.apk)**
+**[Download Timecounter APK — Android 8.0+](https://github.com/TaiThanDen/Timecounter/releases/download/download/timecounter.apk)**
 
-[Release notes and checksums](https://github.com/TaiThanDen/Timecounter/releases/tag/v1.0.0-beta.3)
+[Current version, release notes and checksums](https://github.com/TaiThanDen/Timecounter/releases/tag/download)
 
 [Download APK](https://github.com/TaiThanDen/Timecounter/releases) · [Report a bug](https://github.com/TaiThanDen/Timecounter/issues) · [Privacy](PRIVACY.md) · [Changelog](CHANGELOG.md)
 
@@ -26,7 +26,7 @@ The launcher uses the owner's custom Timecounter icon. The reference-style water
 
 ## Install
 
-1. Download `timecounter-*.apk` from [Releases](https://github.com/TaiThanDen/Timecounter/releases).
+1. Download [timecounter.apk](https://github.com/TaiThanDen/Timecounter/releases/download/download/timecounter.apk), or a versioned `timecounter-*.apk` from [Releases](https://github.com/TaiThanDen/Timecounter/releases).
 2. Open the APK and allow installation from your browser/file manager if Android asks.
 3. Grant camera access. Location enables location labels; microphone access enables video audio.
 4. Take a test photo and open the saved file to check its orientation and watermark.

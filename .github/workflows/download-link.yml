@@ -1,0 +1,60 @@
+name: Update permanent APK download
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Published version tag to serve at the permanent download link
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: permanent-apk-download
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE_TAG: ${{ inputs.source_tag || github.event.release.tag_name }}
+    steps:
+      - name: Download and verify the published APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_TAG" == v* ]]
+          gh release view "$SOURCE_TAG" --json isDraft --jq '.isDraft' | grep -qx false
+          mkdir source output
+          gh release download "$SOURCE_TAG" --pattern 'timecounter-*.apk' --pattern SHA256SUMS --dir source
+          mapfile -t apks < <(find source -maxdepth 1 -name 'timecounter-*.apk' -type f)
+          [[ "${#apks[@]}" == 1 ]]
+          apk="${apks[0]}"
+          # Check this exact APK against the versioned release's checksum.
+          expected=$(awk -v name="$(basename "$apk")" '$2 == name {print $1}' source/SHA256SUMS)
+          [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]]
+          printf '%s  %s\n' "$expected" "$apk" | sha256sum --check --strict
+          cp "$apk" output/timecounter.apk
+          (cd output && sha256sum timecounter.apk > SHA256SUMS)
+          printf 'Version: %s\nSource: https://github.com/%s/releases/tag/%s\n' \
+            "$SOURCE_TAG" "$GH_REPO" "$SOURCE_TAG" > output/VERSION.txt
+          {
+            printf 'Permanent download link for the most recently published Timecounter build, including beta releases.\n\n'
+            printf '**Current version: [%s](https://github.com/%s/releases/tag/%s)**\n\n' "$SOURCE_TAG" "$GH_REPO" "$SOURCE_TAG"
+            printf '[Download timecounter.apk](https://github.com/%s/releases/download/download/timecounter.apk) · Android 8.0+\n\n' "$GH_REPO"
+            printf 'This download alias is updated after each versioned release is published. The APK is copied unchanged from that release. See the version link for source code, release notes and known limitations. SHA256SUMS verifies the fixed filename.\n'
+          } > notes.md
+      - name: Update the permanent download release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view download >/dev/null
+          gh release upload download output/timecounter.apk output/SHA256SUMS output/VERSION.txt --clobber
+          gh release edit download --title 'Timecounter — permanent APK download' --notes-file notes.md --prerelease --latest=false
