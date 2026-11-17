@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0-beta.3
+
+- Anchor the watermark date/time sheet to the bottom, remove the numeric-input shortcut, and place the selected date/time below the editor.
+- Keep the camera preview full width on compact displays so the default preview watermark no longer shrinks by about 10% at 1080×1920.
+- Keep watermark and floating camera controls above overlapping capture controls.
+- Compare the default watermark against Timemark on LG at 1080×1920 and 1080×2340; portrait JPEG text retains near-reference dimensions, with small raster differences remaining.
+
+Full four-direction preview/JPEG/video validation has not been repeated for this beta.
+
 ## 1.0.0-beta.2
 
 - Restore watermark date and time to the device clock with one tap; the setting persists across restarts.
