@@ -9,3 +9,9 @@ captures/
 reference_app/
 tools/jadx.zip
 *.apk
+
+# Local signing credentials must never be committed
+.local-release/
+*.jks
+*.keystore
+*.p12
