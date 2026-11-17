@@ -20,10 +20,19 @@ final class AppBrand {
     }
 
     static void draw(Canvas canvas, int width, int height, Bitmap bitmap) {
+        draw(canvas, width, height, bitmap, 0.02f);
+    }
+
+    static void drawPreview(Canvas canvas, int width, int height, Bitmap bitmap) {
+        // Keep the camera's focus/location controls clear along the right edge.
+        draw(canvas, width, height, bitmap, 0.20f);
+    }
+
+    private static void draw(Canvas canvas, int width, int height, Bitmap bitmap, float rightInset) {
         if (bitmap == null || width <= 0 || height <= 0) return;
         float shortEdge = Math.min(width, height);
         float size = shortEdge * 0.09f;
-        float right = width - shortEdge * 0.02f;
+        float right = width - shortEdge * rightInset;
         // Leave room below the image for the saved-photo verification strip.
         float bottom = height - shortEdge * 0.04f;
         canvas.drawBitmap(bitmap, null, new RectF(right - size, bottom - size, right, bottom),

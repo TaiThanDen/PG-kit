@@ -17,6 +17,7 @@ import java.util.Date;
  * are a separate path; see docs/timemark_reference/video/production-pipeline.md.
  */
 final class VideoWatermarkRenderer {
+    private final Bitmap appLogoBitmap;
     private final String address;
     private final WatermarkTemplate.Snapshot template;
     private final int layoutShortEdge;
@@ -29,6 +30,7 @@ final class VideoWatermarkRenderer {
     private int renderedHeight;
 
     VideoWatermarkRenderer(Context context, String address, WatermarkTemplate.Snapshot template) {
+        appLogoBitmap = AppBrand.load(context);
         this.address = address;
         this.template = template;
         // This is the native layout's rasterization density, never JPEG/PreviewView geometry.
@@ -52,7 +54,8 @@ final class VideoWatermarkRenderer {
             Canvas bitmapCanvas = new Canvas(overlay);
             bitmapCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             WatermarkRenderer.drawLive(bitmapCanvas, layoutShortEdge, overlay.getHeight(),
-                    new Date(deviceTimeMillis), address, density, template);
+                    new Date(deviceTimeMillis), address, density, template, false);
+            AppBrand.draw(bitmapCanvas, overlay.getWidth(), overlay.getHeight(), appLogoBitmap);
             renderedSecond = second;
         }
         destination.set(0, 0, width, height);

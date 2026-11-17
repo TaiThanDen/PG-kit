@@ -74,12 +74,19 @@ final class WatermarkRenderer {
 
     static void drawLive(Canvas canvas, int width, int height, Date when, String address,
                          float density, WatermarkTemplate.Snapshot template) {
+        drawLive(canvas, width, height, when, address, density, template, true);
+    }
+
+    static void drawLive(Canvas canvas, int width, int height, Date when, String address,
+                         float density, WatermarkTemplate.Snapshot template, boolean showBrand) {
         if (template != null && TemplateWatermarkRenderer.drawLive(
                 canvas, width, height, when, address, density, template)) {
-            if (!"none".equals(template.id)) AppBrand.draw(canvas, width, height, appLogoBitmap);
+            if (showBrand && !"none".equals(template.id)) AppBrand.drawPreview(canvas, width, height, appLogoBitmap);
             return;
         }
-        drawLive(canvas, width, height, when, address, density);
+        TimeLocationWatermark.draw(canvas, width, height, density, time(when), date(when),
+                weekday(when), address, timeTypeface, textTypeface);
+        if (showBrand) AppBrand.drawPreview(canvas, width, height, appLogoBitmap);
     }
 
     static void drawSaved(Canvas canvas, int width, int height, Date when, String address,
@@ -104,7 +111,7 @@ final class WatermarkRenderer {
     static void drawLive(Canvas canvas, int width, int height, Date when, String address, float density) {
         TimeLocationWatermark.draw(canvas, width, height, density, time(when), date(when),
                 weekday(when), address, timeTypeface, textTypeface);
-        AppBrand.draw(canvas, width, height, appLogoBitmap);
+        AppBrand.drawPreview(canvas, width, height, appLogoBitmap);
     }
 
     static void drawStyled34(Canvas canvas, int width, int height, Date when, String address,
